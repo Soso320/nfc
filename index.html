@@ -252,18 +252,15 @@
     </div>
 
     <script>
-        let abortController = null;
+     let abortController = null;
         let timeoutTimer = null;
 
-        // --- Modal Logic ---
         function showModal(title, text, icon, showClose = false, isHtml = false) {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalIcon').innerText = icon;
-            
             const textContainer = document.getElementById('modalText');
             if (isHtml) textContainer.innerHTML = text;
             else textContainer.innerText = text;
-
             document.getElementById('modalCloseBtn').style.display = showClose ? 'block' : 'none';
             document.getElementById('nfcModal').classList.add('active');
         }
@@ -274,7 +271,7 @@
             if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
         }
 
-        // --- NFC Write Engine ---
+        // --- NFC Write Engine (Now uses MIME instead of Text) ---
         async function writeNFC(payload) {
             if (!("NDEFReader" in window)) {
                 showModal("Not Supported", "WebNFC requires Chrome on Android.", "🚫", true);
@@ -293,8 +290,14 @@
 
             try {
                 const ndef = new NDEFReader();
+                const encoder = new TextEncoder();
+                
+                // Pack the URL first, followed by the hidden JSON MIME record
                 await ndef.write({
-                    records: [{ recordType: "text", data: JSON.stringify(payload) }]
+                    records: [
+                        { recordType: "url", data: "https://soso320.github.io/nfc/" },
+                        { recordType: "mime", mediaType: "application/json", data: encoder.encode(JSON.stringify(payload)) }
+                    ]
                 }, { signal: abortController.signal });
                 
                 clearTimeout(timeoutTimer);
@@ -306,11 +309,7 @@
             }
         }
 
-        // --- Hardware Commands ---
-        function sendStopAll() {
-            // Firmware treats zone 'O' and state '0' as an emergency stop and coasts the pump
-            writeNFC({ cmd: "sol", zone: "O", state: 0 });
-        }
+        function sendStopAll() { writeNFC({ cmd: "sol", zone: "O", state: 0 }); }
 
         function sendPumpCmd() {
             const dir = parseInt(document.getElementById('pump_dir').value);
@@ -350,13 +349,13 @@
                     clearTimeout(timeoutTimer);
                     const decoder = new TextDecoder();
                     for (const record of event.message.records) {
-                        if (record.recordType === "text") {
+                        
+                        // Only extract our custom hidden MIME record
+                        if (record.recordType === "mime" && record.mediaType === "application/json") {
                             const rawText = decoder.decode(record.data);
-                            
                             try {
                                 const data = JSON.parse(rawText);
                                 if (data.sys) {
-                                    // Parse firmware variables into human readable format
                                     const dir = data.sys.pump_dir === 1 ? 'Forward' : (data.sys.pump_dir === 2 ? 'Reverse' : 'Idle');
                                     const htmlStats = `
                                         <div class="stats-box">
