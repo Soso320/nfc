@@ -1,1 +1,64 @@
-meow
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Watering Control</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+        button { display: block; width: 100%; padding: 18px; margin: 10px 0; font-size: 18px; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
+        .btn-a { background: #3b82f6; }
+        .btn-b { background: #10b981; }
+        .btn-c { background: #8b5cf6; }
+        .btn-off { background: #ef4444; margin-top: 30px; }
+        #status { margin-top: 20px; padding: 10px; font-weight: bold; color: #333; background: #e2e8f0; border-radius: 6px;}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Watering Control</h2>
+        <p>Tap a button, then hold phone to the STM32 NFC tag.</p>
+        
+        <button class="btn-a" onclick="sendNFCCommand('A', 50)">Activate Zone A (50%)</button>
+        <button class="btn-b" onclick="sendNFCCommand('B', 50)">Activate Zone B (50%)</button>
+        <button class="btn-c" onclick="sendNFCCommand('C', 50)">Activate Zone C (50%)</button>
+        <button class="btn-off" onclick="sendNFCCommand('OFF', 0)">EMERGENCY STOP (0%)</button>
+
+        <div id="status">Waiting for command...</div>
+    </div>
+
+    <script>
+        async function sendNFCCommand(zone, speed) {
+            const statusEl = document.getElementById('status');
+            
+            if (!("NDEFReader" in window)) {
+                statusEl.innerText = "Error: WebNFC not supported on this browser (Use Android Chrome).";
+                return;
+            }
+
+            try {
+                const ndef = new NDEFReader();
+                
+                // Format the JSON payload exactly how the STM32 expects it
+                const payload = JSON.stringify({ zone: zone, pump: speed });
+                
+                statusEl.innerText = `Ready to write: ${zone}... Tap tag now!`;
+                
+                await ndef.write({
+                    records: [{
+                        recordType: "text",
+                        data: payload
+                    }]
+                });
+                
+                statusEl.innerText = `[Success] Sent command: Zone ${zone}`;
+                statusEl.style.background = "#dcfce3";
+            } catch (error) {
+                statusEl.innerText = `[Failed] ${error}`;
+                statusEl.style.background = "#fee2e2";
+            }
+        }
+    </script>
+</body>
+</html>
