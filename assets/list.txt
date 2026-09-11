@@ -1,0 +1,10 @@
+document.png
+warning.png
+timeout.png
+error.png
+check.png
+nfc.png
+settings.png
+valve.png
+pump.png
+cancel.png
