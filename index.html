@@ -24,7 +24,7 @@
             display: flex; 
             justify-content: center;
             overscroll-behavior-y: contain; 
-            color-scheme: dark; /* Ensures native scrolling UI and select dropdowns use dark mode */
+            color-scheme: dark;
         }
 
         .container { 
@@ -54,24 +54,10 @@
             color: var(--text-main);
         }
 
-        .header-icon {
-            width: 22px;
-            height: 22px;
-            object-fit: contain;
-        }
+        .header-icon { width: 22px; height: 22px; object-fit: contain; }
 
-        .input-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .input-group {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+        .input-row { display: flex; gap: 12px; margin-bottom: 16px; }
+        .input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 
         label { 
             font-size: 0.8rem; 
@@ -81,7 +67,7 @@
             letter-spacing: 0.5px;
         }
 
-        select, input { 
+        select, input[type="number"] { 
             width: 100%; 
             padding: 12px; 
             border: 1px solid var(--border); 
@@ -95,11 +81,17 @@
             text-align: center;
         }
 
-        select:focus, input:focus {
-            outline: none;
-            border-color: #6b7280;
-            background: #1f2937;
+        input[type="color"] {
+            width: 100%;
+            height: 44px;
+            padding: 2px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #111827;
+            cursor: pointer;
         }
+
+        select:focus, input:focus { outline: none; border-color: #6b7280; background: #1f2937; }
 
         button { 
             width: 100%; 
@@ -118,89 +110,48 @@
             gap: 8px;
         }
 
-        button:active { 
-            transform: scale(0.97); 
-            opacity: 0.9;
-        }
+        button:active { transform: scale(0.97); opacity: 0.9; }
 
-        .btn-icon {
-            width: 20px;
-            height: 20px;
-            object-fit: contain;
-        }
+        .btn-icon { width: 20px; height: 20px; object-fit: contain; }
+        .btn-danger { background: var(--danger); font-size: 1.1rem; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); }
 
-        .btn-danger {
-            background: var(--danger);
-            font-size: 1.1rem;
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-        }
-
-        .btn-outline { 
-            background: transparent; 
-            border: 2px solid var(--border); 
-        }
-
-        /* Modal Overlay CSS */
         .modal-overlay { 
-            position: fixed; 
-            top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0,0,0,0.6); 
-            backdrop-filter: blur(4px);
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            z-index: 1000; 
-            opacity: 0; 
-            transition: opacity 0.2s ease; 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; 
+            z-index: 1000; opacity: 0; transition: opacity 0.2s ease; 
         }
 
-        .modal-overlay.active { 
-            display: flex; 
-            opacity: 1; 
-        }
+        .modal-overlay.active { display: flex; opacity: 1; }
 
         .modal-content { 
-            background: var(--surface); 
-            padding: 28px 24px; 
-            border-radius: 20px; 
-            width: 85%; 
-            max-width: 320px; 
-            text-align: center; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
-            transform: scale(0.95);
+            background: var(--surface); padding: 28px 24px; border-radius: 20px; 
+            width: 85%; max-width: 320px; text-align: center; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: scale(0.95);
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid var(--border);
         }
 
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-icon img { 
-            width: 56px; 
-            height: 56px; 
-            margin-bottom: 16px; 
-            object-fit: contain;
-        }
-        
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-icon img { width: 56px; height: 56px; margin-bottom: 16px; object-fit: contain; }
         .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
         .modal-text { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
         
-        /* Stats Table inside Modal */
         .stats-box { text-align: left; background: #111827; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 0.95rem; }
-        .stats-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .stats-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); align-items: center; }
         .stats-row:last-child { border-bottom: none; padding-bottom: 0; }
         .stats-row:first-child { padding-top: 0; }
         .stats-label { font-weight: 600; color: var(--text-muted); }
-        .stats-val { font-weight: 700; color: var(--text-main); }
+        .stats-val { font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
         
+        .color-swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #555; }
         .modal-close { background: var(--border); color: var(--text-main); display: none; padding: 14px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Prominent Emergency Stop -->
         <button class="btn-danger" onclick="sendStopAll()">
             <img src="cancel.png" class="btn-icon" alt="Stop"> STOP ALL
         </button>
@@ -250,6 +201,17 @@
         </div>
 
         <div class="card">
+            <h3><img src="led.png" class="header-icon" alt="LED"> Illumination Array</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Array Color</label>
+                    <input type="color" id="led_color" value="#00ffcc">
+                </div>
+            </div>
+            <button onclick="sendLedCmd()">Write Color Command</button>
+        </div>
+
+        <div class="card">
             <h3><img src="settings.png" class="header-icon" alt="Settings"> Diagnostics</h3>
             <button class="btn-outline" onclick="readMetrics()">Read Device Config</button>
         </div>
@@ -272,11 +234,8 @@
         function showModal(title, text, imageSrc, showClose = false, isHtml = false) {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalIcon').innerHTML = `<img src="${imageSrc}" alt="Status Icon">`;
-            
             const textContainer = document.getElementById('modalText');
-            if (isHtml) textContainer.innerHTML = text;
-            else textContainer.innerText = text;
-
+            if (isHtml) textContainer.innerHTML = text; else textContainer.innerText = text;
             document.getElementById('modalCloseBtn').style.display = showClose ? 'block' : 'none';
             document.getElementById('nfcModal').classList.add('active');
         }
@@ -288,25 +247,17 @@
         }
 
         async function writeNFC(payload) {
-            if (!("NDEFReader" in window)) {
-                showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true);
-                return;
-            }
-
+            if (!("NDEFReader" in window)) { showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true); return; }
             abortController = new AbortController();
             showModal("Ready to Write", "Hold your phone near the tag...", "nfc.png", false);
             
             timeoutTimer = setTimeout(() => {
-                if (abortController) {
-                    abortController.abort();
-                    showModal("Timeout", "No tag detected. Try again.", "timeout.png", true);
-                }
+                if (abortController) { abortController.abort(); showModal("Timeout", "No tag detected. Try again.", "timeout.png", true); }
             }, 8000);
 
             try {
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
-                
                 await ndef.write({
                     records: [
                         { recordType: "url", data: "https://soso320.github.io/nfc/" },
@@ -323,7 +274,10 @@
             }
         }
 
-        function sendStopAll() { writeNFC({ cmd: "sol", zone: "O", state: 0 }); }
+        function sendStopAll() { 
+            writeNFC({ cmd: "sol", zone: "O", state: 0 }); 
+            // Optional: You could append an LED off command payload here if desired
+        }
 
         function sendPumpCmd() {
             const dir = parseInt(document.getElementById('pump_dir').value);
@@ -338,20 +292,21 @@
             writeNFC({ cmd: "sol", zone: zone, state: state });
         }
 
-        async function readMetrics() {
-            if (!("NDEFReader" in window)) {
-                showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true);
-                return;
-            }
+        function sendLedCmd() {
+            const hex = document.getElementById('led_color').value;
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            writeNFC({ cmd: "led", r: r, g: g, b: b });
+        }
 
+        async function readMetrics() {
+            if (!("NDEFReader" in window)) { showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true); return; }
             abortController = new AbortController();
             showModal("Reading Config", "Hold your phone near the tag...", "nfc.png", false);
 
             timeoutTimer = setTimeout(() => {
-                if (abortController) {
-                    abortController.abort();
-                    showModal("Timeout", "No tag detected.", "timeout.png", true);
-                }
+                if (abortController) { abortController.abort(); showModal("Timeout", "No tag detected.", "timeout.png", true); }
             }, 8000);
 
             try {
@@ -362,28 +317,30 @@
                     clearTimeout(timeoutTimer);
                     const decoder = new TextDecoder();
                     for (const record of event.message.records) {
-                        
                         if (record.recordType === "mime" && record.mediaType === "application/json") {
                             const rawText = decoder.decode(record.data);
                             try {
                                 const data = JSON.parse(rawText);
                                 if (data.sys) {
                                     const dir = data.sys.pump_dir === 1 ? 'Forward' : (data.sys.pump_dir === 2 ? 'Reverse' : 'Idle');
+                                    // Parse RGB back to Hex for the swatch
+                                    const r = data.sys.led_r || 0; const g = data.sys.led_g || 0; const b = data.sys.led_b || 0;
+                                    const hexColor = `rgb(${r},${g},${b})`;
+                                    
                                     const htmlStats = `
                                         <div class="stats-box">
                                             <div class="stats-row"><span class="stats-label">Pump Status</span> <span class="stats-val">${dir} (${data.sys.pump_spd}%)</span></div>
                                             <div class="stats-row"><span class="stats-label">Solenoid A</span> <span class="stats-val">${data.sys.sol_A ? 'OPEN' : 'CLOSED'}</span></div>
                                             <div class="stats-row"><span class="stats-label">Solenoid B</span> <span class="stats-val">${data.sys.sol_B ? 'OPEN' : 'CLOSED'}</span></div>
                                             <div class="stats-row"><span class="stats-label">Solenoid C</span> <span class="stats-val">${data.sys.sol_C ? 'OPEN' : 'CLOSED'}</span></div>
+                                            <div class="stats-row"><span class="stats-label">LED Array</span> <span class="stats-val"><div class="color-swatch" style="background-color: ${hexColor};"></div> HEX</span></div>
                                         </div>
                                     `;
                                     showModal("Live Hardware Config", htmlStats, "settings.png", true, true);
                                 } else {
                                     showModal("Raw Payload", rawText, "document.png", true);
                                 }
-                            } catch (e) {
-                                showModal("Raw Payload", rawText, "document.png", true);
-                            }
+                            } catch (e) { showModal("Raw Payload", rawText, "document.png", true); }
                         }
                     }
                 };
