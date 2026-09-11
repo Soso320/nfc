@@ -6,13 +6,13 @@
     <title>Hardware Debugger</title>
     <style>
         :root {
-            --bg: #f4f4f5;
-            --surface: #ffffff;
-            --text-main: #18181b;
-            --text-muted: #71717a;
-            --border: #e4e4e7;
-            --accent: #27272a;
-            --danger: #ef4444;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --accent: #374151;
+            --danger: #dc2626;
         }
 
         body { 
@@ -24,6 +24,7 @@
             display: flex; 
             justify-content: center;
             overscroll-behavior-y: contain; 
+            color-scheme: dark; /* Ensures native scrolling UI and select dropdowns use dark mode */
         }
 
         .container { 
@@ -32,7 +33,6 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            /* Added top padding since the header was removed */
             padding-top: 10px; 
         }
 
@@ -40,7 +40,7 @@
             background: var(--surface); 
             padding: 20px; 
             border-radius: 16px; 
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04); 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
             border: 1px solid var(--border);
         }
 
@@ -51,6 +51,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            color: var(--text-main);
         }
 
         .header-icon {
@@ -88,21 +89,22 @@
             box-sizing: border-box; 
             font-family: inherit; 
             font-size: 1rem; 
-            background: #fafafa;
+            background: #111827;
+            color: var(--text-main);
             appearance: none;
             text-align: center;
         }
 
         select:focus, input:focus {
             outline: none;
-            border-color: var(--accent);
-            background: var(--surface);
+            border-color: #6b7280;
+            background: #1f2937;
         }
 
         button { 
             width: 100%; 
             background: var(--accent); 
-            color: var(--surface); 
+            color: var(--text-main); 
             border: none; 
             padding: 16px; 
             border-radius: 10px; 
@@ -130,12 +132,11 @@
         .btn-danger {
             background: var(--danger);
             font-size: 1.1rem;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
         }
 
         .btn-outline { 
             background: transparent; 
-            color: var(--accent); 
             border: 2px solid var(--border); 
         }
 
@@ -143,7 +144,7 @@
         .modal-overlay { 
             position: fixed; 
             top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0,0,0,0.4); 
+            background: rgba(0,0,0,0.6); 
             backdrop-filter: blur(4px);
             display: none; 
             align-items: center; 
@@ -165,9 +166,10 @@
             width: 85%; 
             max-width: 320px; 
             text-align: center; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
             transform: scale(0.95);
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid var(--border);
         }
 
         .modal-overlay.active .modal-content {
@@ -181,17 +183,18 @@
             object-fit: contain;
         }
         
-        .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+        .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
         .modal-text { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
         
         /* Stats Table inside Modal */
-        .stats-box { text-align: left; background: #fafafa; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 0.95rem; }
-        .stats-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
-        .stats-row:last-child { border-bottom: none; }
+        .stats-box { text-align: left; background: #111827; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 0.95rem; }
+        .stats-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .stats-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .stats-row:first-child { padding-top: 0; }
         .stats-label { font-weight: 600; color: var(--text-muted); }
         .stats-val { font-weight: 700; color: var(--text-main); }
         
-        .modal-close { background: #f4f4f5; color: var(--text-main); display: none; padding: 14px; }
+        .modal-close { background: var(--border); color: var(--text-main); display: none; padding: 14px; }
     </style>
 </head>
 <body>
@@ -266,7 +269,6 @@
         let abortController = null;
         let timeoutTimer = null;
 
-        // --- Modal Logic ---
         function showModal(title, text, imageSrc, showClose = false, isHtml = false) {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalIcon').innerHTML = `<img src="${imageSrc}" alt="Status Icon">`;
@@ -285,7 +287,6 @@
             if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
         }
 
-        // --- NFC Write Engine ---
         async function writeNFC(payload) {
             if (!("NDEFReader" in window)) {
                 showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true);
@@ -337,7 +338,6 @@
             writeNFC({ cmd: "sol", zone: zone, state: state });
         }
 
-        // --- NFC Read Engine ---
         async function readMetrics() {
             if (!("NDEFReader" in window)) {
                 showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true);
