@@ -23,7 +23,6 @@
             padding: 16px; 
             display: flex; 
             justify-content: center;
-            /* Prevents pull-to-refresh on mobile */
             overscroll-behavior-y: contain; 
         }
 
@@ -33,14 +32,8 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-        }
-
-        h2 { 
-            text-align: center; 
-            font-size: 1.4rem; 
-            font-weight: 700; 
-            margin: 10px 0; 
-            letter-spacing: -0.5px;
+            /* Added top padding since the header was removed */
+            padding-top: 10px; 
         }
 
         .card { 
@@ -58,6 +51,12 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .header-icon {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
         }
 
         .input-row {
@@ -122,6 +121,12 @@
             opacity: 0.9;
         }
 
+        .btn-icon {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
         .btn-danger {
             background: var(--danger);
             font-size: 1.1rem;
@@ -169,7 +174,13 @@
             transform: scale(1);
         }
 
-        .modal-icon { font-size: 3.5rem; margin-bottom: 12px; }
+        .modal-icon img { 
+            width: 56px; 
+            height: 56px; 
+            margin-bottom: 16px; 
+            object-fit: contain;
+        }
+        
         .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
         .modal-text { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
         
@@ -186,13 +197,13 @@
 <body>
 
     <div class="container">
-        <h2>Hardware Debugger</h2>
-
         <!-- Prominent Emergency Stop -->
-        <button class="btn-danger" onclick="sendStopAll()">🛑 STOP ALL</button>
+        <button class="btn-danger" onclick="sendStopAll()">
+            <img src="cancel.png" class="btn-icon" alt="Stop"> STOP ALL
+        </button>
 
         <div class="card">
-            <h3>💧 Pump Control</h3>
+            <h3><img src="pump.png" class="header-icon" alt="Pump"> Pump Control</h3>
             <div class="input-row">
                 <div class="input-group">
                     <label>Direction</label>
@@ -214,7 +225,7 @@
         </div>
 
         <div class="card">
-            <h3>🚰 Solenoid Control</h3>
+            <h3><img src="valve.png" class="header-icon" alt="Valve"> Solenoid Control</h3>
             <div class="input-row">
                 <div class="input-group">
                     <label>Target Valve</label>
@@ -236,7 +247,7 @@
         </div>
 
         <div class="card">
-            <h3>⚙️ Diagnostics</h3>
+            <h3><img src="settings.png" class="header-icon" alt="Settings"> Diagnostics</h3>
             <button class="btn-outline" onclick="readMetrics()">Read Device Config</button>
         </div>
     </div>
@@ -244,7 +255,7 @@
     <!-- Custom Popup Modal -->
     <div class="modal-overlay" id="nfcModal">
         <div class="modal-content">
-            <div class="modal-icon" id="modalIcon">📱</div>
+            <div class="modal-icon" id="modalIcon"><img src="nfc.png" alt="Icon"></div>
             <div class="modal-title" id="modalTitle">Ready to Scan</div>
             <div class="modal-text" id="modalText">Hold phone near STM32 board.</div>
             <button class="modal-close" id="modalCloseBtn" onclick="hideModal()">Dismiss</button>
@@ -252,15 +263,18 @@
     </div>
 
     <script>
-     let abortController = null;
+        let abortController = null;
         let timeoutTimer = null;
 
-        function showModal(title, text, icon, showClose = false, isHtml = false) {
+        // --- Modal Logic ---
+        function showModal(title, text, imageSrc, showClose = false, isHtml = false) {
             document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalIcon').innerText = icon;
+            document.getElementById('modalIcon').innerHTML = `<img src="${imageSrc}" alt="Status Icon">`;
+            
             const textContainer = document.getElementById('modalText');
             if (isHtml) textContainer.innerHTML = text;
             else textContainer.innerText = text;
+
             document.getElementById('modalCloseBtn').style.display = showClose ? 'block' : 'none';
             document.getElementById('nfcModal').classList.add('active');
         }
@@ -271,20 +285,20 @@
             if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
         }
 
-        // --- NFC Write Engine (Now uses MIME instead of Text) ---
+        // --- NFC Write Engine ---
         async function writeNFC(payload) {
             if (!("NDEFReader" in window)) {
-                showModal("Not Supported", "WebNFC requires Chrome on Android.", "🚫", true);
+                showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true);
                 return;
             }
 
             abortController = new AbortController();
-            showModal("Ready to Write", "Hold your phone near the tag...", "📡", false);
+            showModal("Ready to Write", "Hold your phone near the tag...", "nfc.png", false);
             
             timeoutTimer = setTimeout(() => {
                 if (abortController) {
                     abortController.abort();
-                    showModal("Timeout", "No tag detected. Try again.", "⏱️", true);
+                    showModal("Timeout", "No tag detected. Try again.", "timeout.png", true);
                 }
             }, 8000);
 
@@ -292,7 +306,6 @@
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
                 
-                // Pack the URL first, followed by the hidden JSON MIME record
                 await ndef.write({
                     records: [
                         { recordType: "url", data: "https://soso320.github.io/nfc/" },
@@ -301,11 +314,11 @@
                 }, { signal: abortController.signal });
                 
                 clearTimeout(timeoutTimer);
-                showModal("Success", "Command transmitted.", "✅", false);
+                showModal("Success", "Command transmitted.", "check.png", false);
                 setTimeout(hideModal, 1500);
             } catch (err) {
                 clearTimeout(timeoutTimer);
-                if (err.name !== 'AbortError') showModal("Error", "Write failed: " + err.message, "❌", true);
+                if (err.name !== 'AbortError') showModal("Error", "Write failed: " + err.message, "error.png", true);
             }
         }
 
@@ -324,20 +337,20 @@
             writeNFC({ cmd: "sol", zone: zone, state: state });
         }
 
-        // --- NFC Read & Parse Engine ---
+        // --- NFC Read Engine ---
         async function readMetrics() {
             if (!("NDEFReader" in window)) {
-                showModal("Not Supported", "WebNFC requires Chrome on Android.", "🚫", true);
+                showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true);
                 return;
             }
 
             abortController = new AbortController();
-            showModal("Reading Config", "Hold your phone near the tag...", "📡", false);
+            showModal("Reading Config", "Hold your phone near the tag...", "nfc.png", false);
 
             timeoutTimer = setTimeout(() => {
                 if (abortController) {
                     abortController.abort();
-                    showModal("Timeout", "No tag detected.", "⏱️", true);
+                    showModal("Timeout", "No tag detected.", "timeout.png", true);
                 }
             }, 8000);
 
@@ -350,7 +363,6 @@
                     const decoder = new TextDecoder();
                     for (const record of event.message.records) {
                         
-                        // Only extract our custom hidden MIME record
                         if (record.recordType === "mime" && record.mediaType === "application/json") {
                             const rawText = decoder.decode(record.data);
                             try {
@@ -365,19 +377,19 @@
                                             <div class="stats-row"><span class="stats-label">Solenoid C</span> <span class="stats-val">${data.sys.sol_C ? 'OPEN' : 'CLOSED'}</span></div>
                                         </div>
                                     `;
-                                    showModal("Live Hardware Config", htmlStats, "⚙️", true, true);
+                                    showModal("Live Hardware Config", htmlStats, "settings.png", true, true);
                                 } else {
-                                    showModal("Raw Payload", rawText, "📝", true);
+                                    showModal("Raw Payload", rawText, "document.png", true);
                                 }
                             } catch (e) {
-                                showModal("Raw Payload", rawText, "📝", true);
+                                showModal("Raw Payload", rawText, "document.png", true);
                             }
                         }
                     }
                 };
             } catch (err) {
                 clearTimeout(timeoutTimer);
-                if (err.name !== 'AbortError') showModal("Error", "Read failed: " + err.message, "❌", true);
+                if (err.name !== 'AbortError') showModal("Error", "Read failed: " + err.message, "error.png", true);
             }
         }
     </script>
