@@ -3,60 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Watering Control</title>
+    <title>Hardware Debugger</title>
     <style>
-        body { font-family: -apple-system, sans-serif; text-align: center; background: #f4f4f9; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
-        button { display: block; width: 100%; padding: 18px; margin: 10px 0; font-size: 18px; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
-        .btn-a { background: #3b82f6; }
-        .btn-b { background: #10b981; }
-        .btn-c { background: #8b5cf6; }
-        .btn-off { background: #ef4444; margin-top: 30px; }
-        #status { margin-top: 20px; padding: 10px; font-weight: bold; color: #333; background: #e2e8f0; border-radius: 6px;}
+        body { font-family: monospace; padding: 10px; margin: 0; }
+        fieldset { margin-bottom: 20px; }
+        button { padding: 10px; margin-top: 10px; display: block; width: 100%; }
+        input, select { padding: 8px; margin: 5px 0; width: 90%; box-sizing: border-box; }
+        #log { background: #eee; padding: 10px; min-height: 40px; margin-bottom: 20px; word-wrap: break-word;}
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Watering Control</h2>
-        <p>Tap a button, then hold phone to the STM32 NFC tag.</p>
-        
-        <button class="btn-a" onclick="sendNFCCommand('A', 50)">Activate Zone A (50%)</button>
-        <button class="btn-b" onclick="sendNFCCommand('B', 50)">Activate Zone B (50%)</button>
-        <button class="btn-c" onclick="sendNFCCommand('C', 50)">Activate Zone C (50%)</button>
-        <button class="btn-off" onclick="sendNFCCommand('OFF', 0)">EMERGENCY STOP (0%)</button>
+    <h2>NFC Debug Console</h2>
+    
+    <div id="log">Status: Idle</div>
 
-        <div id="status">Waiting for command...</div>
-    </div>
+    <fieldset>
+        <legend>Pump Test</legend>
+        <label>Direction:</label>
+        <select id="pump_dir">
+            <option value="1">Forward (1)</option>
+            <option value="2">Reverse (2)</option>
+            <option value="0">Coast (0)</option>
+            <option value="3">Brake (3)</option>
+        </select>
+        <label>Speed (0-100%):</label>
+        <input type="number" id="pump_spd" value="50" min="0" max="100">
+        <label>Duration (Seconds):</label>
+        <input type="number" id="pump_sec" value="5" min="0">
+        <button onclick="sendPumpCmd()">Write Pump Command</button>
+    </fieldset>
+
+    <fieldset>
+        <legend>Solenoid Test</legend>
+        <label>Zone:</label>
+        <select id="sol_zone">
+            <option value="A">Zone A</option>
+            <option value="B">Zone B</option>
+            <option value="C">Zone C</option>
+            <option value="O">All Off</option>
+        </select>
+        <label>State:</label>
+        <select id="sol_state">
+            <option value="1">ON (Open)</option>
+            <option value="0">OFF (Closed)</option>
+        </select>
+        <button onclick="sendSolCmd()">Write Solenoid Command</button>
+    </fieldset>
+
+    <fieldset>
+        <legend>Device Metrics</legend>
+        <button onclick="readMetrics()">Scan Tag for Metrics</button>
+        <pre id="metrics_out">No data yet...</pre>
+    </fieldset>
 
     <script>
-        async function sendNFCCommand(zone, speed) {
-            const statusEl = document.getElementById('status');
-            
+        const logEl = document.getElementById('log');
+
+        async function writeNFC(payload) {
             if (!("NDEFReader" in window)) {
-                statusEl.innerText = "Error: WebNFC not supported on this browser (Use Android Chrome).";
+                logEl.innerText = "Error: WebNFC not supported.";
                 return;
             }
-
             try {
                 const ndef = new NDEFReader();
-                
-                // Format the JSON payload exactly how the STM32 expects it
-                const payload = JSON.stringify({ zone: zone, pump: speed });
-                
-                statusEl.innerText = `Ready to write: ${zone}... Tap tag now!`;
-                
+                logEl.innerText = "Ready to write... Tap the tag!";
                 await ndef.write({
-                    records: [{
-                        recordType: "text",
-                        data: payload
-                    }]
+                    records: [{ recordType: "text", data: JSON.stringify(payload) }]
                 });
+                logEl.innerText = "Success! Wrote: " + JSON.stringify(payload);
+            } catch (err) {
+                logEl.innerText = "Write failed: " + err;
+            }
+        }
+
+        function sendPumpCmd() {
+            const dir = parseInt(document.getElementById('pump_dir').value);
+            const spd = parseInt(document.getElementById('pump_spd').value);
+            const sec = parseInt(document.getElementById('pump_sec').value);
+            writeNFC({ cmd: "pump", dir: dir, spd: spd, sec: sec });
+        }
+
+        function sendSolCmd() {
+            const zone = document.getElementById('sol_zone').value;
+            const state = parseInt(document.getElementById('sol_state').value);
+            writeNFC({ cmd: "sol", zone: zone, state: state });
+        }
+
+        async function readMetrics() {
+            if (!("NDEFReader" in window)) {
+                logEl.innerText = "Error: WebNFC not supported.";
+                return;
+            }
+            try {
+                const ndef = new NDEFReader();
+                logEl.innerText = "Ready to read... Tap the tag!";
+                await ndef.scan();
                 
-                statusEl.innerText = `[Success] Sent command: Zone ${zone}`;
-                statusEl.style.background = "#dcfce3";
-            } catch (error) {
-                statusEl.innerText = `[Failed] ${error}`;
-                statusEl.style.background = "#fee2e2";
+                ndef.onreading = event => {
+                    const decoder = new TextDecoder();
+                    for (const record of event.message.records) {
+                        if (record.recordType === "text") {
+                            const data = decoder.decode(record.data);
+                            document.getElementById('metrics_out').innerText = data;
+                            logEl.innerText = "Read Successful!";
+                        }
+                    }
+                };
+            } catch (err) {
+                logEl.innerText = "Read failed: " + err;
             }
         }
     </script>
