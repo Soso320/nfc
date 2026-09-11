@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hardware Debugger</title>
     <style>
         :root {
@@ -12,6 +12,7 @@
             --text-muted: #71717a;
             --border: #e4e4e7;
             --accent: #27272a;
+            --danger: #ef4444;
         }
 
         body { 
@@ -19,64 +20,78 @@
             background-color: var(--bg); 
             color: var(--text-main); 
             margin: 0; 
-            padding: 20px; 
+            padding: 16px; 
             display: flex; 
-            justify-content: center; 
+            justify-content: center;
+            /* Prevents pull-to-refresh on mobile */
+            overscroll-behavior-y: contain; 
         }
 
         .container { 
-            background: var(--surface); 
             width: 100%; 
-            max-width: 420px; 
-            padding: 24px; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); 
+            max-width: 400px; 
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         h2 { 
             text-align: center; 
             font-size: 1.4rem; 
-            font-weight: 600; 
-            margin: 0 0 24px 0; 
+            font-weight: 700; 
+            margin: 10px 0; 
+            letter-spacing: -0.5px;
         }
 
-        .section { 
-            margin-bottom: 24px; 
-            padding-bottom: 24px; 
-            border-bottom: 1px solid var(--border); 
+        .card { 
+            background: var(--surface); 
+            padding: 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04); 
+            border: 1px solid var(--border);
         }
 
-        .section:last-child { 
-            border-bottom: none; 
-            margin-bottom: 0; 
-            padding-bottom: 0; 
-        }
-
-        .section h3 { 
-            font-size: 1.05rem; 
+        .card h3 { 
+            font-size: 1.1rem; 
             font-weight: 600; 
             margin: 0 0 16px 0; 
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         label { 
-            display: block; 
-            font-size: 0.85rem; 
-            font-weight: 500; 
+            font-size: 0.8rem; 
+            font-weight: 600; 
             color: var(--text-muted); 
-            margin-bottom: 6px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         select, input { 
             width: 100%; 
             padding: 12px; 
-            margin-bottom: 16px; 
             border: 1px solid var(--border); 
-            border-radius: 8px; 
+            border-radius: 10px; 
             box-sizing: border-box; 
             font-family: inherit; 
-            font-size: 0.95rem; 
+            font-size: 1rem; 
             background: #fafafa;
             appearance: none;
+            text-align: center;
         }
 
         select:focus, input:focus {
@@ -90,42 +105,41 @@
             background: var(--accent); 
             color: var(--surface); 
             border: none; 
-            padding: 14px; 
-            border-radius: 8px; 
-            font-size: 0.95rem; 
+            padding: 16px; 
+            border-radius: 10px; 
+            font-size: 1.05rem; 
             font-weight: 600; 
             cursor: pointer; 
             transition: transform 0.1s, opacity 0.2s; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
         }
 
         button:active { 
-            transform: scale(0.98); 
+            transform: scale(0.97); 
             opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
         }
 
         .btn-outline { 
             background: transparent; 
             color: var(--accent); 
-            border: 1px solid var(--border); 
-            margin-bottom: 12px;
-        }
-
-        pre { 
-            background: #fafafa; 
-            padding: 12px; 
-            border-radius: 8px; 
-            overflow-x: auto; 
-            font-size: 0.85rem; 
-            border: 1px solid var(--border); 
-            margin: 0;
-            color: var(--text-muted);
+            border: 2px solid var(--border); 
         }
 
         /* Modal Overlay CSS */
         .modal-overlay { 
             position: fixed; 
             top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(0,0,0,0.6); 
+            background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(4px);
             display: none; 
             align-items: center; 
             justify-content: center; 
@@ -141,43 +155,32 @@
 
         .modal-content { 
             background: var(--surface); 
-            padding: 32px 24px; 
-            border-radius: 16px; 
-            width: 80%; 
+            padding: 28px 24px; 
+            border-radius: 20px; 
+            width: 85%; 
             max-width: 320px; 
             text-align: center; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
-            transform: translateY(20px);
-            transition: transform 0.2s ease;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .modal-overlay.active .modal-content {
-            transform: translateY(0);
+            transform: scale(1);
         }
 
-        .modal-icon { 
-            font-size: 3rem; 
-            margin-bottom: 16px; 
-        }
-
-        .modal-title { 
-            font-size: 1.2rem; 
-            font-weight: 600; 
-            margin-bottom: 8px; 
-        }
-
-        .modal-text { 
-            font-size: 0.95rem; 
-            color: var(--text-muted); 
-            margin-bottom: 24px; 
-            line-height: 1.5; 
-        }
-
-        .modal-close { 
-            background: #f4f4f5; 
-            color: var(--text-main); 
-            display: none; 
-        }
+        .modal-icon { font-size: 3.5rem; margin-bottom: 12px; }
+        .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+        .modal-text { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+        
+        /* Stats Table inside Modal */
+        .stats-box { text-align: left; background: #fafafa; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 0.95rem; }
+        .stats-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+        .stats-row:last-child { border-bottom: none; }
+        .stats-label { font-weight: 600; color: var(--text-muted); }
+        .stats-val { font-weight: 700; color: var(--text-main); }
+        
+        .modal-close { background: #f4f4f5; color: var(--text-main); display: none; padding: 14px; }
     </style>
 </head>
 <body>
@@ -185,48 +188,56 @@
     <div class="container">
         <h2>Hardware Debugger</h2>
 
-        <div class="section">
-            <h3>Pump Control</h3>
-            <label>Direction</label>
-            <select id="pump_dir">
-                <option value="1">Forward</option>
-                <option value="2">Reverse</option>
-                <option value="0">Coast</option>
-                <option value="3">Active Brake</option>
-            </select>
-            
-            <label>Speed (0-100%)</label>
-            <input type="number" id="pump_spd" value="50" min="0" max="100">
-            
-            <label>Duration (Seconds)</label>
-            <input type="number" id="pump_sec" value="5" min="0">
-            
+        <!-- Prominent Emergency Stop -->
+        <button class="btn-danger" onclick="sendStopAll()">🛑 STOP ALL</button>
+
+        <div class="card">
+            <h3>💧 Pump Control</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Direction</label>
+                    <select id="pump_dir">
+                        <option value="1">Forward</option>
+                        <option value="2">Reverse</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Speed (%)</label>
+                    <input type="number" id="pump_spd" value="50" min="0" max="100">
+                </div>
+            </div>
+            <div class="input-group" style="margin-bottom: 16px;">
+                <label>Duration (Seconds)</label>
+                <input type="number" id="pump_sec" value="5" min="1">
+            </div>
             <button onclick="sendPumpCmd()">Write Pump Command</button>
         </div>
 
-        <div class="section">
-            <h3>Solenoid Control</h3>
-            <label>Target Zone</label>
-            <select id="sol_zone">
-                <option value="A">Zone A</option>
-                <option value="B">Zone B</option>
-                <option value="C">Zone C</option>
-                <option value="O">All Off (Emergency)</option>
-            </select>
-            
-            <label>Valve State</label>
-            <select id="sol_state">
-                <option value="1">Open (ON)</option>
-                <option value="0">Closed (OFF)</option>
-            </select>
-            
+        <div class="card">
+            <h3>🚰 Solenoid Control</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Target Valve</label>
+                    <select id="sol_zone">
+                        <option value="A">Solenoid A</option>
+                        <option value="B">Solenoid B</option>
+                        <option value="C">Solenoid C</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>State</label>
+                    <select id="sol_state">
+                        <option value="1">OPEN</option>
+                        <option value="0">CLOSED</option>
+                    </select>
+                </div>
+            </div>
             <button onclick="sendSolCmd()">Write Solenoid Command</button>
         </div>
 
-        <div class="section">
-            <h3>Live Metrics</h3>
-            <button class="btn-outline" onclick="readMetrics()">Scan Tag for Metrics</button>
-            <pre id="metrics_out">Waiting for scan...</pre>
+        <div class="card">
+            <h3>⚙️ Diagnostics</h3>
+            <button class="btn-outline" onclick="readMetrics()">Read Device Config</button>
         </div>
     </div>
 
@@ -235,7 +246,7 @@
         <div class="modal-content">
             <div class="modal-icon" id="modalIcon">📱</div>
             <div class="modal-title" id="modalTitle">Ready to Scan</div>
-            <div class="modal-text" id="modalText">Hold your phone near the STM32 board.</div>
+            <div class="modal-text" id="modalText">Hold phone near STM32 board.</div>
             <button class="modal-close" id="modalCloseBtn" onclick="hideModal()">Dismiss</button>
         </div>
     </div>
@@ -245,42 +256,38 @@
         let timeoutTimer = null;
 
         // --- Modal Logic ---
-        function showModal(title, text, icon, showClose = false) {
+        function showModal(title, text, icon, showClose = false, isHtml = false) {
             document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalText').innerText = text;
             document.getElementById('modalIcon').innerText = icon;
+            
+            const textContainer = document.getElementById('modalText');
+            if (isHtml) textContainer.innerHTML = text;
+            else textContainer.innerText = text;
+
             document.getElementById('modalCloseBtn').style.display = showClose ? 'block' : 'none';
             document.getElementById('nfcModal').classList.add('active');
         }
 
         function hideModal() {
             document.getElementById('nfcModal').classList.remove('active');
-            // Cancel any pending NFC operation when modal closes
-            if (abortController) {
-                abortController.abort();
-                abortController = null;
-            }
-            if (timeoutTimer) {
-                clearTimeout(timeoutTimer);
-                timeoutTimer = null;
-            }
+            if (abortController) { abortController.abort(); abortController = null; }
+            if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
         }
 
         // --- NFC Write Engine ---
         async function writeNFC(payload) {
             if (!("NDEFReader" in window)) {
-                showModal("Not Supported", "WebNFC is only available on Chrome for Android.", "🚫", true);
+                showModal("Not Supported", "WebNFC requires Chrome on Android.", "🚫", true);
                 return;
             }
 
             abortController = new AbortController();
             showModal("Ready to Write", "Hold your phone near the tag...", "📡", false);
             
-            // 8-second manual timeout
             timeoutTimer = setTimeout(() => {
                 if (abortController) {
                     abortController.abort();
-                    showModal("Timeout", "No tag detected. Ensure the phone is close enough.", "⏱️", true);
+                    showModal("Timeout", "No tag detected. Try again.", "⏱️", true);
                 }
             }, 8000);
 
@@ -291,19 +298,20 @@
                 }, { signal: abortController.signal });
                 
                 clearTimeout(timeoutTimer);
-                showModal("Success", "Command written to hardware successfully.", "✅", false);
-                
-                // Auto-close modal on success
+                showModal("Success", "Command transmitted.", "✅", false);
                 setTimeout(hideModal, 1500);
             } catch (err) {
                 clearTimeout(timeoutTimer);
-                if (err.name !== 'AbortError') {
-                    showModal("Error", "Write failed: " + err.message, "❌", true);
-                }
+                if (err.name !== 'AbortError') showModal("Error", "Write failed: " + err.message, "❌", true);
             }
         }
 
         // --- Hardware Commands ---
+        function sendStopAll() {
+            // Firmware treats zone 'O' and state '0' as an emergency stop and coasts the pump
+            writeNFC({ cmd: "sol", zone: "O", state: 0 });
+        }
+
         function sendPumpCmd() {
             const dir = parseInt(document.getElementById('pump_dir').value);
             const spd = parseInt(document.getElementById('pump_spd').value);
@@ -317,15 +325,15 @@
             writeNFC({ cmd: "sol", zone: zone, state: state });
         }
 
-        // --- NFC Read Engine ---
+        // --- NFC Read & Parse Engine ---
         async function readMetrics() {
             if (!("NDEFReader" in window)) {
-                showModal("Not Supported", "WebNFC is only available on Chrome for Android.", "🚫", true);
+                showModal("Not Supported", "WebNFC requires Chrome on Android.", "🚫", true);
                 return;
             }
 
             abortController = new AbortController();
-            showModal("Ready to Read", "Hold your phone near the tag...", "📡", false);
+            showModal("Reading Config", "Hold your phone near the tag...", "📡", false);
 
             timeoutTimer = setTimeout(() => {
                 if (abortController) {
@@ -336,8 +344,6 @@
 
             try {
                 const ndef = new NDEFReader();
-                
-                // scan() resolves immediately when reading starts, onreading fires when data arrives
                 await ndef.scan({ signal: abortController.signal }); 
                 
                 ndef.onreading = event => {
@@ -345,25 +351,34 @@
                     const decoder = new TextDecoder();
                     for (const record of event.message.records) {
                         if (record.recordType === "text") {
-                            let rawText = decoder.decode(record.data);
+                            const rawText = decoder.decode(record.data);
                             
-                            // Attempt to pretty-print if it's JSON
                             try {
-                                const jsonObj = JSON.parse(rawText);
-                                rawText = JSON.stringify(jsonObj, null, 2);
-                            } catch (e) {}
-
-                            document.getElementById('metrics_out').innerText = rawText;
-                            showModal("Metrics Read", "Data retrieved successfully.", "✅", false);
-                            setTimeout(hideModal, 1200);
+                                const data = JSON.parse(rawText);
+                                if (data.sys) {
+                                    // Parse firmware variables into human readable format
+                                    const dir = data.sys.pump_dir === 1 ? 'Forward' : (data.sys.pump_dir === 2 ? 'Reverse' : 'Idle');
+                                    const htmlStats = `
+                                        <div class="stats-box">
+                                            <div class="stats-row"><span class="stats-label">Pump Status</span> <span class="stats-val">${dir} (${data.sys.pump_spd}%)</span></div>
+                                            <div class="stats-row"><span class="stats-label">Solenoid A</span> <span class="stats-val">${data.sys.sol_A ? 'OPEN' : 'CLOSED'}</span></div>
+                                            <div class="stats-row"><span class="stats-label">Solenoid B</span> <span class="stats-val">${data.sys.sol_B ? 'OPEN' : 'CLOSED'}</span></div>
+                                            <div class="stats-row"><span class="stats-label">Solenoid C</span> <span class="stats-val">${data.sys.sol_C ? 'OPEN' : 'CLOSED'}</span></div>
+                                        </div>
+                                    `;
+                                    showModal("Live Hardware Config", htmlStats, "⚙️", true, true);
+                                } else {
+                                    showModal("Raw Payload", rawText, "📝", true);
+                                }
+                            } catch (e) {
+                                showModal("Raw Payload", rawText, "📝", true);
+                            }
                         }
                     }
                 };
             } catch (err) {
                 clearTimeout(timeoutTimer);
-                if (err.name !== 'AbortError') {
-                    showModal("Error", "Read failed: " + err.message, "❌", true);
-                }
+                if (err.name !== 'AbortError') showModal("Error", "Read failed: " + err.message, "❌", true);
             }
         }
     </script>
