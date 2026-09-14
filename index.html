@@ -23,8 +23,10 @@
         p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; }
 
         /* Startup / Overlays */
-        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; transition: opacity 0.4s ease; backdrop-filter: blur(10px); }
+        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; transition: opacity 0.4s ease; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
         .overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        .static-icon { width: 100px; height: 100px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; font-size: 3.5rem; }
         
         .pulse-ring { width: 90px; height: 90px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative; }
         .pulse-ring::after { content: ''; position: absolute; inset: -12px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
@@ -42,7 +44,7 @@
         /* Inputs & Layouts */
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
         .input-row { display: flex; gap: 12px; width: 100%; }
-        .input-row > * { min-width: 0; flex: 1; } /* Fixes clipping out of boxes */
+        .input-row > * { min-width: 0; flex: 1; } 
         label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
         
         input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 16px; border-radius: 12px; font-size: 1rem; transition: all 0.2s; appearance: none; width: 100%; }
@@ -107,16 +109,24 @@
 
     <div id="toast-container"></div>
 
-    <!-- Startup Screen -->
+    <!-- Static Startup Screen -->
     <div id="screen-startup" class="overlay">
-        <div class="pulse-ring"><span style="font-size: 2.5rem;">📱</span></div>
+        <div class="static-icon">📱</div>
         <h2 id="startup-title">Connect to Controller</h2>
-        <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Tap your phone against the STM32 hardware module to establish a connection.</p>
-        <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">Scan NFC Tag</button>
+        <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Press the button below, then tap your phone against the hardware module.</p>
+        <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">Start NFC Scan</button>
+    </div>
+
+    <!-- Active Scanning Prompt -->
+    <div id="screen-scan-prompt" class="overlay hidden" style="background: rgba(9, 9, 11, 0.95);">
+        <div class="pulse-ring"><span style="font-size: 2.5rem;">📡</span></div>
+        <h2>Ready to Scan</h2>
+        <p style="margin-top: 10px; max-width: 250px; color: var(--accent);">Hold your phone steady against the controller's NFC tag.</p>
+        <button onclick="cancelScan()" style="max-width: 200px; margin-top: 40px; background: transparent; border-color: var(--border);">Cancel</button>
     </div>
 
     <!-- Sync Progress Overlay -->
-    <div id="screen-sync" class="overlay hidden">
+    <div id="screen-sync" class="overlay hidden" style="background: rgba(9, 9, 11, 0.95);">
         <div class="pulse-ring" style="border-color: var(--warning); animation-duration: 1s;"><span style="font-size: 2.5rem;">📡</span></div>
         <h2>Syncing Device</h2>
         <p id="sync-status" style="color: var(--warning); font-weight: 600; font-size: 1.1rem; margin-top: 10px;">Writing changes...</p>
@@ -257,15 +267,15 @@
                 <div class="input-group">
                     <label>How Often? (Frequency)</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_int_val" value="3" min="1" style="flex: 1;">
-                        <select id="wiz_int_unit" style="flex: 1.5;"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
+                        <input type="number" id="wiz_int_val" value="3" min="1">
+                        <select id="wiz_int_unit"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
                     </div>
                 </div>
                 <div class="input-group" style="margin-top: 20px;">
                     <label>How Long? (Duration)</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_dur_val" value="10" min="1" style="flex: 1;">
-                        <select id="wiz_dur_unit" style="flex: 1.5;"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
+                        <input type="number" id="wiz_dur_val" value="10" min="1">
+                        <select id="wiz_dur_unit"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
                     </div>
                 </div>
                 <div class="input-row" style="margin-top: 40px;">
@@ -278,22 +288,22 @@
                 <div class="input-group">
                     <label>First Watering Event</label>
                     <div class="input-row">
-                        <input type="date" id="wiz_exp_date" style="flex: 1.5;">
-                        <input type="time" id="wiz_exp_time" style="flex: 1;">
+                        <input type="date" id="wiz_exp_date">
+                        <input type="time" id="wiz_exp_time">
                     </div>
                 </div>
                 <div class="input-group" style="margin-top: 16px;">
                     <label>Repeat Every</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_exp_rep_val" value="1" min="1" style="flex: 1;">
-                        <select id="wiz_exp_rep_unit" style="flex: 1.5;"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
+                        <input type="number" id="wiz_exp_rep_val" value="1" min="1">
+                        <select id="wiz_exp_rep_unit"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
                     </div>
                 </div>
                 <div class="input-group" style="margin-top: 16px;">
                     <label>Duration</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_exp_dur_val" value="10" min="1" style="flex: 1;">
-                        <select id="wiz_exp_dur_unit" style="flex: 1.5;"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
+                        <input type="number" id="wiz_exp_dur_val" value="10" min="1">
+                        <select id="wiz_exp_dur_unit"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
                     </div>
                 </div>
                 <div class="input-row" style="margin-top: 30px;">
@@ -325,6 +335,7 @@
         let commandQueue = [];
         let currentSchedules = {};
         let selectedWizMode = 'interval';
+        let scanAbortController = null;
         
         window.onload = () => {
             if (!("NDEFReader" in window)) {
@@ -382,11 +393,15 @@
             return JSON.stringify(payload);
         }
 
-        // --- Hardware Scanning (Robust DataView + offset 0x0004 logic presumed active on firmware) ---
+        // --- Hardware Scanning ---
         async function initConnection() {
             try {
+                scanAbortController = new AbortController();
                 const ndef = new NDEFReader();
-                await ndef.scan({ signal: new AbortController().signal });
+                
+                document.getElementById('screen-scan-prompt').classList.remove('hidden');
+                
+                await ndef.scan({ signal: scanAbortController.signal });
                 
                 ndef.onreading = event => {
                     for (const record of event.message.records) {
@@ -415,16 +430,27 @@
                                 
                                 localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
                                 renderSchedules();
+                                
+                                document.getElementById('screen-scan-prompt').classList.add('hidden');
                                 document.getElementById('screen-startup').classList.add('hidden');
                                 showToast("Hardware State Synced!");
                                 return;
                             } catch (e) { console.error(e); }
                         }
                     }
+                    document.getElementById('screen-scan-prompt').classList.add('hidden');
                     document.getElementById('screen-startup').classList.add('hidden');
                     showToast("Connected. No existing configurations found.");
                 };
-            } catch (err) { showToast("Scan Failed: " + err.message); }
+            } catch (err) { 
+                document.getElementById('screen-scan-prompt').classList.add('hidden');
+                if (err.name !== 'AbortError') showToast("Scan Failed: " + err.message); 
+            }
+        }
+
+        function cancelScan() {
+            if (scanAbortController) scanAbortController.abort();
+            document.getElementById('screen-scan-prompt').classList.add('hidden');
         }
 
         // --- Instant Execution ---
@@ -582,7 +608,7 @@
                 let d = document.getElementById('wiz_exp_date').valueAsDate;
                 let t = document.getElementById('wiz_exp_time').value.split(':');
                 d.setHours(parseInt(t[0]), parseInt(t[1]), 0);
-                startEpoch = getLocalEpoch(d); // Uses precise timezone math
+                startEpoch = getLocalEpoch(d); 
                 
                 let v = parseInt(document.getElementById('wiz_exp_rep_val').value);
                 let u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
