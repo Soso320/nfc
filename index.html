@@ -8,113 +8,140 @@
         :root {
             --bg: #09090b; --surface: #18181b; --surface-hover: #27272a;
             --text-main: #f4f4f5; --text-muted: #a1a1aa;
-            --border: #3f3f46; --accent: #3b82f6; --accent-glow: rgba(59, 130, 246, 0.5);
-            --danger: #ef4444; --danger-glow: rgba(239, 68, 68, 0.6);
-            --success: #22c55e;
-            --radius: 16px;
+            --border: #3f3f46; --accent: #3b82f6; --accent-glow: rgba(59, 130, 246, 0.4);
+            --danger: #ef4444; --danger-glow: rgba(239, 68, 68, 0.5);
+            --success: #22c55e; --warning: #f59e0b;
+            --radius: 18px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { background-color: var(--bg); color: var(--text-main); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 100px; }
+        body { background-color: var(--bg); color: var(--text-main); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 120px; }
 
-        /* Startup / Status Overlays */
-        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; transition: opacity 0.3s; }
-        .overlay.hidden { opacity: 0; pointer-events: none; }
-        .pulse-ring { width: 100px; height: 100px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative; }
-        .pulse-ring::after { content: ''; position: absolute; inset: -10px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
-
-        /* Typography & Layout */
-        h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+        /* Typography */
+        h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
         p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; }
-        .container { width: 100%; max-width: 480px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: slideUp 0.3s ease; }
-        .container.active { display: flex; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Cards & Inputs */
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-        .card-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        /* Startup / Overlays */
+        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; transition: opacity 0.4s ease; backdrop-filter: blur(10px); }
+        .overlay.hidden { opacity: 0; pointer-events: none; }
         
+        .pulse-ring { width: 90px; height: 90px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative; }
+        .pulse-ring::after { content: ''; position: absolute; inset: -12px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+
+        /* Views */
+        .container { width: 100%; max-width: 480px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .container.active { display: flex; }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+        .card-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px; }
+        
+        /* Inputs & Layouts */
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-        .input-row { display: flex; gap: 12px; }
-        .input-row .input-group { flex: 1; }
-        label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 14px; border-radius: 12px; font-size: 1rem; transition: border 0.2s; appearance: none; }
-        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        .input-row { display: flex; gap: 12px; width: 100%; }
+        .input-row > * { min-width: 0; flex: 1; } /* Fixes clipping out of boxes */
+        label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+        
+        input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 16px; border-radius: 12px; font-size: 1rem; transition: all 0.2s; appearance: none; width: 100%; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        input[type="date"], input[type="time"] { padding: 14px 12px; }
 
         /* Buttons */
-        button { background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border); padding: 16px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; }
-        button:active { transform: scale(0.98); }
-        button.primary { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); }
-        button.danger { background: var(--danger); border-color: var(--danger); }
+        button { background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border); padding: 16px; border-radius: 14px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; }
+        button:active { transform: scale(0.96); }
+        button.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
+        button.danger { background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 20px var(--danger-glow); }
         
         /* Bottom Navigation */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(24, 24, 27, 0.9); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 10px 24px 10px; z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: color 0.2s; flex: 1; padding: 8px; border-radius: 12px; }
-        .nav-item.active { color: var(--accent); background: rgba(59, 130, 246, 0.1); }
-        .nav-icon { font-size: 1.4rem; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(24, 24, 27, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 12px 10px 30px 10px; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; padding: 10px; border-radius: 14px; }
+        .nav-item.active { color: var(--accent); background: rgba(59, 130, 246, 0.12); }
+        .nav-icon { font-size: 1.5rem; transition: transform 0.2s; }
+        .nav-item.active .nav-icon { transform: translateY(-2px); }
 
-        /* Queue Banner (Glowing Red) */
-        .queue-banner { position: fixed; bottom: 85px; left: 20px; right: 20px; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(8px); border: 1px solid var(--danger); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1500; box-shadow: 0 0 20px var(--danger-glow); transform: translateY(150%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .queue-banner.visible { transform: translateY(0); animation: pulse-border 2s infinite; }
-        @keyframes pulse-border { 0% { box-shadow: 0 0 15px var(--danger-glow); } 50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); } 100% { box-shadow: 0 0 15px var(--danger-glow); } }
-        .queue-info { display: flex; flex-direction: column; }
-        .queue-title { color: var(--danger); font-weight: 700; font-size: 0.95rem; }
-        .queue-desc { color: var(--text-muted); font-size: 0.8rem; }
-        .queue-banner button { width: auto; padding: 10px 20px; font-size: 0.9rem; margin: 0; box-shadow: none; }
+        /* Queue Banner */
+        .queue-banner { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(150%); width: calc(100% - 40px); max-width: 440px; background: rgba(239, 68, 68, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--danger); border-radius: 18px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 900; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2); }
+        .queue-banner.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+        .queue-info { display: flex; flex-direction: column; gap: 4px; }
+        .queue-title { color: var(--danger); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+        .queue-desc { color: var(--text-main); font-size: 0.85rem; opacity: 0.9; }
+        .queue-banner button { width: auto; padding: 10px 24px; font-size: 0.95rem; margin: 0; box-shadow: none; border-radius: 10px; }
 
-        /* Lists & Items */
-        .list-item { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .item-main { font-weight: 600; font-size: 1.05rem; color: var(--text-main); margin-bottom: 4px; display: block; }
-        .item-sub { font-size: 0.85rem; color: var(--text-muted); }
-        .btn-icon { background: transparent; border: none; padding: 8px; font-size: 1.2rem; width: auto; }
+        /* Lists */
+        .list-item { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s; }
+        .list-item:active { border-color: var(--danger); }
+        .item-main { font-weight: 600; font-size: 1.05rem; color: var(--text-main); margin-bottom: 6px; display: block; }
+        .item-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; display: block; }
+        .btn-icon { background: transparent; border: none; padding: 10px; font-size: 1.3rem; width: auto; border-radius: 50%; color: var(--text-muted); }
+        .btn-icon:hover, .btn-icon:active { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
 
-        /* Toast Notifications */
-        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--surface-hover); border: 1px solid var(--border); padding: 12px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: slideDown 0.3s, fadeOut 0.3s 2.7s forwards; }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; } }
+        /* Toasts */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
+        .toast { background: rgba(39, 39, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 14px 20px; border-radius: 16px; font-size: 0.95rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.4s 3s forwards; text-align: center; }
+        @keyframes slideDown { from { transform: translateY(-30px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-        /* Wizard Overlay */
-        .wizard { display: none; }
-        .wizard.active { display: block; }
-        .mode-card { background: var(--bg); border: 2px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
-        .mode-card.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+        /* Dialogs / Modals */
+        .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 3000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .dialog-overlay.active { opacity: 1; pointer-events: auto; }
+        .dialog-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 90%; max-width: 340px; transform: scale(0.95) translateY(10px); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; }
+        .dialog-overlay.active .dialog-box { transform: scale(1) translateY(0); }
+        .dialog-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 10px; }
+        .dialog-text { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.5; }
+        .dialog-buttons { display: flex; gap: 12px; }
+
+        /* Wizard */
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .mode-card { background: var(--bg); border: 2px solid var(--border); padding: 18px; border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 6px; }
+        .mode-card.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.08); box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1); }
+        
+        .slot-configured { font-weight: 600; color: var(--text-main); }
+        .slot-available { font-weight: 400; color: var(--success); }
     </style>
 </head>
 <body>
 
-    <!-- Toast Notifications -->
     <div id="toast-container"></div>
 
     <!-- Startup Screen -->
     <div id="screen-startup" class="overlay">
-        <div class="pulse-ring">
-            <span style="font-size: 2.5rem;">📱</span>
-        </div>
+        <div class="pulse-ring"><span style="font-size: 2.5rem;">📱</span></div>
         <h2 id="startup-title">Connect to Controller</h2>
-        <p id="startup-desc" style="margin-bottom: 24px;">Tap your phone against the STM32 board to establish a connection.</p>
+        <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Tap your phone against the STM32 hardware module to establish a connection.</p>
         <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">Scan NFC Tag</button>
     </div>
 
     <!-- Sync Progress Overlay -->
-    <div id="screen-sync" class="overlay hidden" style="background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(8px);">
-        <div class="pulse-ring" style="border-color: var(--danger);">
-            <span style="font-size: 2.5rem;">📡</span>
-        </div>
+    <div id="screen-sync" class="overlay hidden">
+        <div class="pulse-ring" style="border-color: var(--warning); animation-duration: 1s;"><span style="font-size: 2.5rem;">📡</span></div>
         <h2>Syncing Device</h2>
-        <p id="sync-status" style="color: var(--accent); font-weight: 600; font-size: 1.1rem; margin-top: 10px;">Writing changes...</p>
-        <p style="margin-top: 10px;">Please hold your phone steady against the tag.</p>
+        <p id="sync-status" style="color: var(--warning); font-weight: 600; font-size: 1.1rem; margin-top: 10px;">Writing changes...</p>
+        <p style="margin-top: 10px;">Hold your phone steady against the tag.</p>
     </div>
 
-    <!-- The Queue Banner -->
+    <!-- Confirmation Dialog -->
+    <div id="dialog-confirm" class="dialog-overlay">
+        <div class="dialog-box">
+            <div class="dialog-title">⚠️ Overwrite Slot?</div>
+            <div class="dialog-text" id="dialog-msg">This slot is already in use. Are you sure you want to overwrite it?</div>
+            <div class="dialog-buttons">
+                <button onclick="closeConfirmDialog()">Cancel</button>
+                <button class="primary danger" id="dialog-btn-confirm">Overwrite</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Queue Banner -->
     <div id="queue-banner" class="queue-banner">
         <div class="queue-info">
             <span class="queue-title">⚠️ Unsaved Changes</span>
             <span class="queue-desc" id="queue-count">0 changes pending</span>
         </div>
-        <button class="primary danger" onclick="executeQueue()">SAVE</button>
+        <button class="primary danger" onclick="executeQueue()">SYNC</button>
     </div>
 
     <!-- VIEW: SCHEDULES -->
@@ -125,9 +152,9 @@
                 <span id="sch_count" style="margin-left: auto; color: var(--accent);">0/10</span>
             </div>
             <div id="schedule_list">
-                <p style="text-align: center; color: var(--text-muted); padding: 20px 0;">No schedules found. Tap below to create one.</p>
+                <p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No schedules found.<br>Tap below to create one.</p>
             </div>
-            <button class="primary" onclick="openWizard()" style="margin-top: 16px;">➕ Add Schedule</button>
+            <button class="primary" onclick="openWizard()" style="margin-top: 10px;">➕ Add Schedule</button>
         </div>
     </div>
 
@@ -143,13 +170,12 @@
                 <label>Flow Calibration Offset</label>
                 <input type="number" id="opt_calib" value="0">
             </div>
-            <button class="primary" onclick="queueOptions()">Queue Configuration Changes</button>
+            <button class="primary" onclick="queueOptions()" style="margin-top: 8px;">Queue Changes</button>
         </div>
 
         <div class="card">
             <div class="card-title">💧 Calibration Helper</div>
-            <p style="margin-bottom: 16px;">Place a cup under the pipe. The system will dispense for 10s. Weigh it in grams and update the offset above.</p>
-            <!-- Fixed dir to 0 (Forward) -->
+            <p style="margin-bottom: 20px;">Place a cup under the pipe. The system will dispense for 10s. Weigh it in grams and update the offset above.</p>
             <button onclick="executeImmediate({cmd: 'pump', dir: 0, spd: 100, sec: 10})">Dispense Test Volume</button>
         </div>
     </div>
@@ -158,18 +184,17 @@
     <div id="view-maintenance" class="container">
         <div class="card">
             <div class="card-title">⏱️ RTC Synchronization</div>
-            <p style="margin-bottom: 16px;">The controller's clock drifts over time. Sync it with your phone's accurate internet time.</p>
-            <button onclick="executeImmediate({cmd: 'rtc'})">Sync Clock Now</button>
+            <p style="margin-bottom: 20px;">The controller's clock naturally drifts over time. Sync it with your phone's accurate internet time.</p>
+            <button class="primary" onclick="executeImmediate({cmd: 'rtc'})">Sync Clock Now</button>
         </div>
 
         <div class="card">
-            <div class="card-title">⚙️ Hardware Overrides</div>
-            <p style="margin-bottom: 16px; color: var(--danger);">Warning: Overrides execute instantly. Do not queue.</p>
+            <div class="card-title" style="color: var(--danger);">⚠️ Hardware Overrides</div>
+            <p style="margin-bottom: 20px; font-size: 0.85rem;">Warning: Overrides bypass safety logic and execute instantly. Do not queue.</p>
             
             <div class="input-row">
                 <div class="input-group">
                     <label>Pump Dir</label>
-                    <!-- Fixed ENUM values -->
                     <select id="maint_pump_dir"><option value="0">Forward</option><option value="1">Reverse</option></select>
                 </div>
                 <div class="input-group">
@@ -181,7 +206,7 @@
                 <label>Duration (Seconds)</label>
                 <input type="number" id="maint_pump_sec" value="5" min="1">
             </div>
-            <button class="primary" onclick="overridePump()" style="margin-bottom: 24px;">Run Pump</button>
+            <button class="danger" onclick="overridePump()" style="margin-bottom: 32px;">Run Pump</button>
 
             <div class="input-row">
                 <div class="input-group">
@@ -193,28 +218,27 @@
                     <select id="maint_sol_state"><option value="1">OPEN</option><option value="0">CLOSED</option></select>
                 </div>
             </div>
-            <button class="primary" onclick="overrideSol()">Toggle Solenoid</button>
+            <button class="danger" onclick="overrideSol()">Toggle Solenoid</button>
         </div>
     </div>
 
-    <!-- STEP-BY-STEP SCHEDULE WIZARD OVERLAY -->
-    <div id="screen-wizard" class="overlay hidden" style="justify-content: flex-start; padding-top: 60px;">
+    <!-- WIZARD OVERLAY -->
+    <div id="screen-wizard" class="overlay hidden" style="justify-content: flex-start; padding-top: 50px;">
         <div class="card" style="width: 100%; max-width: 480px; position: relative;">
-            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 16px; right: 16px;">❌</button>
+            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 18px; right: 18px;">❌</button>
             <div class="card-title" id="wiz-title">Create Schedule</div>
             
-            <!-- Wizard Pages -->
-            <div id="wiz_1" class="wizard active">
-                <label style="margin-bottom: 8px; display: block;">Target Valve</label>
-                <select id="wiz_zone" style="margin-bottom: 24px; width: 100%;">
+            <div id="wiz_1" class="wizard-step active">
+                <label style="margin-bottom: 10px; display: block;">Select Target Valve</label>
+                <select id="wiz_zone" style="margin-bottom: 30px;">
                     <option value="A">Zone A</option>
                     <option value="B">Zone B</option>
                 </select>
-                <button class="primary" onclick="wizGo(2)">Next</button>
+                <button class="primary" onclick="wizGo(2)">Next Step</button>
             </div>
 
-            <div id="wiz_2" class="wizard">
-                <label style="margin-bottom: 8px; display: block;">Timing Mode</label>
+            <div id="wiz_2" class="wizard-step">
+                <label style="margin-bottom: 10px; display: block;">Timing Mode</label>
                 <div class="mode-card selected" id="mode_interval" onclick="wizMode('interval')">
                     <span class="item-main">Easy Interval</span>
                     <span class="item-sub">Water routinely every few days or hours.</span>
@@ -223,73 +247,67 @@
                     <span class="item-main">Expert Calendar</span>
                     <span class="item-sub">Pick an exact start date and repetition cycle.</span>
                 </div>
-                <div class="input-row" style="margin-top: 24px;">
+                <div class="input-row" style="margin-top: 30px;">
                     <button onclick="wizGo(1)">Back</button>
-                    <button class="primary" onclick="wizGo(3)">Next</button>
+                    <button class="primary" onclick="wizGo(3)">Next Step</button>
                 </div>
             </div>
 
-            <div id="wiz_3a" class="wizard">
+            <div id="wiz_3a" class="wizard-step">
                 <div class="input-group">
-                    <label>Frequency (How Often)</label>
+                    <label>How Often? (Frequency)</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_int_val" value="3" min="1" style="flex: 0.4;">
-                        <select id="wiz_int_unit" style="flex: 0.6;"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
+                        <input type="number" id="wiz_int_val" value="3" min="1" style="flex: 1;">
+                        <select id="wiz_int_unit" style="flex: 1.5;"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
                     </div>
                 </div>
-                <div class="input-group" style="margin-top: 16px;">
-                    <label>Duration (How Long)</label>
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>How Long? (Duration)</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_dur_val" value="10" min="1" style="flex: 0.4;">
-                        <select id="wiz_dur_unit" style="flex: 0.6;"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
+                        <input type="number" id="wiz_dur_val" value="10" min="1" style="flex: 1;">
+                        <select id="wiz_dur_unit" style="flex: 1.5;"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
                     </div>
                 </div>
-                <div class="input-row" style="margin-top: 32px;">
+                <div class="input-row" style="margin-top: 40px;">
                     <button onclick="wizGo(2)">Back</button>
-                    <button class="primary" onclick="wizGo(4)">Next</button>
+                    <button class="primary" onclick="wizGo(4)">Next Step</button>
                 </div>
             </div>
 
-            <div id="wiz_3b" class="wizard">
+            <div id="wiz_3b" class="wizard-step">
                 <div class="input-group">
                     <label>First Watering Event</label>
                     <div class="input-row">
-                        <input type="date" id="wiz_exp_date" style="flex: 0.6;">
-                        <input type="time" id="wiz_exp_time" style="flex: 0.4;">
+                        <input type="date" id="wiz_exp_date" style="flex: 1.5;">
+                        <input type="time" id="wiz_exp_time" style="flex: 1;">
                     </div>
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="margin-top: 16px;">
                     <label>Repeat Every</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_exp_rep_val" value="1" min="1" style="flex: 0.4;">
-                        <select id="wiz_exp_rep_unit" style="flex: 0.6;"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
+                        <input type="number" id="wiz_exp_rep_val" value="1" min="1" style="flex: 1;">
+                        <select id="wiz_exp_rep_unit" style="flex: 1.5;"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
                     </div>
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="margin-top: 16px;">
                     <label>Duration</label>
                     <div class="input-row">
-                        <input type="number" id="wiz_exp_dur_val" value="10" min="1" style="flex: 0.4;">
-                        <select id="wiz_exp_dur_unit" style="flex: 0.6;"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
+                        <input type="number" id="wiz_exp_dur_val" value="10" min="1" style="flex: 1;">
+                        <select id="wiz_exp_dur_unit" style="flex: 1.5;"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
                     </div>
                 </div>
-                <div class="input-row" style="margin-top: 32px;">
+                <div class="input-row" style="margin-top: 30px;">
                     <button onclick="wizGo(2)">Back</button>
-                    <button class="primary" onclick="wizGo(4)">Next</button>
+                    <button class="primary" onclick="wizGo(4)">Next Step</button>
                 </div>
             </div>
 
-            <div id="wiz_4" class="wizard">
-                <label style="margin-bottom: 8px; display: block;">Hardware Memory Slot</label>
-                <select id="wiz_slot" style="margin-bottom: 24px; width: 100%;">
-                    <option value="0">Slot 1</option><option value="1">Slot 2</option>
-                    <option value="2">Slot 3</option><option value="3">Slot 4</option>
-                    <option value="4">Slot 5</option><option value="5">Slot 6</option>
-                    <option value="6">Slot 7</option><option value="7">Slot 8</option>
-                    <option value="8">Slot 9</option><option value="9">Slot 10</option>
-                </select>
+            <div id="wiz_4" class="wizard-step">
+                <label style="margin-bottom: 10px; display: block;">Hardware Memory Slot</label>
+                <select id="wiz_slot" style="margin-bottom: 30px; font-weight: 600;"></select>
                 <div class="input-row">
                     <button onclick="wizGo(selectedWizMode === 'interval' ? '3a' : '3b')">Back</button>
-                    <button class="primary danger" onclick="queueSchedule()">Queue Add</button>
+                    <button class="primary" onclick="attemptQueueSchedule()">Queue Schedule</button>
                 </div>
             </div>
         </div>
@@ -297,15 +315,9 @@
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('schedules', this)">
-            <span class="nav-icon">📅</span> Schedules
-        </div>
-        <div class="nav-item" onclick="switchTab('options', this)">
-            <span class="nav-icon">⚙️</span> Config
-        </div>
-        <div class="nav-item" onclick="switchTab('maintenance', this)">
-            <span class="nav-icon">🔧</span> Maintenance
-        </div>
+        <div class="nav-item active" onclick="switchTab('schedules', this)"><span class="nav-icon">📅</span> Schedules</div>
+        <div class="nav-item" onclick="switchTab('options', this)"><span class="nav-icon">⚙️</span> Config</div>
+        <div class="nav-item" onclick="switchTab('maintenance', this)"><span class="nav-icon">🔧</span> Manual</div>
     </div>
 
     <script>
@@ -314,12 +326,21 @@
         let currentSchedules = {};
         let selectedWizMode = 'interval';
         
-        // --- Initialization ---
         window.onload = () => {
             if (!("NDEFReader" in window)) {
                 document.getElementById('startup-title').innerText = "Unsupported Browser";
-                document.getElementById('startup-desc').innerText = "WebNFC requires Google Chrome on an Android device. Please switch devices or browsers to configure the system.";
+                document.getElementById('startup-desc').innerText = "WebNFC requires Google Chrome on an Android device.";
                 document.getElementById('btn-startup').style.display = 'none';
+            }
+            
+            const storedSch = localStorage.getItem('irrigationSchedules');
+            if (storedSch) { currentSchedules = JSON.parse(storedSch); renderSchedules(); }
+            
+            const storedOpt = localStorage.getItem('irrigationOptions');
+            if (storedOpt) {
+                const opt = JSON.parse(storedOpt);
+                document.getElementById('opt_delay').value = opt.delay;
+                document.getElementById('opt_calib').value = opt.calib;
             }
         };
 
@@ -329,7 +350,7 @@
             toast.className = 'toast';
             toast.innerText = msg;
             container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            setTimeout(() => toast.remove(), 3400);
         }
 
         function switchTab(tab, element) {
@@ -339,120 +360,96 @@
             element.classList.add('active');
         }
 
-        // --- NFC Handlers ---
-async function initConnection() {
+        // Epoch Math (Timezone Fix)
+        function getLocalEpoch(d) {
+            const year = d.getFullYear(); const mo = d.getMonth() + 1; const date = d.getDate();
+            const h = d.getHours(); const m = d.getMinutes(); const s = d.getSeconds();
+            const days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            let days = 0;
+            for (let i = 1970; i < year; i++) { days += 365 + ((i % 4 === 0 && (i % 100 !== 0 || i % 400 === 0)) ? 1 : 0); }
+            for (let i = 1; i < mo; i++) {
+                days += days_in_month[i - 1];
+                if (i === 2 && (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0))) days++;
+            }
+            days += (date - 1);
+            return (days * 86400) + (h * 3600) + (m * 60) + s;
+        }
+
+        function buildNFCPayload(payload) {
+            const now = new Date();
+            payload.y = now.getFullYear() - 2000; payload.mo = now.getMonth() + 1; payload.d = now.getDate();
+            payload.dw = now.getDay() === 0 ? 7 : now.getDay(); payload.h = now.getHours(); payload.m = now.getMinutes(); payload.s = now.getSeconds();
+            return JSON.stringify(payload);
+        }
+
+        // --- Hardware Scanning (Robust DataView + offset 0x0004 logic presumed active on firmware) ---
+        async function initConnection() {
             try {
                 const ndef = new NDEFReader();
-                // Force active scanning to bypass aggressive Android NFC caching
                 await ndef.scan({ signal: new AbortController().signal });
                 
                 ndef.onreading = event => {
-                    let debugTypes = [];
-                    
                     for (const record of event.message.records) {
-                        debugTypes.push(record.mediaType || record.recordType);
-                        
-                        // Use .includes() to safely catch charset variants from the OS
                         if (record.mediaType && record.mediaType.includes("octet-stream")) {
                             try {
-                                const data = record.data; // Native DataView
+                                const data = record.data; 
                                 let idx = 4; // Skip system states
                                 
-                                // Parse Config
-                                const pipe_delay = data.getUint16(idx); idx += 2;
-                                const flow_calib = data.getUint16(idx); idx += 2;
-                                document.getElementById('opt_delay').value = pipe_delay;
-                                document.getElementById('opt_calib').value = flow_calib;
+                                document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
+                                document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
                                 
-                                // Parse Schedules
                                 currentSchedules = {};
                                 for (let i = 0; i < 10; i++) {
-                                    const active = data.getUint8(idx); idx++;
-                                    const zoneCode = data.getUint8(idx); idx++;
-                                    const zone = String.fromCharCode(zoneCode);
+                                    const active = data.getUint8(idx++);
+                                    const zoneCode = data.getUint8(idx++);
                                     const interval = data.getUint32(idx); idx += 4;
                                     const epoch = data.getUint32(idx); idx += 4; 
                                     const duration = data.getUint16(idx); idx += 2;
                                     
                                     if (active === 1) {
-                                        let uiDesc = "";
-                                        if (interval >= 86400 && interval % 86400 === 0) {
-                                            uiDesc += `Repeats ${interval / 86400} Days`;
-                                        } else {
-                                            uiDesc += `Repeats ${interval / 3600} Hours`;
-                                        }
-                                        
-                                        if (duration >= 60 && duration % 60 === 0) {
-                                            uiDesc += ` • ${duration / 60} Mins`;
-                                        } else {
-                                            uiDesc += ` • ${duration} Secs`;
-                                        }
-                                        
-                                        currentSchedules[i] = { zone, desc: uiDesc };
+                                        let uiDesc = (interval >= 86400 && interval % 86400 === 0) ? `Repeats ${interval / 86400} Days` : `Repeats ${interval / 3600} Hours`;
+                                        uiDesc += (duration >= 60 && duration % 60 === 0) ? ` • ${duration / 60} Mins` : ` • ${duration} Secs`;
+                                        currentSchedules[i] = { zone: String.fromCharCode(zoneCode), desc: uiDesc };
                                     }
                                 }
                                 
-                                // Save and Render
                                 localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
                                 renderSchedules();
-                                
                                 document.getElementById('screen-startup').classList.add('hidden');
                                 showToast("Hardware State Synced!");
-                                return; // Success, exit early
-                                
-                            } catch (parseError) {
-                                showToast("Parse Error: " + parseError.message);
                                 return;
-                            }
+                            } catch (e) { console.error(e); }
                         }
                     }
-                    
-                    // Fallback if the octet-stream was missing
                     document.getElementById('screen-startup').classList.add('hidden');
-                    showToast("Read Tag: [" + debugTypes.join(", ") + "] - No schedules found.");
+                    showToast("Connected. No existing configurations found.");
                 };
-            } catch (err) {
-                showToast("Scan Failed: " + err.message);
-            }
+            } catch (err) { showToast("Scan Failed: " + err.message); }
         }
 
-        // Applies RTC payload dynamically right before encoding to ensure exact time
-        function buildNFCPayload(payload) {
-            const now = new Date();
-            payload.y = now.getFullYear() - 2000;
-            payload.mo = now.getMonth() + 1;
-            payload.d = now.getDate();
-            payload.dw = now.getDay() === 0 ? 7 : now.getDay();
-            payload.h = now.getHours();
-            payload.m = now.getMinutes();
-            payload.s = now.getSeconds();
-            return JSON.stringify(payload);
-        }
-
-        // Immediate Execution (Overrides)
+        // --- Instant Execution ---
         async function executeImmediate(payload) {
             try {
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
-                await ndef.write({
-                    records: [
-                        { recordType: "url", data: "https://soso320.github.io/nfc/" },
-                        { recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }
-                    ]
-                });
-                showToast("Override Command Sent!");
-            } catch (err) {
-                showToast("Write failed: " + err.message);
-            }
+                await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }] });
+                showToast("Command Sent Successfully");
+            } catch (err) { showToast("Write failed: " + err.message); }
+        }
+
+        function overridePump() {
+            executeImmediate({ cmd: "pump", dir: parseInt(document.getElementById('maint_pump_dir').value), spd: parseInt(document.getElementById('maint_pump_spd').value), sec: parseInt(document.getElementById('maint_pump_sec').value) });
+        }
+        function overrideSol() {
+            executeImmediate({ cmd: "sol", zone: document.getElementById('maint_sol_zone').value, state: parseInt(document.getElementById('maint_sol_state').value) });
         }
 
         // --- Queue System ---
         function updateQueueUI() {
             const banner = document.getElementById('queue-banner');
-            const count = document.getElementById('queue-count');
             if (commandQueue.length > 0) {
+                document.getElementById('queue-count').innerText = `${commandQueue.length} change${commandQueue.length > 1 ? 's' : ''} pending`;
                 banner.classList.add('visible');
-                count.innerText = `${commandQueue.length} change${commandQueue.length > 1 ? 's' : ''} pending sync`;
             } else {
                 banner.classList.remove('visible');
             }
@@ -464,10 +461,8 @@ async function initConnection() {
             showToast("Added to Queue");
         }
 
-        // Executes the queue sequentially with a delay so STM32 can parse & burn EEPROM safely
         async function executeQueue() {
             if (commandQueue.length === 0) return;
-            
             const screen = document.getElementById('screen-sync');
             const status = document.getElementById('sync-status');
             screen.classList.remove('hidden');
@@ -475,75 +470,37 @@ async function initConnection() {
             try {
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
-
                 for (let i = 0; i < commandQueue.length; i++) {
                     status.innerText = `Writing change ${i + 1} of ${commandQueue.length}...`;
-                    
-                    const payloadString = buildNFCPayload(commandQueue[i].payload);
-                    await ndef.write({
-                        records: [
-                            { recordType: "url", data: "https://soso320.github.io/nfc/" },
-                            { recordType: "mime", mediaType: "application/json", data: encoder.encode(payloadString) }
-                        ]
-                    });
-
-                    // Crucial 1.2s delay: Allows STM32 loop to catch the payload, run logic, and burn new EEPROM state
-                    if (i < commandQueue.length - 1) {
-                        await new Promise(r => setTimeout(r, 1200)); 
-                    }
+                    await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(commandQueue[i].payload)) }] });
+                    if (i < commandQueue.length - 1) await new Promise(r => setTimeout(r, 1200)); 
                 }
-
+                
                 commandQueue = [];
                 updateQueueUI();
                 status.innerText = "Sync Complete!";
                 status.style.color = "var(--success)";
-                
-                setTimeout(() => {
-                    screen.classList.add('hidden');
-                    status.style.color = "var(--accent)";
-                }, 1500);
-
+                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 1500);
             } catch (err) {
                 status.innerText = "Error: Sync Interrupted";
                 status.style.color = "var(--danger)";
                 showToast(err.message);
-                setTimeout(() => {
-                    screen.classList.add('hidden');
-                    status.style.color = "var(--accent)";
-                }, 2500);
+                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 2500);
             }
         }
 
-        // --- Feature logic ---
         function queueOptions() {
-            addToQueue("Update Configuration", {
-                cmd: "opt",
-                delay: parseInt(document.getElementById('opt_delay').value),
-                calib: parseInt(document.getElementById('opt_calib').value) || 0
-            });
+            const delay = parseInt(document.getElementById('opt_delay').value);
+            const calib = parseInt(document.getElementById('opt_calib').value) || 0;
+            addToQueue("Update Config", { cmd: "opt", delay, calib });
+            localStorage.setItem('irrigationOptions', JSON.stringify({ delay, calib }));
         }
 
         function queueDeleteSchedule(slot) {
             addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
             delete currentSchedules[slot];
+            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
             renderSchedules();
-        }
-
-        function overridePump() {
-            executeImmediate({
-                cmd: "pump",
-                dir: parseInt(document.getElementById('maint_pump_dir').value),
-                spd: parseInt(document.getElementById('maint_pump_spd').value),
-                sec: parseInt(document.getElementById('maint_pump_sec').value)
-            });
-        }
-
-        function overrideSol() {
-            executeImmediate({
-                cmd: "sol",
-                zone: document.getElementById('maint_sol_zone').value,
-                state: parseInt(document.getElementById('maint_sol_state').value)
-            });
         }
 
         // --- Wizard Logic ---
@@ -551,13 +508,35 @@ async function initConnection() {
             const now = new Date();
             document.getElementById('wiz_exp_date').valueAsDate = now;
             document.getElementById('wiz_exp_time').value = now.toTimeString().substring(0, 5);
+            
+            // Dynamic Slot Population
+            const slotSelect = document.getElementById('wiz_slot');
+            slotSelect.innerHTML = '';
+            let firstEmpty = -1;
+
+            for (let i = 0; i < 10; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                if (currentSchedules[i]) {
+                    opt.innerText = `Slot ${i + 1}  [ 🟢 Configured ]`;
+                    opt.className = 'slot-configured';
+                } else {
+                    opt.innerText = `Slot ${i + 1}  [ ⚪ Available ]`;
+                    opt.className = 'slot-available';
+                    if (firstEmpty === -1) firstEmpty = i;
+                }
+                slotSelect.appendChild(opt);
+            }
+            
+            slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
             document.getElementById('screen-wizard').classList.remove('hidden');
             wizGo(1);
         }
+
         function closeWizard() { document.getElementById('screen-wizard').classList.add('hidden'); }
         
         function wizGo(step) {
-            document.querySelectorAll('.wizard').forEach(w => w.classList.remove('active'));
+            document.querySelectorAll('.wizard-step').forEach(w => w.classList.remove('active'));
             if (step === 3) step = selectedWizMode === 'interval' ? '3a' : '3b';
             document.getElementById('wiz_' + step).classList.add('active');
         }
@@ -569,8 +548,25 @@ async function initConnection() {
             document.getElementById('mode_' + mode).classList.add('selected');
         }
 
-        function queueSchedule() {
+        let pendingScheduleConfirm = null;
+        function attemptQueueSchedule() {
             const slot = parseInt(document.getElementById('wiz_slot').value);
+            if (currentSchedules[slot]) {
+                document.getElementById('dialog-msg').innerText = `Slot ${slot + 1} is already configured to water Zone ${currentSchedules[slot].zone}. Overwriting it will delete the old schedule.`;
+                document.getElementById('dialog-confirm').classList.add('active');
+                
+                document.getElementById('dialog-btn-confirm').onclick = () => {
+                    closeConfirmDialog();
+                    finalizeQueueSchedule(slot);
+                };
+            } else {
+                finalizeQueueSchedule(slot);
+            }
+        }
+
+        function closeConfirmDialog() { document.getElementById('dialog-confirm').classList.remove('active'); }
+
+        function finalizeQueueSchedule(slot) {
             const zone = document.getElementById('wiz_zone').value;
             let interval = 0, duration = 0, startEpoch = 0, uiDesc = "";
 
@@ -578,7 +574,6 @@ async function initConnection() {
                 let v = parseInt(document.getElementById('wiz_int_val').value);
                 let u = parseInt(document.getElementById('wiz_int_unit').value);
                 interval = v * u;
-                
                 let dv = parseInt(document.getElementById('wiz_dur_val').value);
                 let du = parseInt(document.getElementById('wiz_dur_unit').value);
                 duration = dv * du;
@@ -587,12 +582,11 @@ async function initConnection() {
                 let d = document.getElementById('wiz_exp_date').valueAsDate;
                 let t = document.getElementById('wiz_exp_time').value.split(':');
                 d.setHours(parseInt(t[0]), parseInt(t[1]), 0);
-                startEpoch = getLocalEpoch(d);
+                startEpoch = getLocalEpoch(d); // Uses precise timezone math
                 
                 let v = parseInt(document.getElementById('wiz_exp_rep_val').value);
                 let u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
                 interval = v * u;
-                
                 let dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
                 let du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
                 duration = dv * du;
@@ -601,6 +595,7 @@ async function initConnection() {
 
             addToQueue(`Add Schedule to Zone ${zone}`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
             currentSchedules[slot] = { zone, desc: uiDesc };
+            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
             renderSchedules();
             closeWizard();
         }
@@ -618,33 +613,13 @@ async function initConnection() {
                             <span class="item-main">Zone ${currentSchedules[i].zone} (Slot ${i + 1})</span>
                             <span class="item-sub">${currentSchedules[i].desc}</span>
                         </div>
-                        <button class="btn-icon" style="color: var(--danger);" onclick="queueDeleteSchedule(${i})">🗑️</button>
+                        <button class="btn-icon" onclick="queueDeleteSchedule(${i})">🗑️</button>
                     </div>`;
                 }
             }
-            if(count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">No active schedules.</p>`;
+            if(count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules.<br>Tap below to create one.</p>`;
             document.getElementById('sch_count').innerText = `${count}/10`;
         }
-
-        // Emulates the STM32 C-code epoch calculator precisely
-function getLocalEpoch(d) {
-    const year = d.getFullYear();
-    const mo = d.getMonth() + 1;
-    const date = d.getDate();
-    const h = d.getHours();
-    const m = d.getMinutes();
-    const s = d.getSeconds();
-
-    const days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    let days = 0;
-    for (let i = 1970; i < year; i++) { days += 365 + ((i % 4 === 0 && (i % 100 !== 0 || i % 400 === 0)) ? 1 : 0); }
-    for (let i = 1; i < mo; i++) {
-        days += days_in_month[i - 1];
-        if (i === 2 && (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0))) days++;
-    }
-    days += (date - 1);
-    return (days * 86400) + (h * 3600) + (m * 60) + s;
-}
     </script>
 </body>
 </html>
