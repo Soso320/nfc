@@ -5,204 +5,135 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Irrigation Control</title>
     <style>
-        :root { --bg: #121212; --surface: #1e1e1e; --text-main: #f3f4f6; --text-muted: #9ca3af; --border: #374151; --accent: #374151; --danger: #dc2626; --sync: #2563eb; }
-        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 16px; display: flex; justify-content: center; overscroll-behavior-y: contain; color-scheme: dark; }
-        .container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; padding-top: 10px; }
-        .card { background: var(--surface); padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border: 1px solid var(--border); }
-        .card h3 { font-size: 1.1rem; font-weight: 600; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; color: var(--text-main); }
-        .header-icon { width: 22px; height: 22px; object-fit: contain; }
+        :root { --bg: #121212; --surface: #1e1e1e; --text-main: #f3f4f6; --text-muted: #9ca3af; --border: #374151; --accent: #374151; --sync: #2563eb; }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overscroll-behavior-y: contain; color-scheme: dark; }
+        
+        /* Tab Navigation */
+        .nav-bar { width: 100%; max-width: 400px; display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .nav-tab { flex: 1; padding: 16px 0; text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; }
+        .nav-tab.active { color: var(--text-main); border-bottom: 3px solid var(--sync); }
+        
+        .view-container { width: 100%; max-width: 400px; padding: 16px; box-sizing: border-box; display: none; }
+        .view-container.active { display: flex; flex-direction: column; gap: 16px; }
+
+        .card { background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .card h3 { font-size: 1.1rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; }
+        
         .input-row { display: flex; gap: 12px; margin-bottom: 16px; }
         .input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-        label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        select, input[type="number"] { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 1rem; background: #111827; color: var(--text-main); appearance: none; text-align: center; }
-        select:focus, input:focus { outline: none; border-color: #6b7280; background: #1f2937; }
-        button { width: 100%; background: var(--accent); color: var(--text-main); border: none; padding: 16px; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        button:active { transform: scale(0.97); opacity: 0.9; }
-        .btn-icon { width: 20px; height: 20px; object-fit: contain; }
-        .btn-danger { background: var(--danger); font-size: 1.1rem; }
-        .btn-sync { background: var(--sync); font-size: 1.1rem; }
-        .btn-outline { background: transparent; border: 2px solid var(--border); }
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.2s ease; }
-        .modal-overlay.active { display: flex; opacity: 1; }
-        .modal-content { background: var(--surface); padding: 28px 24px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; border: 1px solid var(--border); transform: scale(0.95); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        .modal-icon img { width: 56px; height: 56px; margin-bottom: 16px; object-fit: contain; }
-        .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
-        .modal-text { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
-        .stats-box { text-align: left; background: #111827; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 0.95rem; }
-        .stats-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); align-items: center; }
-        .stats-row:last-child { border-bottom: none; padding-bottom: 0; }
-        .stats-row:first-child { padding-top: 0; }
-        .stats-label { font-weight: 600; color: var(--text-muted); }
-        .stats-val { font-weight: 700; color: var(--text-main); }
-        .modal-close { background: var(--border); color: var(--text-main); display: none; padding: 14px; }
+        label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        select, input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 1rem; background: #111827; color: var(--text-main); text-align: center; }
+        
+        button { width: 100%; background: var(--accent); color: var(--text-main); border: none; padding: 16px; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; }
+        .btn-sync { background: var(--sync); }
+        
+        /* Schedule List Styles */
+        .sch-item { background: #111827; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .sch-info { display: flex; flex-direction: column; gap: 4px; }
+        .sch-time { font-weight: bold; font-size: 1.1rem; }
+        .sch-days { font-size: 0.85rem; color: var(--text-muted); }
+        .btn-add { background: transparent; border: 2px dashed var(--border); color: var(--text-muted); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <button class="btn-danger" onclick="sendStopAll()">
-            <img src="cancel.png" class="btn-icon" alt="Stop"> STOP ALL
-        </button>
 
-        <div class="card">
-            <h3><img src="settings.png" class="header-icon" alt="Clock"> System Clock</h3>
-            <button class="btn-sync" onclick="syncRTC()">Sync Time with Phone</button>
-        </div>
+    <div class="nav-bar">
+        <div class="nav-tab active" onclick="switchTab('schedules', this)">Schedules</div>
+        <div class="nav-tab" onclick="switchTab('options', this)">Options</div>
+        <div class="nav-tab" onclick="switchTab('maintenance', this)">Maintenance</div>
+    </div>
 
+    <!-- VIEW: SCHEDULES -->
+    <div id="schedules" class="view-container active">
         <div class="card">
-            <h3><img src="pump.png" class="header-icon" alt="Pump"> Pump Control</h3>
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Direction</label>
-                    <select id="pump_dir">
-                        <option value="1">Forward</option>
-                        <option value="2">Reverse</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>Speed (%)</label>
-                    <input type="number" id="pump_spd" value="50" min="0" max="100">
-                </div>
+            <div class="card-header">
+                <h3>Active Schedules</h3>
+                <span style="color: var(--text-muted); font-weight: bold;">1/10</span>
             </div>
-            <div class="input-group" style="margin-bottom: 16px;">
-                <label>Duration (Seconds)</label>
-                <input type="number" id="pump_sec" value="5" min="1">
-            </div>
-            <button onclick="sendPumpCmd()">Write Pump Command</button>
-        </div>
-
-        <div class="card">
-            <h3><img src="valve.png" class="header-icon" alt="Valve"> Solenoid Control</h3>
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Target Valve</label>
-                    <select id="sol_zone">
-                        <option value="A">Solenoid A</option>
-                        <option value="B">Solenoid B</option>
-                        <option value="C">Solenoid C</option>
-                    </select>
+            
+            <div class="sch-item">
+                <div class="sch-info">
+                    <span class="sch-time">08:30 AM (Zone A)</span>
+                    <span class="sch-days">Mon, Wed, Fri • 15 Mins</span>
                 </div>
-                <div class="input-group">
-                    <label>State</label>
-                    <select id="sol_state">
-                        <option value="1">OPEN</option>
-                        <option value="0">CLOSED</option>
-                    </select>
-                </div>
+                <span style="font-size: 1.2rem;">✏️</span>
             </div>
-            <button onclick="sendSolCmd()">Write Solenoid Command</button>
-        </div>
 
-        <div class="card">
-            <h3><img src="settings.png" class="header-icon" alt="Settings"> Diagnostics</h3>
-            <button class="btn-outline" onclick="readMetrics()">Read Device Config</button>
+            <button class="btn-add">➕ Add New Schedule</button>
         </div>
     </div>
 
-    <!-- Custom Popup Modal -->
-    <div class="modal-overlay" id="nfcModal">
-        <div class="modal-content">
-            <div class="modal-icon" id="modalIcon"><img src="nfc.png" alt="Icon"></div>
-            <div class="modal-title" id="modalTitle">Ready to Scan</div>
-            <div class="modal-text" id="modalText">Hold phone near STM32 board.</div>
-            <button class="modal-close" id="modalCloseBtn" onclick="hideModal()">Dismiss</button>
+    <!-- VIEW: OPTIONS -->
+    <div id="options" class="view-container">
+        <div class="card">
+            <h3>Configuration</h3>
+            <div class="input-group" style="margin-bottom: 16px;">
+                <label>Pipe Travel Delay (Seconds)</label>
+                <input type="number" value="12" min="0">
+            </div>
+            <button>Save Configuration</button>
+        </div>
+
+        <div class="card">
+            <h3>Flow Calibration</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; margin-top: 0;">
+                Place a cup under the output pipe. The system will dispense water for 10 seconds. Weigh the cup in grams (ml) and input the value below.
+            </p>
+            <button class="btn-sync" style="margin-bottom: 16px;">1. Dispense Test Volume</button>
+            
+            <div class="input-group">
+                <label>Measured Weight (Grams)</label>
+                <input type="number" placeholder="e.g., 45">
+            </div>
+            <button>2. Calibrate Sensor</button>
+        </div>
+    </div>
+
+    <!-- VIEW: MAINTENANCE -->
+    <div id="maintenance" class="view-container">
+        <div class="card">
+            <h3>System Clock</h3>
+            <button class="btn-sync">Sync Time with Phone</button>
+        </div>
+
+        <div class="card">
+            <h3>Pump Control</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Direction</label>
+                    <select><option>Forward</option><option>Reverse</option></select>
+                </div>
+                <div class="input-group">
+                    <label>Speed (%)</label>
+                    <input type="number" value="50">
+                </div>
+            </div>
+            <button>Override Pump</button>
+        </div>
+
+        <div class="card">
+            <h3>Solenoids</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Valve</label>
+                    <select><option>Zone A</option><option>Zone B</option></select>
+                </div>
+                <div class="input-group">
+                    <label>State</label>
+                    <select><option>OPEN</option><option>CLOSED</option></select>
+                </div>
+            </div>
+            <button>Toggle Solenoid</button>
         </div>
     </div>
 
     <script>
-        let abortController = null;
-        let timeoutTimer = null;
-
-        function showModal(title, text, imageSrc, showClose = false, isHtml = false) {
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalIcon').innerHTML = `<img src="${imageSrc}" alt="Icon">`;
-            const textContainer = document.getElementById('modalText');
-            if (isHtml) textContainer.innerHTML = text; else textContainer.innerText = text;
-            document.getElementById('modalCloseBtn').style.display = showClose ? 'block' : 'none';
-            document.getElementById('nfcModal').classList.add('active');
-        }
-
-        function hideModal() {
-            document.getElementById('nfcModal').classList.remove('active');
-            if (abortController) { abortController.abort(); abortController = null; }
-            if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
-        }
-
-        async function writeNFC(payload) {
-            if (!("NDEFReader" in window)) { showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true); return; }
-            abortController = new AbortController();
-            showModal("Ready to Write", "Hold your phone near the tag...", "nfc.png", false);
-            timeoutTimer = setTimeout(() => { if (abortController) { abortController.abort(); showModal("Timeout", "No tag detected.", "timeout.png", true); } }, 8000);
-
-            try {
-                const ndef = new NDEFReader();
-                const encoder = new TextEncoder();
-                await ndef.write({
-                    records: [
-                        { recordType: "url", data: "https://soso320.github.io/nfc/" },
-                        { recordType: "mime", mediaType: "application/json", data: encoder.encode(JSON.stringify(payload)) }
-                    ]
-                }, { signal: abortController.signal });
-                clearTimeout(timeoutTimer);
-                showModal("Success", "Command transmitted.", "check.png", false);
-                setTimeout(hideModal, 1500);
-            } catch (err) {
-                clearTimeout(timeoutTimer);
-                if (err.name !== 'AbortError') showModal("Error", "Write failed: " + err.message, "error.png", true);
-            }
-        }
-
-        function sendStopAll() { writeNFC({ cmd: "sol", zone: "O", state: 0 }); }
-        function sendPumpCmd() { writeNFC({ cmd: "pump", dir: parseInt(document.getElementById('pump_dir').value), spd: parseInt(document.getElementById('pump_spd').value), sec: parseInt(document.getElementById('pump_sec').value) }); }
-        function sendSolCmd() { writeNFC({ cmd: "sol", zone: document.getElementById('sol_zone').value, state: parseInt(document.getElementById('sol_state').value) }); }
-        
-        function syncRTC() {
-            const now = new Date();
-            writeNFC({ cmd: "rtc", h: now.getHours(), m: now.getMinutes() });
-        }
-
-        async function readMetrics() {
-            if (!("NDEFReader" in window)) { showModal("Not Supported", "WebNFC requires Chrome.", "warning.png", true); return; }
-            abortController = new AbortController();
-            showModal("Reading Config", "Hold your phone near the tag...", "nfc.png", false);
-            timeoutTimer = setTimeout(() => { if (abortController) { abortController.abort(); showModal("Timeout", "No tag detected.", "timeout.png", true); } }, 8000);
-
-            try {
-                const ndef = new NDEFReader();
-                await ndef.scan({ signal: abortController.signal }); 
-                ndef.onreading = event => {
-                    clearTimeout(timeoutTimer);
-                    const decoder = new TextDecoder();
-                    for (const record of event.message.records) {
-                        if (record.recordType === "mime" && record.mediaType === "application/json") {
-                            const rawText = decoder.decode(record.data);
-                            try {
-                                const data = JSON.parse(rawText);
-                                if (data.sys) {
-                                    const dir = data.sys.pump_dir === 1 ? 'Forward' : (data.sys.pump_dir === 2 ? 'Reverse' : 'Idle');
-                                    // Format time safely
-                                    const h = String(data.sys.h || 0).padStart(2, '0');
-                                    const m = String(data.sys.m || 0).padStart(2, '0');
-                                    
-                                    const htmlStats = `
-                                        <div class="stats-box">
-                                            <div class="stats-row"><span class="stats-label">Device Time</span> <span class="stats-val">${h}:${m}</span></div>
-                                            <div class="stats-row"><span class="stats-label">Pump Status</span> <span class="stats-val">${dir} (${data.sys.pump_spd}%)</span></div>
-                                            <div class="stats-row"><span class="stats-label">Solenoid A</span> <span class="stats-val">${data.sys.sol_A ? 'OPEN' : 'CLOSED'}</span></div>
-                                            <div class="stats-row"><span class="stats-label">Solenoid B</span> <span class="stats-val">${data.sys.sol_B ? 'OPEN' : 'CLOSED'}</span></div>
-                                            <div class="stats-row"><span class="stats-label">Solenoid C</span> <span class="stats-val">${data.sys.sol_C ? 'OPEN' : 'CLOSED'}</span></div>
-                                        </div>
-                                    `;
-                                    showModal("Hardware Config", htmlStats, "settings.png", true, true);
-                                } else { showModal("Raw Payload", rawText, "document.png", true); }
-                            } catch (e) { showModal("Raw Payload", rawText, "document.png", true); }
-                        }
-                    }
-                };
-            } catch (err) {
-                clearTimeout(timeoutTimer);
-                if (err.name !== 'AbortError') showModal("Error", "Read failed: " + err.message, "error.png", true);
-            }
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
         }
     </script>
 </body>
