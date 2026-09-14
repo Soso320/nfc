@@ -6,20 +6,21 @@
     <title>Irrigation Control</title>
     <style>
         :root { --bg: #121212; --surface: #1e1e1e; --text-main: #f3f4f6; --text-muted: #9ca3af; --border: #374151; --accent: #374151; --sync: #2563eb; --danger: #ef4444; }
-        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overscroll-behavior-y: contain; color-scheme: dark; padding-bottom: 80px; }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overscroll-behavior-y: contain; color-scheme: dark; padding-bottom: 90px; }
         
         /* Initial Connect Overlay */
-        #connect-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        #connect-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
         .pulse-icon img { width: 80px; height: 80px; margin-bottom: 20px; animation: pulse 2s infinite; object-fit: contain; }
         @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
         
         /* Tab Navigation */
         .nav-bar { width: 100%; max-width: 400px; display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        .nav-tab { flex: 1; padding: 16px 0; text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; }
+        .nav-tab { flex: 1; padding: 16px 0; text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: color 0.2s; }
         .nav-tab.active { color: var(--text-main); border-bottom: 3px solid var(--sync); }
         
         .view-container { width: 100%; max-width: 400px; padding: 16px; box-sizing: border-box; display: none; }
-        .view-container.active { display: flex; flex-direction: column; gap: 16px; }
+        .view-container.active { display: flex; flex-direction: column; gap: 16px; animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .card { background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -29,29 +30,28 @@
         .input-row { display: flex; gap: 12px; margin-bottom: 16px; }
         .input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
         label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        select, input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 1rem; background: #111827; color: var(--text-main); text-align: center; }
-        select:focus, input:focus { outline: none; border-color: #6b7280; }
+        select, input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 1rem; background: #111827; color: var(--text-main); text-align: center; transition: border-color 0.2s; }
+        select:focus, input:focus { outline: none; border-color: var(--sync); }
         
         button { width: 100%; background: var(--accent); color: var(--text-main); border: none; padding: 16px; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; transition: transform 0.1s, opacity 0.2s; }
         button:active { transform: scale(0.97); opacity: 0.9; }
         .btn-sync { background: var(--sync); }
         .btn-icon { width: 20px; height: 20px; object-fit: contain; }
-        .btn-danger { background: var(--danger); font-size: 1.1rem; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
         
-        .sch-item { background: #111827; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .sch-item { background: #111827; padding: 14px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .sch-info { display: flex; flex-direction: column; gap: 4px; }
-        .sch-time { font-weight: bold; font-size: 1.1rem; }
+        .sch-time { font-weight: bold; font-size: 1.05rem; }
         .sch-days { font-size: 0.85rem; color: var(--text-muted); }
-        .btn-add { background: transparent; border: 2px dashed var(--border); color: var(--text-muted); }
+        .btn-add { background: transparent; border: 2px dashed var(--border); color: var(--text-muted); padding: 20px; }
 
-        /* Unsaved Changes Banner */
-        #unsaved-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(8px); border-top: 1px solid var(--danger); padding: 12px 16px; box-sizing: border-box; display: none; align-items: center; justify-content: space-between; z-index: 150; box-shadow: 0 -4px 20px rgba(239, 68, 68, 0.3); animation: glow 2s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 -4px 15px rgba(239, 68, 68, 0.2); } to { box-shadow: 0 -4px 25px rgba(239, 68, 68, 0.5); } }
-        .banner-text { color: var(--danger); font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
-        .btn-save { background: var(--danger); width: auto; padding: 10px 20px; margin: 0; font-size: 0.95rem; }
+        /* Unsaved Changes Banner - Fixed Visibility */
+        #unsaved-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(8px); border-top: 2px solid var(--danger); padding: 16px 20px; box-sizing: border-box; display: none; align-items: center; justify-content: space-between; z-index: 1000; box-shadow: 0 -10px 30px rgba(239, 68, 68, 0.2); animation: glow 1.5s infinite alternate; }
+        @keyframes glow { from { box-shadow: 0 -5px 15px rgba(239, 68, 68, 0.1); } to { box-shadow: 0 -5px 25px rgba(239, 68, 68, 0.4); } }
+        .banner-text { color: var(--danger); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        .btn-save { background: var(--danger); width: auto; padding: 12px 24px; margin: 0; font-size: 0.95rem; }
 
-        /* Modals */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.2s ease; }
+        /* General Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1500; opacity: 0; transition: opacity 0.2s ease; }
         .modal-overlay.active { display: flex; opacity: 1; }
         .modal-content { background: var(--surface); padding: 28px 24px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; border: 1px solid var(--border); transform: scale(0.95); transition: transform 0.2s ease; }
         .modal-overlay.active .modal-content { transform: scale(1); }
@@ -59,11 +59,26 @@
         .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
         .modal-text { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
         .modal-close { background: var(--border); color: var(--text-main); display: none; padding: 14px; }
+
+        /* Step-by-Step Wizard Specifics */
+        .wiz-step { display: none; text-align: left; }
+        .wiz-step.active { display: block; animation: fadeIn 0.25s; }
+        .wiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .wiz-title { font-size: 1.2rem; font-weight: bold; }
+        .wiz-progress { font-size: 0.85rem; color: var(--sync); font-weight: bold; }
+        .wiz-btn-row { display: flex; gap: 12px; margin-top: 24px; }
+        .wiz-btn-back { background: var(--border); color: var(--text-main); }
+        
+        /* Wizard Toggle Cards */
+        .mode-card { background: #111827; border: 2px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+        .mode-card.selected { border-color: var(--sync); background: rgba(37, 99, 235, 0.1); }
+        .mode-title { font-weight: bold; font-size: 1.05rem; margin-bottom: 4px; display: block; }
+        .mode-desc { font-size: 0.85rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
-    <!-- Initial Connection Overlay -->
+    <!-- Startup Overlay -->
     <div id="connect-overlay">
         <div class="pulse-icon"><img src="nfc.png" alt="Scan"></div>
         <h2 style="margin-bottom: 8px;">Connect to Device</h2>
@@ -86,10 +101,6 @@
 
     <!-- VIEW: SCHEDULES -->
     <div id="schedules" class="view-container active">
-        <button class="btn-danger" onclick="sendStopAll()" style="margin-bottom: 8px;">
-            <img src="cancel.png" class="btn-icon" alt="Stop"> EMERGENCY STOP ALL
-        </button>
-
         <div class="card">
             <div class="card-header">
                 <h3><img src="document.png" class="header-icon" alt="List"> Active Schedules</h3>
@@ -100,7 +111,7 @@
                 <!-- Javascript will populate this list -->
             </div>
 
-            <button class="btn-add" onclick="openWizard()">➕ Add New Schedule</button>
+            <button class="btn-add" onclick="startWizard()">➕ Add New Schedule</button>
         </div>
     </div>
 
@@ -119,7 +130,7 @@
             <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; margin-top: 0;">
                 Place a cup under the pipe. The system will dispense for 10s. Weigh it in grams (ml) and input below.
             </p>
-            <button class="btn-sync" style="margin-bottom: 16px;" onclick="sendMaintenanceCmd({cmd: 'pump', dir: 1, spd: 100, sec: 10})">1. Dispense Test Volume</button>
+            <button class="btn-sync" style="margin-bottom: 16px;" onclick="executeMaintenanceCmd({cmd: 'pump', dir: 1, spd: 100, sec: 10})">1. Dispense Test Volume</button>
             
             <div class="input-group">
                 <label>Measured Weight (Grams)</label>
@@ -136,7 +147,7 @@
         </div>
 
         <div class="card">
-            <h3><img src="pump.png" class="header-icon" alt="Pump"> Pump Control</h3>
+            <h3><img src="pump.png" class="header-icon" alt="Pump"> Pump Override</h3>
             <div class="input-row">
                 <div class="input-group">
                     <label>Direction</label>
@@ -151,7 +162,7 @@
                 <label>Duration (Sec)</label>
                 <input type="number" id="maint_pump_sec" value="5">
             </div>
-            <button onclick="executePump()">Override Pump</button>
+            <button onclick="executePump()">Run Pump</button>
         </div>
 
         <div class="card">
@@ -170,40 +181,136 @@
         </div>
     </div>
 
-    <!-- Schedule Wizard Modal -->
+    <!-- STEP-BY-STEP SCHEDULE WIZARD MODAL -->
     <div class="modal-overlay" id="wizardModal">
-        <div class="modal-content" style="text-align: left;">
-            <div class="modal-title" style="text-align: center;">New Schedule</div>
+        <div class="modal-content" style="padding: 20px;">
             
-            <div class="input-group" style="margin-top: 20px;">
-                <label>1. Target Valve</label>
-                <select id="wiz_zone"><option value="A">Zone A</option><option value="B">Zone B</option></select>
+            <!-- Step 1: Zone Selection -->
+            <div id="wiz_step_1" class="wiz-step active">
+                <div class="wiz-header">
+                    <span class="wiz-title">Target Zone</span>
+                    <span class="wiz-progress">Step 1 of 4</span>
+                </div>
+                <label style="margin-bottom: 8px; display: block;">Which valve are we programming?</label>
+                <select id="wiz_zone" style="margin-bottom: 20px;">
+                    <option value="A">Zone A</option>
+                    <option value="B">Zone B</option>
+                </select>
+                <div class="wiz-btn-row">
+                    <button class="wiz-btn-back" onclick="closeWizard()">Cancel</button>
+                    <button class="btn-sync" onclick="goToStep(2)">Next</button>
+                </div>
             </div>
 
-            <div class="input-group" style="margin-top: 16px;">
-                <label>2. How Often?</label>
-                <div style="display: flex; gap: 8px;">
+            <!-- Step 2: Mode Selection -->
+            <div id="wiz_step_2" class="wiz-step">
+                <div class="wiz-header">
+                    <span class="wiz-title">Timing Mode</span>
+                    <span class="wiz-progress">Step 2 of 4</span>
+                </div>
+                
+                <div class="mode-card selected" id="mode_interval" onclick="selectWizardMode('interval')">
+                    <span class="mode-title">Easy Interval</span>
+                    <span class="mode-desc">Water routinely every few days or hours.</span>
+                </div>
+                <div class="mode-card" id="mode_expert" onclick="selectWizardMode('expert')">
+                    <span class="mode-title">Expert Calendar</span>
+                    <span class="mode-desc">Pick an exact start date, time, and repetition cycle.</span>
+                </div>
+                
+                <div class="wiz-btn-row">
+                    <button class="wiz-btn-back" onclick="goToStep(1)">Back</button>
+                    <button class="btn-sync" onclick="goToStep(3)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 3A: Easy Interval -->
+            <div id="wiz_step_3a" class="wiz-step">
+                <div class="wiz-header">
+                    <span class="wiz-title">Frequency & Duration</span>
+                    <span class="wiz-progress">Step 3 of 4</span>
+                </div>
+                
+                <label>How Often?</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; margin-top: 6px;">
                     <input type="number" id="wiz_int_val" value="3" min="1" style="width: 40%;">
                     <select id="wiz_int_unit" style="width: 60%;">
                         <option value="3600">Hours</option>
                         <option value="86400" selected>Days</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="input-group" style="margin-top: 16px; margin-bottom: 24px;">
-                <label>3. How Long?</label>
-                <div style="display: flex; gap: 8px;">
+                <label>How Long?</label>
+                <div style="display: flex; gap: 8px; margin-top: 6px;">
                     <input type="number" id="wiz_dur_val" value="10" min="1" style="width: 40%;">
                     <select id="wiz_dur_unit" style="width: 60%;">
                         <option value="1">Seconds</option>
                         <option value="60" selected>Minutes</option>
                     </select>
                 </div>
+
+                <div class="wiz-btn-row">
+                    <button class="wiz-btn-back" onclick="goToStep(2)">Back</button>
+                    <button class="btn-sync" onclick="goToStep(4)">Next</button>
+                </div>
             </div>
 
-            <button class="btn-sync" onclick="saveWizard()">Write to Device</button>
-            <button class="modal-close" style="display: block; margin-top: 8px;" onclick="document.getElementById('wizardModal').classList.remove('active')">Cancel</button>
+            <!-- Step 3B: Expert Calendar -->
+            <div id="wiz_step_3b" class="wiz-step">
+                <div class="wiz-header">
+                    <span class="wiz-title">Exact Timing</span>
+                    <span class="wiz-progress">Step 3 of 4</span>
+                </div>
+                
+                <label>First Watering Event</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; margin-top: 6px;">
+                    <input type="date" id="wiz_exp_date" style="width: 60%; padding: 10px;">
+                    <input type="time" id="wiz_exp_time" style="width: 40%; padding: 10px;">
+                </div>
+
+                <label>Repeat Every</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; margin-top: 6px;">
+                    <input type="number" id="wiz_exp_rep_val" value="1" min="1" style="width: 40%;">
+                    <select id="wiz_exp_rep_unit" style="width: 60%;">
+                        <option value="3600">Hours</option>
+                        <option value="86400" selected>Days</option>
+                    </select>
+                </div>
+
+                <label>How Long?</label>
+                <div style="display: flex; gap: 8px; margin-top: 6px;">
+                    <input type="number" id="wiz_exp_dur_val" value="10" min="1" style="width: 40%;">
+                    <select id="wiz_exp_dur_unit" style="width: 60%;">
+                        <option value="1">Seconds</option>
+                        <option value="60" selected>Minutes</option>
+                    </select>
+                </div>
+
+                <div class="wiz-btn-row">
+                    <button class="wiz-btn-back" onclick="goToStep(2)">Back</button>
+                    <button class="btn-sync" onclick="goToStep(4)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Memory Slot & Finalize -->
+            <div id="wiz_step_4" class="wiz-step">
+                <div class="wiz-header">
+                    <span class="wiz-title">Save Schedule</span>
+                    <span class="wiz-progress">Step 4 of 4</span>
+                </div>
+                
+                <label style="margin-bottom: 8px; display: block;">Select Hardware Memory Slot</label>
+                <select id="wiz_slot" style="margin-bottom: 24px;">
+                    <option value="0">Slot 1</option><option value="1">Slot 2</option>
+                    <option value="2">Slot 3</option><option value="3">Slot 4</option>
+                    <option value="4">Slot 5</option><option value="5">Slot 6</option>
+                    <option value="6">Slot 7</option><option value="7">Slot 8</option>
+                    <option value="8">Slot 9</option><option value="9">Slot 10</option>
+                </select>
+
+                <button class="btn-sync" onclick="finalizeWizard()">Write to Device</button>
+                <button class="wiz-btn-back" onclick="goToStep(selectedWizardMode === 'interval' ? '3a' : '3b')" style="margin-top: 12px;">Back</button>
+            </div>
         </div>
     </div>
 
@@ -221,10 +328,10 @@
         let abortController = null;
         let timeoutTimer = null;
         let hasUnsavedChanges = false;
-        
-        // Local state to display newly created schedules in the UI
         let currentSchedules = [];
+        let selectedWizardMode = 'interval'; // 'interval' or 'expert'
 
+        // --- Basic UI ---
         function switchTab(tabId, el) {
             document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -258,7 +365,20 @@
             if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
         }
 
-        // --- NFC Write Engine (RTC injected automatically) ---
+        // --- NFC Engine ---
+        async function readInitialData() {
+            if (!("NDEFReader" in window)) { alert("WebNFC requires Chrome on Android."); return; }
+            abortController = new AbortController();
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan({ signal: abortController.signal });
+                ndef.onreading = event => {
+                    document.getElementById('connect-overlay').style.display = 'none';
+                    abortController.abort();
+                };
+            } catch (err) { alert("Scan failed: " + err.message); }
+        }
+
         async function writeNFC(payload, onSuccess) {
             if (!("NDEFReader" in window)) { showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true); return; }
             abortController = new AbortController();
@@ -269,15 +389,10 @@
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
                 
-                // INJECT TIMESTAMP ON EVERY COMMAND
+                // Inject exact time for STM32 RTC on every command
                 const now = new Date();
-                payload.y = now.getFullYear() - 2000; 
-                payload.mo = now.getMonth() + 1; 
-                payload.d = now.getDate(); 
-                payload.dw = now.getDay() === 0 ? 7 : now.getDay(); 
-                payload.h = now.getHours(); 
-                payload.m = now.getMinutes(); 
-                payload.s = now.getSeconds();
+                payload.y = now.getFullYear() - 2000; payload.mo = now.getMonth() + 1; payload.d = now.getDate(); 
+                payload.dw = now.getDay() === 0 ? 7 : now.getDay(); payload.h = now.getHours(); payload.m = now.getMinutes(); payload.s = now.getSeconds();
 
                 await ndef.write({
                     records: [
@@ -296,111 +411,121 @@
             }
         }
 
-        // --- Core Functions ---
-        async function readInitialData() {
-            if (!("NDEFReader" in window)) { alert("WebNFC requires Chrome on Android."); return; }
-            abortController = new AbortController();
+        // --- Wizard Logic ---
+        function startWizard() {
+            // Auto-fill today's date for Expert mode
+            const now = new Date();
+            document.getElementById('wiz_exp_date').valueAsDate = now;
+            document.getElementById('wiz_exp_time').value = now.toTimeString().substring(0, 5);
             
-            try {
-                const ndef = new NDEFReader();
-                await ndef.scan({ signal: abortController.signal });
-                
-                ndef.onreading = event => {
-                    document.getElementById('connect-overlay').style.display = 'none';
-                    abortController.abort();
-                    // System heartbeat is read here to confirm connection.
-                    // Note: Due to NFC NDEF size limits, STM32 EEPROM schedules are not broadcasted back.
-                    // The UI will track schedules added during this current session.
-                };
-            } catch (err) {
-                alert("Scan failed: " + err.message);
+            // Show Modal and reset to step 1
+            document.getElementById('wizardModal').classList.add('active');
+            goToStep(1);
+        }
+
+        function closeWizard() { document.getElementById('wizardModal').classList.remove('active'); }
+
+        function selectWizardMode(mode) {
+            selectedWizardMode = mode;
+            document.getElementById('mode_interval').classList.remove('selected');
+            document.getElementById('mode_expert').classList.remove('selected');
+            document.getElementById('mode_' + mode).classList.add('selected');
+        }
+
+        function goToStep(step) {
+            document.querySelectorAll('.wiz-step').forEach(s => s.classList.remove('active'));
+            if (step === 3) {
+                // Route to correct page 3 based on mode selection
+                document.getElementById(selectedWizardMode === 'interval' ? 'wiz_step_3a' : 'wiz_step_3b').classList.add('active');
+            } else {
+                document.getElementById('wiz_step_' + step).classList.add('active');
             }
         }
 
-        function saveConfiguration() {
-            const configPayload = {
-                cmd: "opt",
-                delay: parseInt(document.getElementById('opt_delay').value),
-                calib: parseInt(document.getElementById('opt_calib').value) || 0
-            };
-            writeNFC(configPayload, clearUnsaved);
-        }
-
-        function openWizard() {
-            if (currentSchedules.length >= 10) { alert("Maximum 10 schedules allowed."); return; }
-            document.getElementById('wizardModal').classList.add('active');
-        }
-
-        function saveWizard() {
+        function finalizeWizard() {
+            const slot = parseInt(document.getElementById('wiz_slot').value);
             const zone = document.getElementById('wiz_zone').value;
-            const int_val = parseInt(document.getElementById('wiz_int_val').value);
-            const int_unit = parseInt(document.getElementById('wiz_int_unit').value);
-            const dur_val = parseInt(document.getElementById('wiz_dur_val').value);
-            const dur_unit = parseInt(document.getElementById('wiz_dur_unit').value);
-            
-            const interval_sec = int_val * int_unit;
-            const duration_sec = dur_val * dur_unit;
-            const next_idx = currentSchedules.length;
+            let interval = 0, duration = 0, startEpoch = 0, uiDesc = "";
 
-            const payload = {
-                cmd: "sch",
-                idx: next_idx,
-                z: zone,
-                int: interval_sec,
-                dur: duration_sec
-            };
+            if (selectedWizardMode === 'interval') {
+                let v = parseInt(document.getElementById('wiz_int_val').value);
+                let u = parseInt(document.getElementById('wiz_int_unit').value);
+                interval = v * u;
+                
+                let dv = parseInt(document.getElementById('wiz_dur_val').value);
+                let du = parseInt(document.getElementById('wiz_dur_unit').value);
+                duration = dv * du;
+                
+                uiDesc = `Every ${v} ${u === 86400 ? 'Days' : 'Hours'} • ${dv} ${du === 60 ? 'Mins' : 'Secs'}`;
+            } 
+            else {
+                // Expert Mode
+                let d = document.getElementById('wiz_exp_date').valueAsDate;
+                let t = document.getElementById('wiz_exp_time').value.split(':');
+                d.setHours(parseInt(t[0]), parseInt(t[1]), 0);
+                startEpoch = Math.floor(d.getTime() / 1000); // Unix Epoch
+                
+                let v = parseInt(document.getElementById('wiz_exp_rep_val').value);
+                let u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
+                interval = v * u;
+                
+                let dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
+                let du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
+                duration = dv * du;
+                
+                uiDesc = `Starts ${d.toLocaleDateString()} ${t[0]}:${t[1]} • Repeats ${v} ${u === 86400 ? 'Days' : 'Hours'}`;
+            }
+
+            // Payload structure - 'strt' is passed to STM32 to handle exact calendar dates
+            const payload = { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch };
 
             writeNFC(payload, () => {
-                document.getElementById('wizardModal').classList.remove('active');
-                
-                // Update local UI
-                let unitText = int_unit === 86400 ? 'Days' : 'Hours';
-                let durText = dur_unit === 60 ? 'Mins' : 'Secs';
-                
-                currentSchedules.push({
-                    zone: zone, 
-                    desc: `Every ${int_val} ${unitText} • ${dur_val} ${durText}`
-                });
+                closeWizard();
+                currentSchedules[slot] = { zone: zone, desc: uiDesc };
                 renderSchedules();
             });
+        }
+
+        // --- Schedule Rendering ---
+        function deleteSchedule(slot) {
+            if (confirm(`Are you sure you want to delete the schedule in Slot ${slot + 1}?`)) {
+                writeNFC({ cmd: "del", idx: slot }, () => {
+                    delete currentSchedules[slot];
+                    renderSchedules();
+                });
+            }
         }
 
         function renderSchedules() {
             const container = document.getElementById('schedule_list');
             container.innerHTML = '';
-            document.getElementById('sch_count').innerText = `${currentSchedules.length}/10`;
+            let activeCount = 0;
+            for (let i = 0; i < 10; i++) {
+                if (currentSchedules[i]) {
+                    activeCount++;
+                    container.innerHTML += `
+                    <div class="sch-item">
+                        <div class="sch-info">
+                            <span class="sch-time">Zone ${currentSchedules[i].zone} (Slot ${i + 1})</span>
+                            <span class="sch-days">${currentSchedules[i].desc}</span>
+                        </div>
+                        <span style="font-size: 1.2rem; cursor: pointer; padding: 10px;" onclick="deleteSchedule(${i})">🗑️</span>
+                    </div>`;
+                }
+            }
+            document.getElementById('sch_count').innerText = `${activeCount}/10`;
+        }
 
-            currentSchedules.forEach((sch, i) => {
-                container.innerHTML += `
-                <div class="sch-item">
-                    <div class="sch-info">
-                        <span class="sch-time">Zone ${sch.zone}</span>
-                        <span class="sch-days">${sch.desc}</span>
-                    </div>
-                    <span style="font-size: 0.9rem; color: var(--text-muted);">IDX ${i}</span>
-                </div>`;
-            });
+        // --- System Commands ---
+        function saveConfiguration() {
+            writeNFC({ cmd: "opt", delay: parseInt(document.getElementById('opt_delay').value), calib: parseInt(document.getElementById('opt_calib').value) || 0 }, clearUnsaved);
         }
 
         function syncRTC() { writeNFC({ cmd: "rtc" }); }
-        function sendStopAll() { writeNFC({ cmd: "sol", zone: "O", state: 0 }); }
         
-        function executePump() {
-            writeNFC({
-                cmd: "pump",
-                dir: parseInt(document.getElementById('maint_pump_dir').value),
-                spd: parseInt(document.getElementById('maint_pump_spd').value),
-                sec: parseInt(document.getElementById('maint_pump_sec').value)
-            });
-        }
-        
-        function executeSol() {
-            writeNFC({
-                cmd: "sol",
-                zone: document.getElementById('maint_sol_zone').value,
-                state: parseInt(document.getElementById('maint_sol_state').value)
-            });
-        }
+        function executeMaintenanceCmd(payload) { writeNFC(payload); }
+        function executePump() { writeNFC({ cmd: "pump", dir: parseInt(document.getElementById('maint_pump_dir').value), spd: parseInt(document.getElementById('maint_pump_spd').value), sec: parseInt(document.getElementById('maint_pump_sec').value) }); }
+        function executeSol() { writeNFC({ cmd: "sol", zone: document.getElementById('maint_sol_zone').value, state: parseInt(document.getElementById('maint_sol_state').value) }); }
     </script>
 </body>
 </html>
