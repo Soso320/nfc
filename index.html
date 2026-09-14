@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Irrigation Control</title>
     <style>
-        :root { --bg: #121212; --surface: #1e1e1e; --text-main: #f3f4f6; --text-muted: #9ca3af; --border: #374151; --accent: #374151; --sync: #2563eb; }
-        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overscroll-behavior-y: contain; color-scheme: dark; }
+        :root { --bg: #121212; --surface: #1e1e1e; --text-main: #f3f4f6; --text-muted: #9ca3af; --border: #374151; --accent: #374151; --sync: #2563eb; --danger: #ef4444; }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overscroll-behavior-y: contain; color-scheme: dark; padding-bottom: 80px; }
+        
+        /* Initial Connect Overlay */
+        #connect-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .pulse-icon img { width: 80px; height: 80px; margin-bottom: 20px; animation: pulse 2s infinite; object-fit: contain; }
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
         
         /* Tab Navigation */
         .nav-bar { width: 100%; max-width: 400px; display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
@@ -19,25 +24,60 @@
         .card { background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .card h3 { font-size: 1.1rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; }
+        .header-icon { width: 22px; height: 22px; object-fit: contain; }
         
         .input-row { display: flex; gap: 12px; margin-bottom: 16px; }
         .input-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
         label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         select, input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 1rem; background: #111827; color: var(--text-main); text-align: center; }
+        select:focus, input:focus { outline: none; border-color: #6b7280; }
         
-        button { width: 100%; background: var(--accent); color: var(--text-main); border: none; padding: 16px; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; }
+        button { width: 100%; background: var(--accent); color: var(--text-main); border: none; padding: 16px; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; transition: transform 0.1s, opacity 0.2s; }
+        button:active { transform: scale(0.97); opacity: 0.9; }
         .btn-sync { background: var(--sync); }
+        .btn-icon { width: 20px; height: 20px; object-fit: contain; }
+        .btn-danger { background: var(--danger); font-size: 1.1rem; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
         
-        /* Schedule List Styles */
         .sch-item { background: #111827; padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .sch-info { display: flex; flex-direction: column; gap: 4px; }
         .sch-time { font-weight: bold; font-size: 1.1rem; }
         .sch-days { font-size: 0.85rem; color: var(--text-muted); }
         .btn-add { background: transparent; border: 2px dashed var(--border); color: var(--text-muted); }
+
+        /* Unsaved Changes Banner */
+        #unsaved-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(8px); border-top: 1px solid var(--danger); padding: 12px 16px; box-sizing: border-box; display: none; align-items: center; justify-content: space-between; z-index: 150; box-shadow: 0 -4px 20px rgba(239, 68, 68, 0.3); animation: glow 2s infinite alternate; }
+        @keyframes glow { from { box-shadow: 0 -4px 15px rgba(239, 68, 68, 0.2); } to { box-shadow: 0 -4px 25px rgba(239, 68, 68, 0.5); } }
+        .banner-text { color: var(--danger); font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+        .btn-save { background: var(--danger); width: auto; padding: 10px 20px; margin: 0; font-size: 0.95rem; }
+
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.2s ease; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-content { background: var(--surface); padding: 28px 24px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; border: 1px solid var(--border); transform: scale(0.95); transition: transform 0.2s ease; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-icon img { width: 56px; height: 56px; margin-bottom: 16px; object-fit: contain; }
+        .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
+        .modal-text { font-size: 1rem; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+        .modal-close { background: var(--border); color: var(--text-main); display: none; padding: 14px; }
     </style>
 </head>
 <body>
 
+    <!-- Initial Connection Overlay -->
+    <div id="connect-overlay">
+        <div class="pulse-icon"><img src="nfc.png" alt="Scan"></div>
+        <h2 style="margin-bottom: 8px;">Connect to Device</h2>
+        <p style="color: var(--text-muted); margin-bottom: 24px;">Tap your phone against the hardware to synchronize.</p>
+        <button class="btn-sync" onclick="readInitialData()" style="max-width: 250px;">Scan NFC Tag</button>
+    </div>
+
+    <!-- Glowing Unsaved Banner -->
+    <div id="unsaved-banner">
+        <div class="banner-text"><img src="warning.png" class="btn-icon" alt="Warning"> Unsaved Changes</div>
+        <button class="btn-save" onclick="saveConfiguration()">SAVE TO DEVICE</button>
+    </div>
+
+    <!-- Navigation -->
     <div class="nav-bar">
         <div class="nav-tab active" onclick="switchTab('schedules', this)">Schedules</div>
         <div class="nav-tab" onclick="switchTab('options', this)">Options</div>
@@ -46,94 +86,320 @@
 
     <!-- VIEW: SCHEDULES -->
     <div id="schedules" class="view-container active">
+        <button class="btn-danger" onclick="sendStopAll()" style="margin-bottom: 8px;">
+            <img src="cancel.png" class="btn-icon" alt="Stop"> EMERGENCY STOP ALL
+        </button>
+
         <div class="card">
             <div class="card-header">
-                <h3>Active Schedules</h3>
-                <span style="color: var(--text-muted); font-weight: bold;">1/10</span>
+                <h3><img src="document.png" class="header-icon" alt="List"> Active Schedules</h3>
+                <span id="sch_count" style="color: var(--text-muted); font-weight: bold;">0/10</span>
             </div>
             
-            <div class="sch-item">
-                <div class="sch-info">
-                    <span class="sch-time">08:30 AM (Zone A)</span>
-                    <span class="sch-days">Mon, Wed, Fri • 15 Mins</span>
-                </div>
-                <span style="font-size: 1.2rem;">✏️</span>
+            <div id="schedule_list">
+                <!-- Javascript will populate this list -->
             </div>
 
-            <button class="btn-add">➕ Add New Schedule</button>
+            <button class="btn-add" onclick="openWizard()">➕ Add New Schedule</button>
         </div>
     </div>
 
     <!-- VIEW: OPTIONS -->
     <div id="options" class="view-container">
         <div class="card">
-            <h3>Configuration</h3>
-            <div class="input-group" style="margin-bottom: 16px;">
+            <h3><img src="settings.png" class="header-icon" alt="Config"> Configuration</h3>
+            <div class="input-group">
                 <label>Pipe Travel Delay (Seconds)</label>
-                <input type="number" value="12" min="0">
+                <input type="number" id="opt_delay" value="12" min="0" oninput="markUnsaved()">
             </div>
-            <button>Save Configuration</button>
         </div>
 
         <div class="card">
-            <h3>Flow Calibration</h3>
+            <h3><img src="valve.png" class="header-icon" alt="Flow"> Flow Calibration</h3>
             <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; margin-top: 0;">
-                Place a cup under the output pipe. The system will dispense water for 10 seconds. Weigh the cup in grams (ml) and input the value below.
+                Place a cup under the pipe. The system will dispense for 10s. Weigh it in grams (ml) and input below.
             </p>
-            <button class="btn-sync" style="margin-bottom: 16px;">1. Dispense Test Volume</button>
+            <button class="btn-sync" style="margin-bottom: 16px;" onclick="sendMaintenanceCmd({cmd: 'pump', dir: 1, spd: 100, sec: 10})">1. Dispense Test Volume</button>
             
             <div class="input-group">
                 <label>Measured Weight (Grams)</label>
-                <input type="number" placeholder="e.g., 45">
+                <input type="number" id="opt_calib" placeholder="e.g., 45" oninput="markUnsaved()">
             </div>
-            <button>2. Calibrate Sensor</button>
         </div>
     </div>
 
     <!-- VIEW: MAINTENANCE -->
     <div id="maintenance" class="view-container">
         <div class="card">
-            <h3>System Clock</h3>
-            <button class="btn-sync">Sync Time with Phone</button>
+            <h3><img src="settings.png" class="header-icon" alt="Clock"> System Clock</h3>
+            <button class="btn-sync" onclick="syncRTC()">Sync Time with Phone</button>
         </div>
 
         <div class="card">
-            <h3>Pump Control</h3>
+            <h3><img src="pump.png" class="header-icon" alt="Pump"> Pump Control</h3>
             <div class="input-row">
                 <div class="input-group">
                     <label>Direction</label>
-                    <select><option>Forward</option><option>Reverse</option></select>
+                    <select id="maint_pump_dir"><option value="1">Forward</option><option value="2">Reverse</option></select>
                 </div>
                 <div class="input-group">
                     <label>Speed (%)</label>
-                    <input type="number" value="50">
+                    <input type="number" id="maint_pump_spd" value="50">
                 </div>
             </div>
-            <button>Override Pump</button>
+            <div class="input-group" style="margin-bottom: 16px;">
+                <label>Duration (Sec)</label>
+                <input type="number" id="maint_pump_sec" value="5">
+            </div>
+            <button onclick="executePump()">Override Pump</button>
         </div>
 
         <div class="card">
-            <h3>Solenoids</h3>
+            <h3><img src="valve.png" class="header-icon" alt="Valve"> Solenoids</h3>
             <div class="input-row">
                 <div class="input-group">
                     <label>Valve</label>
-                    <select><option>Zone A</option><option>Zone B</option></select>
+                    <select id="maint_sol_zone"><option value="A">Zone A</option><option value="B">Zone B</option></select>
                 </div>
                 <div class="input-group">
                     <label>State</label>
-                    <select><option>OPEN</option><option>CLOSED</option></select>
+                    <select id="maint_sol_state"><option value="1">OPEN</option><option value="0">CLOSED</option></select>
                 </div>
             </div>
-            <button>Toggle Solenoid</button>
+            <button onclick="executeSol()">Toggle Solenoid</button>
+        </div>
+    </div>
+
+    <!-- Schedule Wizard Modal -->
+    <div class="modal-overlay" id="wizardModal">
+        <div class="modal-content" style="text-align: left;">
+            <div class="modal-title" style="text-align: center;">New Schedule</div>
+            
+            <div class="input-group" style="margin-top: 20px;">
+                <label>1. Target Valve</label>
+                <select id="wiz_zone"><option value="A">Zone A</option><option value="B">Zone B</option></select>
+            </div>
+
+            <div class="input-group" style="margin-top: 16px;">
+                <label>2. How Often?</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="wiz_int_val" value="3" min="1" style="width: 40%;">
+                    <select id="wiz_int_unit" style="width: 60%;">
+                        <option value="3600">Hours</option>
+                        <option value="86400" selected>Days</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group" style="margin-top: 16px; margin-bottom: 24px;">
+                <label>3. How Long?</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="wiz_dur_val" value="10" min="1" style="width: 40%;">
+                    <select id="wiz_dur_unit" style="width: 60%;">
+                        <option value="1">Seconds</option>
+                        <option value="60" selected>Minutes</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-sync" onclick="saveWizard()">Write to Device</button>
+            <button class="modal-close" style="display: block; margin-top: 8px;" onclick="document.getElementById('wizardModal').classList.remove('active')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Status Feedback Modal -->
+    <div class="modal-overlay" id="nfcModal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modalIcon"><img src="nfc.png" alt="Icon"></div>
+            <div class="modal-title" id="modalTitle">Ready to Scan</div>
+            <div class="modal-text" id="modalText">Hold phone near STM32 board.</div>
+            <button class="modal-close" id="modalCloseBtn" onclick="hideModal()">Dismiss</button>
         </div>
     </div>
 
     <script>
+        let abortController = null;
+        let timeoutTimer = null;
+        let hasUnsavedChanges = false;
+        
+        // Local state to display newly created schedules in the UI
+        let currentSchedules = [];
+
         function switchTab(tabId, el) {
             document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             el.classList.add('active');
+        }
+
+        function markUnsaved() {
+            if (!hasUnsavedChanges) {
+                hasUnsavedChanges = true;
+                document.getElementById('unsaved-banner').style.display = 'flex';
+            }
+        }
+
+        function clearUnsaved() {
+            hasUnsavedChanges = false;
+            document.getElementById('unsaved-banner').style.display = 'none';
+        }
+
+        function showModal(title, text, imageSrc, showClose = false) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalIcon').innerHTML = `<img src="${imageSrc}" alt="Icon">`;
+            document.getElementById('modalText').innerText = text;
+            document.getElementById('modalCloseBtn').style.display = showClose ? 'block' : 'none';
+            document.getElementById('nfcModal').classList.add('active');
+        }
+
+        function hideModal() {
+            document.getElementById('nfcModal').classList.remove('active');
+            if (abortController) { abortController.abort(); abortController = null; }
+            if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
+        }
+
+        // --- NFC Write Engine (RTC injected automatically) ---
+        async function writeNFC(payload, onSuccess) {
+            if (!("NDEFReader" in window)) { showModal("Not Supported", "WebNFC requires Chrome on Android.", "warning.png", true); return; }
+            abortController = new AbortController();
+            showModal("Ready to Write", "Hold your phone near the tag...", "nfc.png", false);
+            timeoutTimer = setTimeout(() => { if (abortController) { abortController.abort(); showModal("Timeout", "No tag detected.", "timeout.png", true); } }, 8000);
+
+            try {
+                const ndef = new NDEFReader();
+                const encoder = new TextEncoder();
+                
+                // INJECT TIMESTAMP ON EVERY COMMAND
+                const now = new Date();
+                payload.y = now.getFullYear() - 2000; 
+                payload.mo = now.getMonth() + 1; 
+                payload.d = now.getDate(); 
+                payload.dw = now.getDay() === 0 ? 7 : now.getDay(); 
+                payload.h = now.getHours(); 
+                payload.m = now.getMinutes(); 
+                payload.s = now.getSeconds();
+
+                await ndef.write({
+                    records: [
+                        { recordType: "url", data: "https://soso320.github.io/nfc/" },
+                        { recordType: "mime", mediaType: "application/json", data: encoder.encode(JSON.stringify(payload)) }
+                    ]
+                }, { signal: abortController.signal });
+                
+                clearTimeout(timeoutTimer);
+                showModal("Success", "Command transmitted successfully.", "check.png", false);
+                setTimeout(hideModal, 1500);
+                if (onSuccess) onSuccess();
+            } catch (err) {
+                clearTimeout(timeoutTimer);
+                if (err.name !== 'AbortError') showModal("Error", "Write failed: " + err.message, "error.png", true);
+            }
+        }
+
+        // --- Core Functions ---
+        async function readInitialData() {
+            if (!("NDEFReader" in window)) { alert("WebNFC requires Chrome on Android."); return; }
+            abortController = new AbortController();
+            
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan({ signal: abortController.signal });
+                
+                ndef.onreading = event => {
+                    document.getElementById('connect-overlay').style.display = 'none';
+                    abortController.abort();
+                    // System heartbeat is read here to confirm connection.
+                    // Note: Due to NFC NDEF size limits, STM32 EEPROM schedules are not broadcasted back.
+                    // The UI will track schedules added during this current session.
+                };
+            } catch (err) {
+                alert("Scan failed: " + err.message);
+            }
+        }
+
+        function saveConfiguration() {
+            const configPayload = {
+                cmd: "opt",
+                delay: parseInt(document.getElementById('opt_delay').value),
+                calib: parseInt(document.getElementById('opt_calib').value) || 0
+            };
+            writeNFC(configPayload, clearUnsaved);
+        }
+
+        function openWizard() {
+            if (currentSchedules.length >= 10) { alert("Maximum 10 schedules allowed."); return; }
+            document.getElementById('wizardModal').classList.add('active');
+        }
+
+        function saveWizard() {
+            const zone = document.getElementById('wiz_zone').value;
+            const int_val = parseInt(document.getElementById('wiz_int_val').value);
+            const int_unit = parseInt(document.getElementById('wiz_int_unit').value);
+            const dur_val = parseInt(document.getElementById('wiz_dur_val').value);
+            const dur_unit = parseInt(document.getElementById('wiz_dur_unit').value);
+            
+            const interval_sec = int_val * int_unit;
+            const duration_sec = dur_val * dur_unit;
+            const next_idx = currentSchedules.length;
+
+            const payload = {
+                cmd: "sch",
+                idx: next_idx,
+                z: zone,
+                int: interval_sec,
+                dur: duration_sec
+            };
+
+            writeNFC(payload, () => {
+                document.getElementById('wizardModal').classList.remove('active');
+                
+                // Update local UI
+                let unitText = int_unit === 86400 ? 'Days' : 'Hours';
+                let durText = dur_unit === 60 ? 'Mins' : 'Secs';
+                
+                currentSchedules.push({
+                    zone: zone, 
+                    desc: `Every ${int_val} ${unitText} • ${dur_val} ${durText}`
+                });
+                renderSchedules();
+            });
+        }
+
+        function renderSchedules() {
+            const container = document.getElementById('schedule_list');
+            container.innerHTML = '';
+            document.getElementById('sch_count').innerText = `${currentSchedules.length}/10`;
+
+            currentSchedules.forEach((sch, i) => {
+                container.innerHTML += `
+                <div class="sch-item">
+                    <div class="sch-info">
+                        <span class="sch-time">Zone ${sch.zone}</span>
+                        <span class="sch-days">${sch.desc}</span>
+                    </div>
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">IDX ${i}</span>
+                </div>`;
+            });
+        }
+
+        function syncRTC() { writeNFC({ cmd: "rtc" }); }
+        function sendStopAll() { writeNFC({ cmd: "sol", zone: "O", state: 0 }); }
+        
+        function executePump() {
+            writeNFC({
+                cmd: "pump",
+                dir: parseInt(document.getElementById('maint_pump_dir').value),
+                spd: parseInt(document.getElementById('maint_pump_spd').value),
+                sec: parseInt(document.getElementById('maint_pump_sec').value)
+            });
+        }
+        
+        function executeSol() {
+            writeNFC({
+                cmd: "sol",
+                zone: document.getElementById('maint_sol_zone').value,
+                state: parseInt(document.getElementById('maint_sol_state').value)
+            });
         }
     </script>
 </body>
