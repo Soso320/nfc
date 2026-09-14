@@ -343,66 +343,73 @@
 async function initConnection() {
             try {
                 const ndef = new NDEFReader();
-                await ndef.scan();
+                // Force active scanning to bypass aggressive Android NFC caching
+                await ndef.scan({ signal: new AbortController().signal });
                 
                 ndef.onreading = event => {
+                    let debugTypes = [];
+                    
                     for (const record of event.message.records) {
-                        // Only intercept our custom binary telemetry record
-                        if (record.mediaType === "application/octet-stream") {
-                            const data = record.data; // Native DataView API
-                            let idx = 0;
-                            
-                            // 1. Skip System States (Only needed if you build a real-time monitoring UI later)
-                            idx += 4; 
-                            
-                            // 2. Parse Config Options (Big-Endian by default)
-                            const pipe_delay = data.getUint16(idx); idx += 2;
-                            const flow_calib = data.getUint16(idx); idx += 2;
-                            document.getElementById('opt_delay').value = pipe_delay;
-                            document.getElementById('opt_calib').value = flow_calib;
-                            
-                            // 3. Parse Schedules
-                            currentSchedules = {};
-                            for (let i = 0; i < 10; i++) {
-                                const active = data.getUint8(idx++);
-                                const zoneCode = data.getUint8(idx++);
-                                const zone = String.fromCharCode(zoneCode);
-                                const interval = data.getUint32(idx); idx += 4;
-                                const epoch = data.getUint32(idx); idx += 4; // Bypassed for UI description
-                                const duration = data.getUint16(idx); idx += 2;
+                        debugTypes.push(record.mediaType || record.recordType);
+                        
+                        // Use .includes() to safely catch charset variants from the OS
+                        if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                            try {
+                                const data = record.data; // Native DataView
+                                let idx = 4; // Skip system states
                                 
-                                if (active) {
-                                    // Reconstruct UI description text
-                                    let uiDesc = "";
-                                    if (interval >= 86400 && interval % 86400 === 0) {
-                                        uiDesc += `Repeats ${interval / 86400} Days`;
-                                    } else {
-                                        uiDesc += `Repeats ${interval / 3600} Hours`;
-                                    }
+                                // Parse Config
+                                const pipe_delay = data.getUint16(idx); idx += 2;
+                                const flow_calib = data.getUint16(idx); idx += 2;
+                                document.getElementById('opt_delay').value = pipe_delay;
+                                document.getElementById('opt_calib').value = flow_calib;
+                                
+                                // Parse Schedules
+                                currentSchedules = {};
+                                for (let i = 0; i < 10; i++) {
+                                    const active = data.getUint8(idx); idx++;
+                                    const zoneCode = data.getUint8(idx); idx++;
+                                    const zone = String.fromCharCode(zoneCode);
+                                    const interval = data.getUint32(idx); idx += 4;
+                                    const epoch = data.getUint32(idx); idx += 4; 
+                                    const duration = data.getUint16(idx); idx += 2;
                                     
-                                    if (duration >= 60 && duration % 60 === 0) {
-                                        uiDesc += ` • ${duration / 60} Mins`;
-                                    } else {
-                                        uiDesc += ` • ${duration} Secs`;
+                                    if (active === 1) {
+                                        let uiDesc = "";
+                                        if (interval >= 86400 && interval % 86400 === 0) {
+                                            uiDesc += `Repeats ${interval / 86400} Days`;
+                                        } else {
+                                            uiDesc += `Repeats ${interval / 3600} Hours`;
+                                        }
+                                        
+                                        if (duration >= 60 && duration % 60 === 0) {
+                                            uiDesc += ` • ${duration / 60} Mins`;
+                                        } else {
+                                            uiDesc += ` • ${duration} Secs`;
+                                        }
+                                        
+                                        currentSchedules[i] = { zone, desc: uiDesc };
                                     }
-                                    
-                                    currentSchedules[i] = { zone, desc: uiDesc };
                                 }
+                                
+                                // Save and Render
+                                localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
+                                renderSchedules();
+                                
+                                document.getElementById('screen-startup').classList.add('hidden');
+                                showToast("Hardware State Synced!");
+                                return; // Success, exit early
+                                
+                            } catch (parseError) {
+                                showToast("Parse Error: " + parseError.message);
+                                return;
                             }
-                            
-                            // 4. Finalize
-                            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
-                            renderSchedules();
-                            
-                            document.getElementById('screen-startup').classList.add('hidden');
-                            showToast("Configurations & Schedules Synced!");
-                            return; // Stop processing further records
                         }
                     }
                     
-                    // Fallback if tag is empty or wiped
+                    // Fallback if the octet-stream was missing
                     document.getElementById('screen-startup').classList.add('hidden');
-                    showToast("Connected! No configurations found on tag.");
+                    showToast("Read Tag: [" + debugTypes.join(", ") + "] - No schedules found.");
                 };
             } catch (err) {
                 showToast("Scan Failed: " + err.message);
