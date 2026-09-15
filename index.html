@@ -434,463 +434,599 @@
         </div>
     </div>
 
-    <script>
-        // --- Constants & State ---
-        const ONE_SHOT_INTERVAL = 315360000; // Safe ~10 year interval to emulate a single execution
-        let commandQueue = [];
-        let currentSchedules = {};
-        let selectedWizMode = 'interval';
-        let scanAbortController = null;
-        
-        window.onload = () => {
-            if (!("NDEFReader" in window)) {
-                document.getElementById('startup-title').innerText = "Unsupported Device";
-                document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support.";
-                document.getElementById('btn-startup').style.display = 'none';
-            }
-            
-            const storedSch = localStorage.getItem('irrigationSchedules');
-            if (storedSch) { currentSchedules = JSON.parse(storedSch); renderSchedules(); }
-            
-            const storedOpt = localStorage.getItem('irrigationOptions');
-            if (storedOpt) {
-                const opt = JSON.parse(storedOpt);
-                document.getElementById('opt_delay').value = opt.delay;
-                document.getElementById('opt_calib').value = opt.calib;
-            }
-        };
+ <script>
+    // --- State Management ---
+    let commandQueue = [];
+    let currentSchedules = {};
+    let selectedWizMode = 'interval';
+    let scanAbortController = null;
 
-        function showToast(msg) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerText = msg;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3400);
+    window.onload = () => {
+        if (!("NDEFReader" in window)) {
+            document.getElementById('startup-title').innerText = "Unsupported Device";
+            document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support (such as Chrome on Android).";
+            document.getElementById('btn-startup').style.display = 'none';
+            return;
         }
 
-        function switchTab(tab, element) {
-            document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('view-' + tab).classList.add('active');
-            element.classList.add('active');
-        }
-
-        function getLocalEpoch(d) {
-            const year = d.getFullYear(); const mo = d.getMonth() + 1; const date = d.getDate();
-            const h = d.getHours(); const m = d.getMinutes(); const s = d.getSeconds();
-            const days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-            let days = 0;
-            for (let i = 1970; i < year; i++) { days += 365 + ((i % 4 === 0 && (i % 100 !== 0 || i % 400 === 0)) ? 1 : 0); }
-            for (let i = 1; i < mo; i++) {
-                days += days_in_month[i - 1];
-                if (i === 2 && (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0))) days++;
-            }
-            days += (date - 1);
-            return (days * 86400) + (h * 3600) + (m * 60) + s;
-        }
-
-        function buildNFCPayload(payload) {
-            const now = new Date();
-            payload.y = now.getFullYear() - 2000; payload.mo = now.getMonth() + 1; payload.d = now.getDate();
-            payload.dw = now.getDay() === 0 ? 7 : now.getDay(); payload.h = now.getHours(); payload.m = now.getMinutes(); payload.s = now.getSeconds();
-            return JSON.stringify(payload);
-        }
-
-        function formatDuration(sec) {
-            if (sec >= 60 && sec % 60 === 0) return `${sec / 60} Minutes`;
-            return `${sec} Seconds`;
-        }
-
-        function parseTelemetryAndSave(data) {
-            let idx = 4; // Skip system states
-            document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
-            document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
-            
-            currentSchedules = {};
-            for (let i = 0; i < 10; i++) {
-                const active = data.getUint8(idx++);
-                const zoneCode = data.getUint8(idx++);
-                const interval = data.getUint32(idx); idx += 4;
-                const epoch = data.getUint32(idx); idx += 4; 
-                const duration = data.getUint16(idx); idx += 2;
-                
-                if (active === 1) {
-                    let uiDesc = "";
-                    if (interval === ONE_SHOT_INTERVAL) {
-                        uiDesc = "One-time event";
-                    } else if (interval >= 604800 && interval % 604800 === 0) {
-                        uiDesc = `Repeats ${interval / 604800} Weeks`;
-                    } else if (interval >= 86400 && interval % 86400 === 0) {
-                        uiDesc = `Repeats ${interval / 86400} Days`;
-                    } else if (interval >= 3600 && interval % 3600 === 0) {
-                        uiDesc = `Repeats ${interval / 3600} Hours`;
-                    } else {
-                        uiDesc = `Repeats ${interval / 60} Mins`;
-                    }
-                    
-                    uiDesc += ` • ${formatDuration(duration)}`;
-                    
-                    // Cache all raw numeric metrics so the details modal can calculate accurate dates
-                    currentSchedules[i] = { 
-                        zone: String.fromCharCode(zoneCode), 
-                        desc: uiDesc,
-                        rawInterval: interval,
-                        rawDuration: duration,
-                        rawEpoch: epoch
-                    };
-                }
-            }
-            
-            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
-            renderSchedules();
-        }
-
-        // --- Hardware Scanning ---
-        async function initConnection() {
+        const storedSch = localStorage.getItem('irrigationSchedules');
+        if (storedSch) {
             try {
-                scanAbortController = new AbortController();
-                const ndef = new NDEFReader();
-                document.getElementById('screen-scan-prompt').classList.remove('hidden');
-                
-                await ndef.scan({ signal: scanAbortController.signal });
-                
+                currentSchedules = JSON.parse(storedSch);
+                renderSchedules();
+            } catch (e) {
+                currentSchedules = {};
+            }
+        }
+
+        const storedOpt = localStorage.getItem('irrigationOptions');
+        if (storedOpt) {
+            try {
+                const opt = JSON.parse(storedOpt);
+                if (opt.delay !== undefined) document.getElementById('opt_delay').value = opt.delay;
+                if (opt.calib !== undefined) document.getElementById('opt_calib').value = opt.calib;
+            } catch (e) {}
+        }
+    };
+
+    function showToast(msg) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3400);
+    }
+
+    function switchTab(tab, element) {
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('view-' + tab).classList.add('active');
+        element.classList.add('active');
+    }
+
+    // Precise Local Epoch Calculator (Matches STM32 Firmware math exactly)
+    function getLocalEpoch(d) {
+        const year = d.getFullYear();
+        const mo = d.getMonth() + 1;
+        const date = d.getDate();
+        const h = d.getHours();
+        const m = d.getMinutes();
+        const s = d.getSeconds();
+        const days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        let days = 0;
+        for (let i = 1970; i < year; i++) {
+            days += 365 + ((i % 4 === 0 && (i % 100 !== 0 || i % 400 === 0)) ? 1 : 0);
+        }
+        for (let i = 1; i < mo; i++) {
+            days += days_in_month[i - 1];
+            if (i === 2 && (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0))) days++;
+        }
+        days += (date - 1);
+        return (days * 86400) + (h * 3600) + (m * 60) + s;
+    }
+
+    function buildNFCPayload(payload) {
+        const now = new Date();
+        payload.y = now.getFullYear() - 2000;
+        payload.mo = now.getMonth() + 1;
+        payload.d = now.getDate();
+        payload.dw = now.getDay() === 0 ? 7 : now.getDay();
+        payload.h = now.getHours();
+        payload.m = now.getMinutes();
+        payload.s = now.getSeconds();
+        return JSON.stringify(payload);
+    }
+
+    function formatDuration(sec) {
+        if (!sec || sec <= 0) return "0 Seconds";
+        if (sec >= 60 && sec % 60 === 0) return `${sec / 60} Minutes`;
+        return `${sec} Seconds`;
+    }
+
+    // Decodes Binary Telemetry from STM32 and updates state
+    function parseTelemetryAndSave(data) {
+        let idx = 4; // Skip system states (Pump Dir, Pump Speed, Sol A, Sol B)
+        document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
+        document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
+
+        currentSchedules = {};
+        for (let i = 0; i < 10; i++) {
+            const active = data.getUint8(idx++);
+            const zoneCode = data.getUint8(idx++);
+            const interval = data.getUint32(idx); idx += 4;
+            const epoch = data.getUint32(idx); idx += 4;
+            const duration = data.getUint16(idx); idx += 2;
+
+            if (active === 1) {
+                let uiDesc = "";
+                if (interval === 0) {
+                    uiDesc = "One-time event";
+                } else if (interval >= 604800 && interval % 604800 === 0) {
+                    uiDesc = `Repeats ${interval / 604800} Weeks`;
+                } else if (interval >= 86400 && interval % 86400 === 0) {
+                    uiDesc = `Repeats ${interval / 86400} Days`;
+                } else if (interval >= 3600 && interval % 3600 === 0) {
+                    uiDesc = `Repeats ${interval / 3600} Hours`;
+                } else {
+                    uiDesc = `Repeats ${Math.round(interval / 60)} Mins`;
+                }
+
+                uiDesc += ` • ${formatDuration(duration)}`;
+
+                currentSchedules[i] = {
+                    zone: String.fromCharCode(zoneCode),
+                    desc: uiDesc,
+                    rawInterval: interval,
+                    rawDuration: duration,
+                    rawEpoch: epoch
+                };
+            }
+        }
+
+        localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
+        localStorage.setItem('irrigationOptions', JSON.stringify({
+            delay: parseInt(document.getElementById('opt_delay').value) || 0,
+            calib: parseInt(document.getElementById('opt_calib').value) || 0
+        }));
+        renderSchedules();
+    }
+
+    // --- NFC Read Connection ---
+    async function initConnection() {
+        if (!("NDEFReader" in window)) {
+            showToast("NFC is not supported on this browser.");
+            return;
+        }
+
+        try {
+            if (scanAbortController) scanAbortController.abort();
+            scanAbortController = new AbortController();
+
+            const ndef = new NDEFReader();
+            document.getElementById('screen-scan-prompt').classList.remove('hidden');
+
+            await ndef.scan({ signal: scanAbortController.signal });
+
+            ndef.onreading = event => {
+                for (const record of event.message.records) {
+                    if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                        try {
+                            parseTelemetryAndSave(record.data);
+                            document.getElementById('screen-scan-prompt').classList.add('hidden');
+                            document.getElementById('screen-startup').classList.add('hidden');
+                            showToast("Controller Synchronized");
+                            if (scanAbortController) scanAbortController.abort();
+                            return;
+                        } catch (e) {
+                            console.error("Payload decoding failed", e);
+                        }
+                    }
+                }
+                document.getElementById('screen-scan-prompt').classList.add('hidden');
+                document.getElementById('screen-startup').classList.add('hidden');
+                showToast("Connected. Memory is currently empty.");
+                if (scanAbortController) scanAbortController.abort();
+            };
+        } catch (err) {
+            document.getElementById('screen-scan-prompt').classList.add('hidden');
+            if (err.name !== 'AbortError') showToast("Scan Failed: " + err.message);
+        }
+    }
+
+    function cancelScan() {
+        if (scanAbortController) {
+            scanAbortController.abort();
+            scanAbortController = null;
+        }
+        document.getElementById('screen-scan-prompt').classList.add('hidden');
+    }
+
+    // --- Instant Execution (With Bidirectional Handshake) ---
+    async function executeImmediate(payload) {
+        const screen = document.getElementById('screen-sync');
+        const status = document.getElementById('sync-status');
+        let abortController = null;
+
+        try {
+            screen.classList.remove('hidden');
+            status.innerText = "Transmitting Command...\nKeep device steady.";
+            status.style.color = "var(--warning)";
+
+            const ndef = new NDEFReader();
+            const encoder = new TextEncoder();
+            abortController = new AbortController();
+
+            await ndef.scan({ signal: abortController.signal });
+            await ndef.write({
+                records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }]
+            });
+
+            status.innerText = "Awaiting Verification...\nKeep device steady.";
+
+            const verified = await new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    ndef.onreading = null;
+                    resolve(false);
+                }, 4500);
+
                 ndef.onreading = event => {
                     for (const record of event.message.records) {
                         if (record.mediaType && record.mediaType.includes("octet-stream")) {
-                            try {
-                                parseTelemetryAndSave(record.data);
-                                document.getElementById('screen-scan-prompt').classList.add('hidden');
-                                document.getElementById('screen-startup').classList.add('hidden');
-                                showToast("Hardware State Synced!");
-                                return;
-                            } catch (e) { console.error(e); }
+                            clearTimeout(timeout);
+                            ndef.onreading = null;
+                            resolve(true);
                         }
                     }
-                    document.getElementById('screen-scan-prompt').classList.add('hidden');
-                    document.getElementById('screen-startup').classList.add('hidden');
-                    showToast("Connected. No existing configurations found.");
                 };
-            } catch (err) { 
-                document.getElementById('screen-scan-prompt').classList.add('hidden');
-                if (err.name !== 'AbortError') showToast("Scan Failed: " + err.message); 
-            }
-        }
+            });
 
-        function cancelScan() {
-            if (scanAbortController) scanAbortController.abort();
-            document.getElementById('screen-scan-prompt').classList.add('hidden');
-        }
+            if (abortController) abortController.abort();
 
-        // --- Instant Execution (With Bidirectional Handshake) ---
-        async function executeImmediate(payload) {
-            const screen = document.getElementById('screen-sync');
-            const status = document.getElementById('sync-status');
-            
-            try {
-                screen.classList.remove('hidden');
-                status.innerText = "Transmitting Command...\nKeep device steady.";
-                status.style.color = "var(--warning)";
-
-                const ndef = new NDEFReader();
-                const encoder = new TextEncoder();
-                const abortController = new AbortController();
-                
-                await ndef.scan({ signal: abortController.signal });
-                await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }] });
-                
-                status.innerText = "Awaiting Hardware Confirmation...\nKeep device steady.";
-
-                const verified = await new Promise((resolve) => {
-                    let timeout = setTimeout(() => { ndef.onreading = null; resolve(false); }, 4000);
-                    ndef.onreading = event => {
-                        for (const record of event.message.records) {
-                            if (record.mediaType && record.mediaType.includes("octet-stream")) {
-                                clearTimeout(timeout);
-                                ndef.onreading = null;
-                                resolve(true);
-                            }
-                        }
-                    };
-                });
-
-                abortController.abort();
-
-                if (verified) {
-                    status.innerText = "Command Executed Successfully!";
-                    status.style.color = "var(--success)";
-                    setTimeout(() => { screen.classList.add('hidden'); }, 1500);
-                } else {
-                    throw new Error("Hardware did not respond.");
-                }
-            } catch (err) { 
-                status.innerText = "Transmission Failed";
-                status.style.color = "var(--danger)";
-                showToast("Error: " + err.message); 
-                setTimeout(() => { screen.classList.add('hidden'); }, 3000);
-            }
-        }
-
-        function overridePump() { executeImmediate({ cmd: "pump", dir: parseInt(document.getElementById('maint_pump_dir').value), spd: parseInt(document.getElementById('maint_pump_spd').value), sec: parseInt(document.getElementById('maint_pump_sec').value) }); }
-        function overrideSol() { executeImmediate({ cmd: "sol", zone: document.getElementById('maint_sol_zone').value, state: parseInt(document.getElementById('maint_sol_state').value) }); }
-
-        // --- Queue System ---
-        function updateQueueUI() {
-            const banner = document.getElementById('queue-banner');
-            if (commandQueue.length > 0) {
-                document.getElementById('queue-count').innerText = `${commandQueue.length} item${commandQueue.length > 1 ? 's' : ''} pending`;
-                banner.classList.add('visible');
-            } else {
-                banner.classList.remove('visible');
-            }
-        }
-
-        function addToQueue(desc, payload) {
-            commandQueue.push({ desc, payload });
-            updateQueueUI();
-            showToast("Added to Queue");
-        }
-
-        async function executeQueue() {
-            if (commandQueue.length === 0) return;
-            const screen = document.getElementById('screen-sync');
-            const status = document.getElementById('sync-status');
-            screen.classList.remove('hidden');
-
-            try {
-                const ndef = new NDEFReader();
-                const encoder = new TextEncoder();
-                const abortController = new AbortController();
-                
-                await ndef.scan({ signal: abortController.signal });
-
-                for (let i = 0; i < commandQueue.length; i++) {
-                    const cmd = commandQueue[i];
-                    let verified = false;
-                    let attempts = 0;
-
-                    while (!verified && attempts < 2) {
-                        attempts++;
-                        status.innerText = `Syncing ${i + 1}/${commandQueue.length}\nWriting: ${cmd.desc}...`;
-                        status.style.color = "var(--warning)";
-                        
-                        await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }] });
-                        
-                        status.innerText = `Syncing ${i + 1}/${commandQueue.length}\nVerifying with hardware...\n(Keep device steady)`;
-                        
-                        verified = await new Promise((resolve) => {
-                            let timeout = setTimeout(() => { ndef.onreading = null; resolve(false); }, 4000);
-                            ndef.onreading = event => {
-                                for (const record of event.message.records) {
-                                    if (record.mediaType && record.mediaType.includes("octet-stream")) {
-                                        try {
-                                            parseTelemetryAndSave(record.data);
-                                            clearTimeout(timeout);
-                                            ndef.onreading = null;
-                                            resolve(true);
-                                        } catch(e) {}
-                                    }
-                                }
-                            };
-                        });
-
-                        if (!verified && attempts < 2) {
-                            status.innerText = `Verification Timeout.\nRetrying...`;
-                            await new Promise(r => setTimeout(r, 1000));
-                        }
-                    }
-                    if (!verified) throw new Error(`Controller failed to verify: ${cmd.desc}`);
-                }
-                
-                abortController.abort();
-                commandQueue = [];
-                updateQueueUI();
-                
-                status.innerText = "All Changes Verified!";
+            if (verified) {
+                status.innerText = "Command Executed Successfully";
                 status.style.color = "var(--success)";
-                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 2000);
-
-            } catch (err) {
-                status.innerText = "Sync Interrupted";
-                status.style.color = "var(--danger)";
-                showToast(err.message);
-                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 3500);
-            }
-        }
-
-        function queueOptions() {
-            const delay = parseInt(document.getElementById('opt_delay').value);
-            const calib = parseInt(document.getElementById('opt_calib').value) || 0;
-            addToQueue("Update Configuration", { cmd: "opt", delay, calib });
-        }
-
-        function queueDeleteSchedule(slot, event) {
-            if(event) event.stopPropagation();
-            addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
-        }
-
-        // --- View Schedule Details ---
-        function showScheduleDetails(slot) {
-            const sch = currentSchedules[slot];
-            if(!sch) return;
-            
-            document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
-            document.getElementById('det-dur').innerText = formatDuration(sch.rawDuration);
-            
-            if (sch.rawInterval === ONE_SHOT_INTERVAL) {
-                document.getElementById('det-freq').innerText = "One-Time Event";
+                setTimeout(() => { screen.classList.add('hidden'); }, 1400);
             } else {
-                let fDesc = "";
-                if (sch.rawInterval >= 604800 && sch.rawInterval % 604800 === 0) fDesc = `Every ${sch.rawInterval / 604800} Weeks`;
-                else if (sch.rawInterval >= 86400 && sch.rawInterval % 86400 === 0) fDesc = `Every ${sch.rawInterval / 86400} Days`;
-                else if (sch.rawInterval >= 3600 && sch.rawInterval % 3600 === 0) fDesc = `Every ${sch.rawInterval / 3600} Hours`;
-                else fDesc = `Every ${sch.rawInterval / 60} Minutes`;
-                document.getElementById('det-freq').innerText = fDesc;
+                throw new Error("Controller did not acknowledge command.");
+            }
+        } catch (err) {
+            if (abortController) abortController.abort();
+            status.innerText = "Transmission Failed";
+            status.style.color = "var(--danger)";
+            showToast("Error: " + err.message);
+            setTimeout(() => { screen.classList.add('hidden'); }, 2800);
+        }
+    }
+
+    function overridePump() {
+        const dir = parseInt(document.getElementById('maint_pump_dir').value);
+        const spd = parseInt(document.getElementById('maint_pump_spd').value);
+        const sec = parseInt(document.getElementById('maint_pump_sec').value);
+
+        if (isNaN(spd) || spd < 0 || spd > 100) { showToast("Enter speed between 0-100%"); return; }
+        if (isNaN(sec) || sec <= 0) { showToast("Enter a duration greater than 0"); return; }
+
+        executeImmediate({ cmd: "pump", dir: dir, spd: spd, sec: sec });
+    }
+
+    function overrideSol() {
+        const zone = document.getElementById('maint_sol_zone').value;
+        const state = parseInt(document.getElementById('maint_sol_state').value);
+        executeImmediate({ cmd: "sol", zone: zone, state: state });
+    }
+
+    // --- Command Queue System ---
+    function updateQueueUI() {
+        const banner = document.getElementById('queue-banner');
+        if (commandQueue.length > 0) {
+            document.getElementById('queue-count').innerText = `${commandQueue.length} item${commandQueue.length > 1 ? 's' : ''} pending`;
+            banner.classList.add('visible');
+        } else {
+            banner.classList.remove('visible');
+        }
+    }
+
+    function addToQueue(desc, payload) {
+        commandQueue.push({ desc, payload });
+        updateQueueUI();
+        showToast("Added to Queue");
+    }
+
+    async function executeQueue() {
+        if (commandQueue.length === 0) return;
+        const screen = document.getElementById('screen-sync');
+        const status = document.getElementById('sync-status');
+        let abortController = null;
+        screen.classList.remove('hidden');
+
+        try {
+            const ndef = new NDEFReader();
+            const encoder = new TextEncoder();
+            abortController = new AbortController();
+
+            await ndef.scan({ signal: abortController.signal });
+
+            for (let i = 0; i < commandQueue.length; i++) {
+                const cmd = commandQueue[i];
+                let verified = false;
+                let attempts = 0;
+
+                while (!verified && attempts < 2) {
+                    attempts++;
+                    status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\n${cmd.desc}...`;
+                    status.style.color = "var(--warning)";
+
+                    await ndef.write({
+                        records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }]
+                    });
+
+                    status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\nVerifying with controller...\n(Keep device steady)`;
+
+                    verified = await new Promise((resolve) => {
+                        const timeout = setTimeout(() => {
+                            ndef.onreading = null;
+                            resolve(false);
+                        }, 4500);
+
+                        ndef.onreading = event => {
+                            for (const record of event.message.records) {
+                                if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                                    try {
+                                        parseTelemetryAndSave(record.data);
+                                        clearTimeout(timeout);
+                                        ndef.onreading = null;
+                                        resolve(true);
+                                    } catch (e) {}
+                                }
+                            }
+                        };
+                    });
+
+                    if (!verified && attempts < 2) {
+                        status.innerText = "Timeout. Retrying...";
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                }
+
+                if (!verified) throw new Error(`Controller failed to confirm: ${cmd.desc}`);
             }
 
-            let currentLocalEpoch = getLocalEpoch(new Date());
-            let nextRunEpoch = sch.rawEpoch + sch.rawInterval;
-            let diffSecs = nextRunEpoch - currentLocalEpoch;
-            
-            if (diffSecs < 0 && sch.rawInterval === ONE_SHOT_INTERVAL) {
-                document.getElementById('det-next').innerText = "Executed (Complete)";
-                document.getElementById('det-next').style.color = "var(--text-muted)";
+            if (abortController) abortController.abort();
+            commandQueue = [];
+            updateQueueUI();
+
+            status.innerText = "All Changes Verified";
+            status.style.color = "var(--success)";
+            setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 1800);
+
+        } catch (err) {
+            if (abortController) abortController.abort();
+            status.innerText = "Sync Interrupted";
+            status.style.color = "var(--danger)";
+            showToast(err.message);
+            setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 3200);
+        }
+    }
+
+    function queueOptions() {
+        const delay = parseInt(document.getElementById('opt_delay').value);
+        const calib = parseInt(document.getElementById('opt_calib').value) || 0;
+
+        if (isNaN(delay) || delay < 0) { showToast("Enter a valid travel delay"); return; }
+        addToQueue("Update Configuration", { cmd: "opt", delay, calib });
+    }
+
+    function queueDeleteSchedule(slot, event) {
+        if (event) event.stopPropagation();
+        addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
+    }
+
+    // --- View Schedule Details ---
+    function showScheduleDetails(slot) {
+        const sch = currentSchedules[slot];
+        if (!sch) return;
+
+        document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
+        document.getElementById('det-dur').innerText = formatDuration(sch.rawDuration);
+
+        const currentLocalEpoch = getLocalEpoch(new Date());
+
+        if (sch.rawInterval === 0) {
+            document.getElementById('det-freq').innerText = "One-Time Event";
+
+            const diffSecs = sch.rawEpoch - currentLocalEpoch;
+            if (diffSecs < 0) {
+                document.getElementById('det-next').innerText = "Pending / Due";
+                document.getElementById('det-next').style.color = "var(--warning)";
             } else {
-                let targetDate = new Date(Date.now() + (diffSecs * 1000));
-                document.getElementById('det-next').innerText = targetDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const targetDate = new Date(Date.now() + (diffSecs * 1000));
+                document.getElementById('det-next').innerText = targetDate.toLocaleString([], {
+                    weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
                 document.getElementById('det-next').style.color = "var(--text-main)";
             }
+        } else {
+            let fDesc = "";
+            if (sch.rawInterval >= 604800 && sch.rawInterval % 604800 === 0) fDesc = `Every ${sch.rawInterval / 604800} Weeks`;
+            else if (sch.rawInterval >= 86400 && sch.rawInterval % 86400 === 0) fDesc = `Every ${sch.rawInterval / 86400} Days`;
+            else if (sch.rawInterval >= 3600 && sch.rawInterval % 3600 === 0) fDesc = `Every ${sch.rawInterval / 3600} Hours`;
+            else fDesc = `Every ${Math.round(sch.rawInterval / 60)} Minutes`;
+            document.getElementById('det-freq').innerText = fDesc;
 
-            document.getElementById('modal-schedule-details').classList.remove('hidden');
+            const nextRunEpoch = sch.rawEpoch + sch.rawInterval;
+            const diffSecs = nextRunEpoch - currentLocalEpoch;
+            const targetDate = new Date(Date.now() + (diffSecs * 1000));
+            document.getElementById('det-next').innerText = targetDate.toLocaleString([], {
+                weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            document.getElementById('det-next').style.color = "var(--text-main)";
         }
 
-        function closeDetailsModal() {
-            document.getElementById('modal-schedule-details').classList.add('hidden');
-        }
+        document.getElementById('modal-schedule-details').classList.remove('hidden');
+    }
 
-        // --- Wizard Logic ---
-        function openWizard() {
-            const now = new Date();
-            document.getElementById('wiz_exp_date').valueAsDate = now;
-            document.getElementById('wiz_exp_time').value = now.toTimeString().substring(0, 5);
-            
-            const slotSelect = document.getElementById('wiz_slot');
-            slotSelect.innerHTML = '';
-            let firstEmpty = -1;
+    function closeDetailsModal() {
+        document.getElementById('modal-schedule-details').classList.add('hidden');
+    }
 
-            for (let i = 0; i < 10; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                if (currentSchedules[i]) {
-                    opt.innerText = `Slot ${i + 1}  [ Configured ]`;
-                    opt.className = 'slot-configured';
-                } else {
-                    opt.innerText = `Slot ${i + 1}  [ Available ]`;
-                    opt.className = 'slot-available';
-                    if (firstEmpty === -1) firstEmpty = i;
-                }
-                slotSelect.appendChild(opt);
-            }
-            
-            slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
-            document.getElementById('screen-wizard').classList.remove('hidden');
-            wizGo(1);
-        }
+    // --- Schedule Wizard ---
+    function openWizard() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
 
-        function closeWizard() { 
-            document.getElementById('screen-wizard').classList.add('hidden'); 
-            document.getElementById('wiz_exp_oneshot').checked = false;
-            toggleOneShot();
-        }
-        
-        function wizGo(step) {
-            document.querySelectorAll('.wizard-step').forEach(w => w.classList.remove('active'));
-            if (step === 3) step = selectedWizMode === 'interval' ? '3a' : '3b';
-            document.getElementById('wiz_' + step).classList.add('active');
-        }
+        // Clean local string assignment (Bypasses the UTC offset bug)
+        document.getElementById('wiz_exp_date').value = `${year}-${month}-${day}`;
+        document.getElementById('wiz_exp_time').value = `${hours}:${minutes}`;
 
-        function wizMode(mode) {
-            selectedWizMode = mode;
-            document.getElementById('mode_interval').classList.remove('selected');
-            document.getElementById('mode_expert').classList.remove('selected');
-            document.getElementById('mode_' + mode).classList.add('selected');
-        }
+        const slotSelect = document.getElementById('wiz_slot');
+        slotSelect.innerHTML = '';
+        let firstEmpty = -1;
 
-        function toggleOneShot() {
-            const isChecked = document.getElementById('wiz_exp_oneshot').checked;
-            document.getElementById('wiz_exp_rep_group').style.display = isChecked ? 'none' : 'flex';
-        }
-
-        function attemptQueueSchedule() {
-            const slot = parseInt(document.getElementById('wiz_slot').value);
-            if (currentSchedules[slot]) {
-                document.getElementById('dialog-confirm').classList.remove('hidden');
-                document.getElementById('dialog-btn-confirm').onclick = () => {
-                    closeConfirmDialog();
-                    finalizeQueueSchedule(slot);
-                };
-            } else { finalizeQueueSchedule(slot); }
-        }
-
-        function closeConfirmDialog() { document.getElementById('dialog-confirm').classList.add('hidden'); }
-
-        function finalizeQueueSchedule(slot) {
-            const zone = document.getElementById('wiz_zone').value;
-            let interval = 0, duration = 0, startEpoch = 0;
-
-            if (selectedWizMode === 'interval') {
-                let v = parseInt(document.getElementById('wiz_int_val').value);
-                let u = parseInt(document.getElementById('wiz_int_unit').value);
-                interval = v * u;
-                
-                let dv = parseInt(document.getElementById('wiz_dur_val').value);
-                let du = parseInt(document.getElementById('wiz_dur_unit').value);
-                duration = dv * du;
+        for (let i = 0; i < 10; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            if (currentSchedules[i]) {
+                opt.innerText = `Slot ${i + 1}  [ Configured ]`;
+                opt.className = 'slot-configured';
             } else {
-                let d = document.getElementById('wiz_exp_date').valueAsDate;
-                let t = document.getElementById('wiz_exp_time').value.split(':');
-                d.setHours(parseInt(t[0]), parseInt(t[1]), 0);
-                startEpoch = getLocalEpoch(d); 
-                
-                let dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
-                let du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
-                duration = dv * du;
-
-                if (document.getElementById('wiz_exp_oneshot').checked) {
-                    interval = ONE_SHOT_INTERVAL; 
-                } else {
-                    let v = parseInt(document.getElementById('wiz_exp_rep_val').value);
-                    let u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
-                    interval = v * u;
-                }
+                opt.innerText = `Slot ${i + 1}  [ Available ]`;
+                opt.className = 'slot-available';
+                if (firstEmpty === -1) firstEmpty = i;
             }
-
-            addToQueue(`Schedule Update (Slot ${slot + 1})`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
-            closeWizard();
+            slotSelect.appendChild(opt);
         }
 
-        function renderSchedules() {
-            const list = document.getElementById('schedule_list');
-            list.innerHTML = '';
-            let count = 0;
-            for (let i = 0; i < 10; i++) {
-                if (currentSchedules[i]) {
-                    count++;
-                    list.innerHTML += `
-                    <div class="list-item" onclick="showScheduleDetails(${i})">
-                        <div>
-                            <span class="item-main">Zone ${currentSchedules[i].zone} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(Slot ${i + 1})</span></span>
-                            <span class="item-sub">${currentSchedules[i].desc}</span>
-                        </div>
-                        <button class="btn-icon" onclick="queueDeleteSchedule(${i}, event)">
-                            <i class="icon" style="-webkit-mask-image: url('trash-can-outline.svg'); mask-image: url('trash-can-outline.svg');"></i>
-                        </button>
-                    </div>`;
-                }
-            }
-            if(count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules configured.<br>Tap below to create one.</p>`;
-            document.getElementById('sch_count').innerText = `${count}/10`;
+        slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
+        document.getElementById('screen-wizard').classList.remove('hidden');
+        wizGo(1);
+    }
+
+    function closeWizard() {
+        document.getElementById('screen-wizard').classList.add('hidden');
+        document.getElementById('wiz_exp_oneshot').checked = false;
+        toggleOneShot();
+    }
+
+    function wizGo(step) {
+        document.querySelectorAll('.wizard-step').forEach(w => w.classList.remove('active'));
+        if (step === 3) step = selectedWizMode === 'interval' ? '3a' : '3b';
+        document.getElementById('wiz_' + step).classList.add('active');
+    }
+
+    function wizMode(mode) {
+        selectedWizMode = mode;
+        document.getElementById('mode_interval').classList.remove('selected');
+        document.getElementById('mode_expert').classList.remove('selected');
+        document.getElementById('mode_' + mode).classList.add('selected');
+    }
+
+    function toggleOneShot() {
+        const isChecked = document.getElementById('wiz_exp_oneshot').checked;
+        document.getElementById('wiz_exp_rep_group').style.display = isChecked ? 'none' : 'flex';
+    }
+
+    function attemptQueueSchedule() {
+        const slot = parseInt(document.getElementById('wiz_slot').value);
+        if (currentSchedules[slot]) {
+            document.getElementById('dialog-confirm').classList.remove('hidden');
+            document.getElementById('dialog-btn-confirm').onclick = () => {
+                closeConfirmDialog();
+                finalizeQueueSchedule(slot);
+            };
+        } else {
+            finalizeQueueSchedule(slot);
         }
-    </script>
+    }
+
+    function closeConfirmDialog() {
+        document.getElementById('dialog-confirm').classList.add('hidden');
+    }
+
+    function finalizeQueueSchedule(slot) {
+        const zone = document.getElementById('wiz_zone').value;
+        let interval = 0, duration = 0, startEpoch = 0;
+
+        if (selectedWizMode === 'interval') {
+            const v = parseInt(document.getElementById('wiz_int_val').value);
+            const u = parseInt(document.getElementById('wiz_int_unit').value);
+            const dv = parseInt(document.getElementById('wiz_dur_val').value);
+            const du = parseInt(document.getElementById('wiz_dur_unit').value);
+
+            if (isNaN(v) || v <= 0 || isNaN(dv) || dv <= 0) {
+                showToast("Please enter positive numbers for frequency and duration.");
+                return;
+            }
+
+            interval = v * u;
+            duration = dv * du;
+        } else {
+            const dateStr = document.getElementById('wiz_exp_date').value;
+            const timeStr = document.getElementById('wiz_exp_time').value;
+
+            if (!dateStr || !timeStr) {
+                showToast("Please select both a start date and time.");
+                return;
+            }
+
+            const dateParts = dateStr.split('-');
+            const timeParts = timeStr.split(':');
+            const targetDate = new Date(
+                parseInt(dateParts[0], 10),
+                parseInt(dateParts[1], 10) - 1,
+                parseInt(dateParts[2], 10),
+                parseInt(timeParts[0], 10),
+                parseInt(timeParts[1], 10),
+                0
+            );
+
+            startEpoch = getLocalEpoch(targetDate);
+
+            const dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
+            const du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
+
+            if (isNaN(dv) || dv <= 0) {
+                showToast("Please enter a valid watering duration.");
+                return;
+            }
+
+            duration = dv * du;
+
+            if (document.getElementById('wiz_exp_oneshot').checked) {
+                interval = 0; // Native firmware One-Shot trigger flag
+            } else {
+                const v = parseInt(document.getElementById('wiz_exp_rep_val').value);
+                const u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
+                if (isNaN(v) || v <= 0) {
+                    showToast("Please enter a positive repetition value.");
+                    return;
+                }
+                interval = v * u;
+            }
+        }
+
+        addToQueue(`Save Schedule (Slot ${slot + 1})`, {
+            cmd: "sch",
+            idx: slot,
+            z: zone,
+            int: interval,
+            dur: duration,
+            strt: startEpoch
+        });
+
+        closeWizard();
+    }
+
+    function renderSchedules() {
+        const list = document.getElementById('schedule_list');
+        list.innerHTML = '';
+        let count = 0;
+
+        for (let i = 0; i < 10; i++) {
+            if (currentSchedules[i]) {
+                count++;
+                list.innerHTML += `
+                <div class="list-item" onclick="showScheduleDetails(${i})">
+                    <div>
+                        <span class="item-main">Zone ${currentSchedules[i].zone} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(Slot ${i + 1})</span></span>
+                        <span class="item-sub">${currentSchedules[i].desc}</span>
+                    </div>
+                    <button class="btn-icon" onclick="queueDeleteSchedule(${i}, event)">
+                        <i class="icon" style="-webkit-mask-image: url('trash-can-outline.svg'); mask-image: url('trash-can-outline.svg');"></i>
+                    </button>
+                </div>`;
+            }
+        }
+
+        if (count === 0) {
+            list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules configured.<br>Tap below to create one.</p>`;
+        }
+        document.getElementById('sch_count').innerText = `${count}/10`;
+    }
+</script>
 </body>
 </html>
