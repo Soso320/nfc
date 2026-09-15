@@ -440,10 +440,11 @@
     let currentSchedules = {};
     let selectedWizMode = 'interval';
     
-    // NEW: A single global reader that never turns off
+    // Global NFC State tracking to prevent overlapping scan errors
     let globalNDEF = null; 
+    let isNfcScanning = false;
 
-    // NEW: The background listener that silently keeps the UI updated if the tag changes
+    // The background listener that silently keeps the UI updated if the tag changes
     const defaultNFCReadHandler = (event) => {
         for (const record of event.message.records) {
             if (record.mediaType && record.mediaType.includes("octet-stream")) {
@@ -451,6 +452,15 @@
             }
         }
     };
+
+    // Safely ensures the NFC scanner is running without triggering overlap errors
+    async function ensureScanning() {
+        if (!globalNDEF) globalNDEF = new NDEFReader();
+        if (!isNfcScanning) {
+            await globalNDEF.scan();
+            isNfcScanning = true;
+        }
+    }
 
     window.onload = () => {
         if (!("NDEFReader" in window)) {
@@ -580,10 +590,9 @@
         }
 
         try {
-            if (!globalNDEF) globalNDEF = new NDEFReader();
             document.getElementById('screen-scan-prompt').classList.remove('hidden');
 
-            await globalNDEF.scan(); // Start scanning
+            await ensureScanning(); // Safe scan start
 
             globalNDEF.onreading = event => {
                 let synced = false;
@@ -600,7 +609,6 @@
                 document.getElementById('screen-startup').classList.add('hidden');
                 showToast(synced ? "Controller Synchronized" : "Connected. Memory empty.");
                 
-                // IMPORTANT: Do not abort. Switch to the silent background listener to block Android popups.
                 globalNDEF.onreading = defaultNFCReadHandler; 
             };
         } catch (err) {
@@ -610,7 +618,6 @@
     }
 
     function cancelScan() {
-        // We just hide the UI. We intentionally leave the NFC listener running to suppress Android popups.
         document.getElementById('screen-scan-prompt').classList.add('hidden');
     }
 
@@ -624,10 +631,9 @@
             status.innerText = "Transmitting Command...\nKeep device steady.";
             status.style.color = "var(--warning)";
 
-            if (!globalNDEF) globalNDEF = new NDEFReader();
             const encoder = new TextEncoder();
 
-            await globalNDEF.scan();
+            await ensureScanning(); // Safe scan start
             await globalNDEF.write({
                 records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }]
             });
@@ -636,7 +642,7 @@
 
             const verified = await new Promise((resolve) => {
                 const timeout = setTimeout(() => {
-                    globalNDEF.onreading = defaultNFCReadHandler; // Restore background listener on timeout
+                    globalNDEF.onreading = defaultNFCReadHandler; 
                     resolve(false);
                 }, 4500);
 
@@ -644,8 +650,8 @@
                     for (const record of event.message.records) {
                         if (record.mediaType && record.mediaType.includes("octet-stream")) {
                             clearTimeout(timeout);
-                            parseTelemetryAndSave(record.data); // Keep UI perfectly matched
-                            globalNDEF.onreading = defaultNFCReadHandler; // Restore background listener
+                            parseTelemetryAndSave(record.data); 
+                            globalNDEF.onreading = defaultNFCReadHandler; 
                             resolve(true);
                         }
                     }
@@ -709,10 +715,9 @@
         screen.classList.remove('hidden');
 
         try {
-            if (!globalNDEF) globalNDEF = new NDEFReader();
             const encoder = new TextEncoder();
 
-            await globalNDEF.scan();
+            await ensureScanning(); // Safe scan start
 
             for (let i = 0; i < commandQueue.length; i++) {
                 const cmd = commandQueue[i];
@@ -963,7 +968,7 @@
             duration = dv * du;
 
             if (document.getElementById('wiz_exp_oneshot').checked) {
-                interval = 0; // Native firmware One-Shot trigger flag
+                interval = 0; 
             } else {
                 const v = parseInt(document.getElementById('wiz_exp_rep_val').value);
                 const u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
