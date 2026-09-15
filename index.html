@@ -11,7 +11,7 @@
             --border: #3f3f46; --accent: #3b82f6; --accent-glow: rgba(59, 130, 246, 0.4);
             --danger: #ef4444; --danger-glow: rgba(239, 68, 68, 0.5);
             --success: #22c55e; --warning: #f59e0b;
-            --radius: 18px;
+            --radius: 16px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -19,18 +19,22 @@
         body { background-color: var(--bg); color: var(--text-main); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 120px; }
 
         /* Typography */
-        h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+        h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
+        h3 { font-size: 1.15rem; font-weight: 600; }
         p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; }
+        
+        svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
 
-        /* Startup / Overlays */
-        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; transition: opacity 0.4s ease; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        /* Overlays & Modals */
+        .overlay { position: fixed; inset: 0; background: rgba(9, 9, 11, 0.85); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.3s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .overlay.hidden { opacity: 0; pointer-events: none; }
         
-        .static-icon { width: 100px; height: 100px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; font-size: 3.5rem; }
-        
-        .pulse-ring { width: 90px; height: 90px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; position: relative; }
-        .pulse-ring::after { content: ''; position: absolute; inset: -12px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateY(0) scale(1); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .overlay.hidden .modal-box { transform: translateY(20px) scale(0.95); }
+
+        .pulse-ring { width: 80px; height: 80px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; position: relative; color: var(--accent); }
+        .pulse-ring::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
 
         /* Views */
         .container { width: 100%; max-width: 480px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -38,34 +42,43 @@
         @keyframes fadeSlide { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Cards */
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
-        .card-title { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .card-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px; color: var(--text-main); }
         
         /* Inputs & Layouts */
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
         .input-row { display: flex; gap: 12px; width: 100%; }
         .input-row > * { min-width: 0; flex: 1; } 
-        label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+        label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
         
-        input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 16px; border-radius: 12px; font-size: 1rem; transition: all 0.2s; appearance: none; width: 100%; }
-        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-        input[type="date"], input[type="time"] { padding: 14px 12px; }
+        input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 14px; border-radius: 12px; font-size: 1rem; transition: all 0.2s; appearance: none; width: 100%; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        
+        /* Tooltip & Checkboxes */
+        .checkbox-container { display: flex; align-items: center; gap: 10px; cursor: pointer; text-transform: none; font-size: 0.95rem; font-weight: 500; color: var(--text-main); letter-spacing: 0; margin-bottom: 16px; }
+        .checkbox-container input { width: auto; appearance: auto; margin: 0; width: 18px; height: 18px; accent-color: var(--accent); }
+        
+        .tooltip { position: relative; display: inline-flex; align-items: center; color: var(--text-muted); }
+        .tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: var(--bg); color: var(--text-main); text-align: left; border-radius: 8px; padding: 12px; position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; font-size: 0.85rem; border: 1px solid var(--border); font-weight: normal; line-height: 1.4; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
 
         /* Buttons */
-        button { background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border); padding: 16px; border-radius: 14px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; }
-        button:active { transform: scale(0.96); }
+        button { background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border); padding: 16px; border-radius: 12px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; }
+        button:active { transform: scale(0.97); }
         button.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
         button.danger { background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 20px var(--danger-glow); }
-        
+        .btn-icon { background: transparent; border: none; padding: 8px; width: auto; border-radius: 50%; color: var(--text-muted); box-shadow: none; }
+        .btn-icon:hover, .btn-icon:active { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: none; }
+
         /* Bottom Navigation */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(24, 24, 27, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 12px 10px 30px 10px; z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; padding: 10px; border-radius: 14px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; padding: 10px; border-radius: 12px; }
         .nav-item.active { color: var(--accent); background: rgba(59, 130, 246, 0.12); }
-        .nav-icon { font-size: 1.5rem; transition: transform 0.2s; }
-        .nav-item.active .nav-icon { transform: translateY(-2px); }
+        .nav-icon { transition: transform 0.2s; }
+        .nav-item.active .nav-icon { transform: translateY(-2px); stroke: var(--accent); }
 
         /* Queue Banner */
-        .queue-banner { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(150%); width: calc(100% - 40px); max-width: 440px; background: rgba(239, 68, 68, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--danger); border-radius: 18px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 900; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2); }
+        .queue-banner { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(150%); width: calc(100% - 40px); max-width: 440px; background: rgba(239, 68, 68, 0.1); backdrop-filter: blur(12px); border: 1px solid var(--danger); border-radius: 16px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 900; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2); }
         .queue-banner.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
         .queue-info { display: flex; flex-direction: column; gap: 4px; }
         .queue-title { color: var(--danger); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
@@ -73,12 +86,16 @@
         .queue-banner button { width: auto; padding: 10px 24px; font-size: 0.95rem; margin: 0; box-shadow: none; border-radius: 10px; }
 
         /* Lists */
-        .list-item { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s; }
-        .list-item:active { border-color: var(--danger); }
+        .list-item { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s; cursor: pointer; }
+        .list-item:active { border-color: var(--accent); }
         .item-main { font-weight: 600; font-size: 1.05rem; color: var(--text-main); margin-bottom: 6px; display: block; }
         .item-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; display: block; }
-        .btn-icon { background: transparent; border: none; padding: 10px; font-size: 1.3rem; width: auto; border-radius: 50%; color: var(--text-muted); }
-        .btn-icon:hover, .btn-icon:active { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        
+        /* Schedule Details Modal */
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; text-align: left;}
+        .detail-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .detail-label { color: var(--text-muted); font-size: 0.85rem; }
+        .detail-value { font-weight: 600; color: var(--text-main); font-size: 0.9rem;}
 
         /* Toasts */
         #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
@@ -86,21 +103,11 @@
         @keyframes slideDown { from { transform: translateY(-30px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-        /* Dialogs / Modals */
-        .dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 3000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-        .dialog-overlay.active { opacity: 1; pointer-events: auto; }
-        .dialog-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 90%; max-width: 340px; transform: scale(0.95) translateY(10px); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; }
-        .dialog-overlay.active .dialog-box { transform: scale(1) translateY(0); }
-        .dialog-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 10px; }
-        .dialog-text { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.5; }
-        .dialog-buttons { display: flex; gap: 12px; }
-
         /* Wizard */
         .wizard-step { display: none; }
         .wizard-step.active { display: block; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .mode-card { background: var(--bg); border: 2px solid var(--border); padding: 18px; border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 6px; }
+        .mode-card { background: var(--bg); border: 1px solid var(--border); padding: 18px; border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 6px; }
         .mode-card.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.08); box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1); }
-        
         .slot-configured { font-weight: 600; color: var(--text-main); }
         .slot-available { font-weight: 400; color: var(--success); }
     </style>
@@ -110,46 +117,72 @@
     <div id="toast-container"></div>
 
     <!-- Static Startup Screen -->
-    <div id="screen-startup" class="overlay">
-        <div class="static-icon">📱</div>
-        <h2 id="startup-title">Connect to Controller</h2>
-        <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Press the button below, then tap your phone against the hardware module.</p>
-        <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">Start NFC Scan</button>
+    <div id="screen-startup" class="overlay" style="background: var(--bg);">
+        <div class="pulse-ring" style="width: 100px; height: 100px; animation: none;">
+            <svg style="width: 40px; height: 40px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+        </div>
+        <h2 id="startup-title">Connect System</h2>
+        <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Press the button below, then tap your device against the controller to establish a secure connection.</p>
+        <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">
+            <svg><path d="M4 11a9 9 0 0 1 9 9m-9-4a4 4 0 0 1 4 4m-4-9a14 14 0 0 1 14 14"></path></svg>
+            Start Scan
+        </button>
     </div>
 
-    <!-- Active Scanning Prompt -->
-    <div id="screen-scan-prompt" class="overlay hidden" style="background: rgba(9, 9, 11, 0.95);">
-        <div class="pulse-ring"><span style="font-size: 2.5rem;">📡</span></div>
-        <h2>Ready to Scan</h2>
-        <p style="margin-top: 10px; max-width: 250px; color: var(--accent);">Hold your phone steady against the controller's NFC tag.</p>
-        <button onclick="cancelScan()" style="max-width: 200px; margin-top: 40px; background: transparent; border-color: var(--border);">Cancel</button>
+    <!-- Active Scanning Modal -->
+    <div id="screen-scan-prompt" class="overlay hidden">
+        <div class="modal-box">
+            <div class="pulse-ring"><svg style="width: 32px; height: 32px;"><path d="M4 11a9 9 0 0 1 9 9m-9-4a4 4 0 0 1 4 4m-4-9a14 14 0 0 1 14 14"></path></svg></div>
+            <h2>Ready to Scan</h2>
+            <p style="color: var(--accent); margin-top: 8px;">Hold your device steady against the controller's tag.</p>
+            <button onclick="cancelScan()" style="margin-top: 32px; background: transparent; border-color: var(--border);">Cancel</button>
+        </div>
     </div>
 
-    <!-- Sync Progress Overlay -->
-    <div id="screen-sync" class="overlay hidden" style="background: rgba(9, 9, 11, 0.95);">
-        <div class="pulse-ring" style="border-color: var(--warning); animation-duration: 1s;"><span style="font-size: 2.5rem;">📡</span></div>
-        <h2>Syncing Device</h2>
-        <p id="sync-status" style="color: var(--warning); font-weight: 600; font-size: 1.1rem; margin-top: 10px;">Writing changes...</p>
-        <p style="margin-top: 10px;">Hold your phone steady against the tag.</p>
+    <!-- Sync Progress Modal -->
+    <div id="screen-sync" class="overlay hidden">
+        <div class="modal-box">
+            <div class="pulse-ring" style="border-color: var(--warning); color: var(--warning); animation-duration: 1s;"><svg style="width: 32px; height: 32px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+            <h2>Synchronizing</h2>
+            <p id="sync-status" style="color: var(--warning); font-weight: 600; margin-top: 8px;">Writing configuration...</p>
+            <p style="margin-top: 8px; font-size: 0.85rem;">Please keep your device steady.</p>
+        </div>
     </div>
 
     <!-- Confirmation Dialog -->
-    <div id="dialog-confirm" class="dialog-overlay">
-        <div class="dialog-box">
-            <div class="dialog-title">⚠️ Overwrite Slot?</div>
-            <div class="dialog-text" id="dialog-msg">This slot is already in use. Are you sure you want to overwrite it?</div>
-            <div class="dialog-buttons">
+    <div id="dialog-confirm" class="overlay hidden">
+        <div class="modal-box" style="padding: 24px;">
+            <div style="color: var(--warning); margin-bottom: 16px;"><svg style="width: 40px; height: 40px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+            <h3 style="margin-bottom: 12px;">Overwrite Slot?</h3>
+            <p id="dialog-msg" style="margin-bottom: 24px; font-size: 0.9rem;">This slot is currently active. Continuing will replace the existing schedule.</p>
+            <div class="input-row">
                 <button onclick="closeConfirmDialog()">Cancel</button>
                 <button class="primary danger" id="dialog-btn-confirm">Overwrite</button>
             </div>
         </div>
     </div>
 
+    <!-- Schedule Details Modal -->
+    <div id="modal-schedule-details" class="overlay hidden">
+        <div class="modal-box" style="padding: 24px;">
+            <div style="color: var(--accent); margin-bottom: 12px;"><svg style="width: 40px; height: 40px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+            <h3 style="margin-bottom: 20px;">Schedule Details</h3>
+            
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color: var(--success);">Active</span></div>
+            <div class="detail-row"><span class="detail-label">Target Valve</span><span class="detail-value" id="det-zone">--</span></div>
+            <div class="detail-row"><span class="detail-label">Frequency</span><span class="detail-value" id="det-freq">--</span></div>
+            <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="det-dur">--</span></div>
+            <div class="detail-row" style="margin-bottom: 24px;"><span class="detail-label">Estimated Next Run</span><span class="detail-value" id="det-next">--</span></div>
+            
+            <button class="primary" onclick="closeDetailsModal()">Close</button>
+        </div>
+    </div>
+
     <!-- Queue Banner -->
     <div id="queue-banner" class="queue-banner">
         <div class="queue-info">
-            <span class="queue-title">⚠️ Unsaved Changes</span>
-            <span class="queue-desc" id="queue-count">0 changes pending</span>
+            <span class="queue-title"><svg style="width: 16px; height: 16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Unsaved Changes</span>
+            <span class="queue-desc" id="queue-count">0 items pending</span>
         </div>
         <button class="primary danger" onclick="executeQueue()">SYNC</button>
     </div>
@@ -158,20 +191,26 @@
     <div id="view-schedules" class="container active">
         <div class="card">
             <div class="card-title">
-                <span>📅 Active Schedules</span>
-                <span id="sch_count" style="margin-left: auto; color: var(--accent);">0/10</span>
+                <svg><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Active Schedules</span>
+                <span id="sch_count" style="margin-left: auto; color: var(--accent); font-size: 0.95rem;">0/10</span>
             </div>
             <div id="schedule_list">
-                <p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No schedules found.<br>Tap below to create one.</p>
+                <p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No schedules configured.<br>Tap below to create one.</p>
             </div>
-            <button class="primary" onclick="openWizard()" style="margin-top: 10px;">➕ Add Schedule</button>
+            <button class="primary" onclick="openWizard()" style="margin-top: 10px;">
+                <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Schedule
+            </button>
         </div>
     </div>
 
     <!-- VIEW: OPTIONS -->
     <div id="view-options" class="container">
         <div class="card">
-            <div class="card-title">⚙️ System Configuration</div>
+            <div class="card-title">
+                <svg><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                System Configuration
+            </div>
             <div class="input-group">
                 <label>Pipe Travel Delay (Seconds)</label>
                 <input type="number" id="opt_delay" value="12" min="0">
@@ -184,8 +223,10 @@
         </div>
 
         <div class="card">
-            <div class="card-title">💧 Calibration Helper</div>
-            <p style="margin-bottom: 20px;">Place a cup under the pipe. The system will dispense for 10s. Weigh it in grams and update the offset above.</p>
+            <div class="card-title">
+                <svg><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg> Calibration Helper
+            </div>
+            <p style="margin-bottom: 20px;">Place a cup under the pipe. The system will dispense water for 10 seconds. Weigh it in grams and update the offset above.</p>
             <button onclick="executeImmediate({cmd: 'pump', dir: 0, spd: 100, sec: 10})">Dispense Test Volume</button>
         </div>
     </div>
@@ -193,22 +234,27 @@
     <!-- VIEW: MAINTENANCE -->
     <div id="view-maintenance" class="container">
         <div class="card">
-            <div class="card-title">⏱️ RTC Synchronization</div>
-            <p style="margin-bottom: 20px;">The controller's clock naturally drifts over time. Sync it with your phone's accurate internet time.</p>
-            <button class="primary" onclick="executeImmediate({cmd: 'rtc'})">Sync Clock Now</button>
+            <div class="card-title">
+                <svg><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Clock Synchronization
+            </div>
+            <p style="margin-bottom: 20px;">The internal clock naturally drifts over time. Synchronize it with your device's accurate internet time.</p>
+            <button class="primary" onclick="executeImmediate({cmd: 'rtc'})">Synchronize Clock Now</button>
         </div>
 
         <div class="card">
-            <div class="card-title" style="color: var(--danger);">⚠️ Hardware Overrides</div>
-            <p style="margin-bottom: 20px; font-size: 0.85rem;">Warning: Overrides bypass safety logic and execute instantly. Do not queue.</p>
+            <div class="card-title" style="color: var(--danger);">
+                <svg><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                Hardware Manual Control
+            </div>
+            <p style="margin-bottom: 20px; font-size: 0.85rem;">Warning: Overrides bypass scheduling logic and execute instantly.</p>
             
             <div class="input-row">
                 <div class="input-group">
-                    <label>Pump Dir</label>
+                    <label>Pump Direction</label>
                     <select id="maint_pump_dir"><option value="0">Forward</option><option value="1">Reverse</option></select>
                 </div>
                 <div class="input-group">
-                    <label>Speed (%)</label>
+                    <label>Power (%)</label>
                     <input type="number" id="maint_pump_spd" value="50" min="0" max="100">
                 </div>
             </div>
@@ -216,11 +262,11 @@
                 <label>Duration (Seconds)</label>
                 <input type="number" id="maint_pump_sec" value="5" min="1">
             </div>
-            <button class="danger" onclick="overridePump()" style="margin-bottom: 32px;">Run Pump</button>
+            <button class="danger" onclick="overridePump()" style="margin-bottom: 32px;">Engage Pump</button>
 
             <div class="input-row">
                 <div class="input-group">
-                    <label>Solenoid</label>
+                    <label>Solenoid Valve</label>
                     <select id="maint_sol_zone"><option value="A">Zone A</option><option value="B">Zone B</option></select>
                 </div>
                 <div class="input-group">
@@ -235,7 +281,7 @@
     <!-- WIZARD OVERLAY -->
     <div id="screen-wizard" class="overlay hidden" style="justify-content: flex-start; padding-top: 50px;">
         <div class="card" style="width: 100%; max-width: 480px; position: relative;">
-            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 18px; right: 18px;">❌</button>
+            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 16px; right: 16px;"><svg><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             <div class="card-title" id="wiz-title">Create Schedule</div>
             
             <div id="wiz_1" class="wizard-step active">
@@ -244,35 +290,40 @@
                     <option value="A">Zone A</option>
                     <option value="B">Zone B</option>
                 </select>
-                <button class="primary" onclick="wizGo(2)">Next Step</button>
+                <button class="primary" onclick="wizGo(2)">Continue</button>
             </div>
 
             <div id="wiz_2" class="wizard-step">
                 <label style="margin-bottom: 10px; display: block;">Timing Mode</label>
                 <div class="mode-card selected" id="mode_interval" onclick="wizMode('interval')">
                     <span class="item-main">Easy Interval</span>
-                    <span class="item-sub">Water routinely every few days or hours.</span>
+                    <span class="item-sub">Water routinely every few days, hours, or minutes.</span>
                 </div>
                 <div class="mode-card" id="mode_expert" onclick="wizMode('expert')">
                     <span class="item-main">Expert Calendar</span>
-                    <span class="item-sub">Pick an exact start date and repetition cycle.</span>
+                    <span class="item-sub">Pick an exact start date and precise repetition cycle.</span>
                 </div>
                 <div class="input-row" style="margin-top: 30px;">
                     <button onclick="wizGo(1)">Back</button>
-                    <button class="primary" onclick="wizGo(3)">Next Step</button>
+                    <button class="primary" onclick="wizGo(3)">Continue</button>
                 </div>
             </div>
 
             <div id="wiz_3a" class="wizard-step">
                 <div class="input-group">
-                    <label>How Often? (Frequency)</label>
+                    <label>Frequency (How Often)</label>
                     <div class="input-row">
                         <input type="number" id="wiz_int_val" value="3" min="1">
-                        <select id="wiz_int_unit"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
+                        <select id="wiz_int_unit">
+                            <option value="60">Minutes</option>
+                            <option value="3600">Hours</option>
+                            <option value="86400" selected>Days</option>
+                            <option value="604800">Weeks</option>
+                        </select>
                     </div>
                 </div>
                 <div class="input-group" style="margin-top: 20px;">
-                    <label>How Long? (Duration)</label>
+                    <label>Duration (How Long)</label>
                     <div class="input-row">
                         <input type="number" id="wiz_dur_val" value="10" min="1">
                         <select id="wiz_dur_unit"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
@@ -280,7 +331,7 @@
                 </div>
                 <div class="input-row" style="margin-top: 40px;">
                     <button onclick="wizGo(2)">Back</button>
-                    <button class="primary" onclick="wizGo(4)">Next Step</button>
+                    <button class="primary" onclick="wizGo(4)">Continue</button>
                 </div>
             </div>
 
@@ -288,15 +339,30 @@
                 <div class="input-group">
                     <label>First Watering Event</label>
                     <div class="input-row">
-                        <input type="date" id="wiz_exp_date">
-                        <input type="time" id="wiz_exp_time">
+                        <input type="date" id="wiz_exp_date" style="flex: 1.5;">
+                        <input type="time" id="wiz_exp_time" style="flex: 1;">
                     </div>
                 </div>
-                <div class="input-group" style="margin-top: 16px;">
+                
+                <label class="checkbox-container">
+                    <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()">
+                    <span>One-Time Event</span>
+                    <div class="tooltip">
+                        <svg style="width:16px; height:16px; color:var(--text-muted);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span class="tooltiptext">When selected, the system will trigger only once on the specified date and time without repeating.</span>
+                    </div>
+                </label>
+
+                <div class="input-group" id="wiz_exp_rep_group">
                     <label>Repeat Every</label>
                     <div class="input-row">
                         <input type="number" id="wiz_exp_rep_val" value="1" min="1">
-                        <select id="wiz_exp_rep_unit"><option value="3600">Hours</option><option value="86400" selected>Days</option></select>
+                        <select id="wiz_exp_rep_unit">
+                            <option value="60">Minutes</option>
+                            <option value="3600">Hours</option>
+                            <option value="86400" selected>Days</option>
+                            <option value="604800">Weeks</option>
+                        </select>
                     </div>
                 </div>
                 <div class="input-group" style="margin-top: 16px;">
@@ -308,12 +374,12 @@
                 </div>
                 <div class="input-row" style="margin-top: 30px;">
                     <button onclick="wizGo(2)">Back</button>
-                    <button class="primary" onclick="wizGo(4)">Next Step</button>
+                    <button class="primary" onclick="wizGo(4)">Continue</button>
                 </div>
             </div>
 
             <div id="wiz_4" class="wizard-step">
-                <label style="margin-bottom: 10px; display: block;">Hardware Memory Slot</label>
+                <label style="margin-bottom: 10px; display: block;">Hardware Memory Allocation</label>
                 <select id="wiz_slot" style="margin-bottom: 30px; font-weight: 600;"></select>
                 <div class="input-row">
                     <button onclick="wizGo(selectedWizMode === 'interval' ? '3a' : '3b')">Back</button>
@@ -325,13 +391,14 @@
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('schedules', this)"><span class="nav-icon">📅</span> Schedules</div>
-        <div class="nav-item" onclick="switchTab('options', this)"><span class="nav-icon">⚙️</span> Config</div>
-        <div class="nav-item" onclick="switchTab('maintenance', this)"><span class="nav-icon">🔧</span> Manual</div>
+        <div class="nav-item active" onclick="switchTab('schedules', this)"><svg class="nav-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Schedules</div>
+        <div class="nav-item" onclick="switchTab('options', this)"><svg class="nav-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Options</div>
+        <div class="nav-item" onclick="switchTab('maintenance', this)"><svg class="nav-icon"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg> Manual</div>
     </div>
 
-<script>
-        // --- State Management ---
+    <script>
+        // --- Constants & State ---
+        const ONE_SHOT_INTERVAL = 315360000; // Safe ~10 year interval to emulate a single execution
         let commandQueue = [];
         let currentSchedules = {};
         let selectedWizMode = 'interval';
@@ -339,8 +406,8 @@
         
         window.onload = () => {
             if (!("NDEFReader" in window)) {
-                document.getElementById('startup-title').innerText = "Unsupported Browser";
-                document.getElementById('startup-desc').innerText = "WebNFC requires Google Chrome on an Android device.";
+                document.getElementById('startup-title').innerText = "Unsupported Device";
+                document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support.";
                 document.getElementById('btn-startup').style.display = 'none';
             }
             
@@ -392,7 +459,11 @@
             return JSON.stringify(payload);
         }
 
-        // Extracts hardware telemetry and updates local UI exactly to hardware spec
+        function formatDuration(sec) {
+            if (sec >= 60 && sec % 60 === 0) return `${sec / 60} Minutes`;
+            return `${sec} Seconds`;
+        }
+
         function parseTelemetryAndSave(data) {
             let idx = 4; // Skip system states
             document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
@@ -407,9 +478,29 @@
                 const duration = data.getUint16(idx); idx += 2;
                 
                 if (active === 1) {
-                    let uiDesc = (interval >= 86400 && interval % 86400 === 0) ? `Repeats ${interval / 86400} Days` : `Repeats ${interval / 3600} Hours`;
-                    uiDesc += (duration >= 60 && duration % 60 === 0) ? ` • ${duration / 60} Mins` : ` • ${duration} Secs`;
-                    currentSchedules[i] = { zone: String.fromCharCode(zoneCode), desc: uiDesc };
+                    let uiDesc = "";
+                    if (interval === ONE_SHOT_INTERVAL) {
+                        uiDesc = "One-time event";
+                    } else if (interval >= 604800 && interval % 604800 === 0) {
+                        uiDesc = `Repeats ${interval / 604800} Weeks`;
+                    } else if (interval >= 86400 && interval % 86400 === 0) {
+                        uiDesc = `Repeats ${interval / 86400} Days`;
+                    } else if (interval >= 3600 && interval % 3600 === 0) {
+                        uiDesc = `Repeats ${interval / 3600} Hours`;
+                    } else {
+                        uiDesc = `Repeats ${interval / 60} Mins`;
+                    }
+                    
+                    uiDesc += ` • ${formatDuration(duration)}`;
+                    
+                    // Cache all raw numeric metrics so the details modal can calculate accurate dates
+                    currentSchedules[i] = { 
+                        zone: String.fromCharCode(zoneCode), 
+                        desc: uiDesc,
+                        rawInterval: interval,
+                        rawDuration: duration,
+                        rawEpoch: epoch
+                    };
                 }
             }
             
@@ -460,22 +551,20 @@
             
             try {
                 screen.classList.remove('hidden');
-                status.innerText = "Transmitting Command...\nKeep holding phone steady.";
+                status.innerText = "Transmitting Command...\nKeep device steady.";
                 status.style.color = "var(--warning)";
 
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
                 const abortController = new AbortController();
                 
-                // Start listening BEFORE writing so we don't miss the immediate STM32 ACK
                 await ndef.scan({ signal: abortController.signal });
                 await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }] });
                 
-                status.innerText = "Awaiting Hardware Confirmation...\nKeep holding phone steady.";
+                status.innerText = "Awaiting Hardware Confirmation...\nKeep device steady.";
 
                 const verified = await new Promise((resolve) => {
                     let timeout = setTimeout(() => { ndef.onreading = null; resolve(false); }, 4000);
-
                     ndef.onreading = event => {
                         for (const record of event.message.records) {
                             if (record.mediaType && record.mediaType.includes("octet-stream")) {
@@ -507,11 +596,11 @@
         function overridePump() { executeImmediate({ cmd: "pump", dir: parseInt(document.getElementById('maint_pump_dir').value), spd: parseInt(document.getElementById('maint_pump_spd').value), sec: parseInt(document.getElementById('maint_pump_sec').value) }); }
         function overrideSol() { executeImmediate({ cmd: "sol", zone: document.getElementById('maint_sol_zone').value, state: parseInt(document.getElementById('maint_sol_state').value) }); }
 
-        // --- Queue System (With Bidirectional Handshake) ---
+        // --- Queue System ---
         function updateQueueUI() {
             const banner = document.getElementById('queue-banner');
             if (commandQueue.length > 0) {
-                document.getElementById('queue-count').innerText = `${commandQueue.length} change${commandQueue.length > 1 ? 's' : ''} pending`;
+                document.getElementById('queue-count').innerText = `${commandQueue.length} item${commandQueue.length > 1 ? 's' : ''} pending`;
                 banner.classList.add('visible');
             } else {
                 banner.classList.remove('visible');
@@ -549,11 +638,10 @@
                         
                         await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }] });
                         
-                        status.innerText = `Syncing ${i + 1}/${commandQueue.length}\nVerifying with STM32...\n(Keep holding phone steady)`;
+                        status.innerText = `Syncing ${i + 1}/${commandQueue.length}\nVerifying with hardware...\n(Keep device steady)`;
                         
                         verified = await new Promise((resolve) => {
                             let timeout = setTimeout(() => { ndef.onreading = null; resolve(false); }, 4000);
-
                             ndef.onreading = event => {
                                 for (const record of event.message.records) {
                                     if (record.mediaType && record.mediaType.includes("octet-stream")) {
@@ -573,37 +661,74 @@
                             await new Promise(r => setTimeout(r, 1000));
                         }
                     }
-
-                    if (!verified) {
-                        throw new Error(`STM32 failed to verify: ${cmd.desc}\nPlease align NFC properly and try again.`);
-                    }
+                    if (!verified) throw new Error(`Controller failed to verify: ${cmd.desc}`);
                 }
                 
                 abortController.abort();
                 commandQueue = [];
                 updateQueueUI();
                 
-                status.innerText = "All Changes Verified by Hardware!";
+                status.innerText = "All Changes Verified!";
                 status.style.color = "var(--success)";
                 setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 2000);
 
             } catch (err) {
-                status.innerText = "Sync Failed or Interrupted";
+                status.innerText = "Sync Interrupted";
                 status.style.color = "var(--danger)";
                 showToast(err.message);
                 setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 3500);
             }
         }
 
-        // --- Standard Configuration Queues ---
         function queueOptions() {
             const delay = parseInt(document.getElementById('opt_delay').value);
             const calib = parseInt(document.getElementById('opt_calib').value) || 0;
-            addToQueue("Update Config", { cmd: "opt", delay, calib });
+            addToQueue("Update Configuration", { cmd: "opt", delay, calib });
         }
 
-        function queueDeleteSchedule(slot) {
+        function queueDeleteSchedule(slot, event) {
+            if(event) event.stopPropagation(); // Prevent opening details modal
             addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
+        }
+
+        // --- View Schedule Details ---
+        function showScheduleDetails(slot) {
+            const sch = currentSchedules[slot];
+            if(!sch) return;
+            
+            document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
+            document.getElementById('det-dur').innerText = formatDuration(sch.rawDuration);
+            
+            if (sch.rawInterval === ONE_SHOT_INTERVAL) {
+                document.getElementById('det-freq').innerText = "One-Time Event";
+            } else {
+                let fDesc = "";
+                if (sch.rawInterval >= 604800 && sch.rawInterval % 604800 === 0) fDesc = `Every ${sch.rawInterval / 604800} Weeks`;
+                else if (sch.rawInterval >= 86400 && sch.rawInterval % 86400 === 0) fDesc = `Every ${sch.rawInterval / 86400} Days`;
+                else if (sch.rawInterval >= 3600 && sch.rawInterval % 3600 === 0) fDesc = `Every ${sch.rawInterval / 3600} Hours`;
+                else fDesc = `Every ${sch.rawInterval / 60} Minutes`;
+                document.getElementById('det-freq').innerText = fDesc;
+            }
+
+            // Estimate next run date relative to local time math
+            let currentLocalEpoch = getLocalEpoch(new Date());
+            let nextRunEpoch = sch.rawEpoch + sch.rawInterval;
+            
+            let diffSecs = nextRunEpoch - currentLocalEpoch;
+            if (diffSecs < 0 && sch.rawInterval === ONE_SHOT_INTERVAL) {
+                document.getElementById('det-next').innerText = "Executed (Complete)";
+                document.getElementById('det-next').style.color = "var(--text-muted)";
+            } else {
+                let targetDate = new Date(Date.now() + (diffSecs * 1000));
+                document.getElementById('det-next').innerText = targetDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                document.getElementById('det-next').style.color = "var(--text-main)";
+            }
+
+            document.getElementById('modal-schedule-details').classList.remove('hidden');
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('modal-schedule-details').classList.add('hidden');
         }
 
         // --- Wizard Logic ---
@@ -635,7 +760,11 @@
             wizGo(1);
         }
 
-        function closeWizard() { document.getElementById('screen-wizard').classList.add('hidden'); }
+        function closeWizard() { 
+            document.getElementById('screen-wizard').classList.add('hidden'); 
+            document.getElementById('wiz_exp_oneshot').checked = false;
+            toggleOneShot();
+        }
         
         function wizGo(step) {
             document.querySelectorAll('.wizard-step').forEach(w => w.classList.remove('active'));
@@ -650,12 +779,15 @@
             document.getElementById('mode_' + mode).classList.add('selected');
         }
 
+        function toggleOneShot() {
+            const isChecked = document.getElementById('wiz_exp_oneshot').checked;
+            document.getElementById('wiz_exp_rep_group').style.display = isChecked ? 'none' : 'flex';
+        }
+
         function attemptQueueSchedule() {
             const slot = parseInt(document.getElementById('wiz_slot').value);
             if (currentSchedules[slot]) {
-                document.getElementById('dialog-msg').innerText = `Slot ${slot + 1} is already configured to water Zone ${currentSchedules[slot].zone}. Overwriting it will delete the old schedule.`;
-                document.getElementById('dialog-confirm').classList.add('active');
-                
+                document.getElementById('dialog-confirm').classList.remove('hidden');
                 document.getElementById('dialog-btn-confirm').onclick = () => {
                     closeConfirmDialog();
                     finalizeQueueSchedule(slot);
@@ -663,39 +795,40 @@
             } else { finalizeQueueSchedule(slot); }
         }
 
-        function closeConfirmDialog() { document.getElementById('dialog-confirm').classList.remove('active'); }
+        function closeConfirmDialog() { document.getElementById('dialog-confirm').classList.add('hidden'); }
 
         function finalizeQueueSchedule(slot) {
             const zone = document.getElementById('wiz_zone').value;
-            let interval = 0, duration = 0, startEpoch = 0, uiDesc = "";
+            let interval = 0, duration = 0, startEpoch = 0;
 
             if (selectedWizMode === 'interval') {
                 let v = parseInt(document.getElementById('wiz_int_val').value);
                 let u = parseInt(document.getElementById('wiz_int_unit').value);
                 interval = v * u;
+                
                 let dv = parseInt(document.getElementById('wiz_dur_val').value);
                 let du = parseInt(document.getElementById('wiz_dur_unit').value);
                 duration = dv * du;
-                uiDesc = `Every ${v} ${u === 86400 ? 'Days' : 'Hours'} for ${dv} ${du === 60 ? 'Mins' : 'Secs'}`;
             } else {
                 let d = document.getElementById('wiz_exp_date').valueAsDate;
                 let t = document.getElementById('wiz_exp_time').value.split(':');
                 d.setHours(parseInt(t[0]), parseInt(t[1]), 0);
                 startEpoch = getLocalEpoch(d); 
                 
-                let v = parseInt(document.getElementById('wiz_exp_rep_val').value);
-                let u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
-                interval = v * u;
                 let dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
                 let du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
                 duration = dv * du;
-                uiDesc = `Starts ${d.toLocaleDateString()} ${t[0]}:${t[1]} (Repeats ${v} ${u === 86400 ? 'Days' : 'Hours'})`;
+
+                if (document.getElementById('wiz_exp_oneshot').checked) {
+                    interval = ONE_SHOT_INTERVAL; // 10 years offset trick for one-shot execution
+                } else {
+                    let v = parseInt(document.getElementById('wiz_exp_rep_val').value);
+                    let u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
+                    interval = v * u;
+                }
             }
 
-            addToQueue(`Add Schedule to Zone ${zone}`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
-            
-            // Note: We no longer artificially inject the schedule into the UI memory here.
-            // The UI will ONLY update once the STM32 has acknowledged the write in the verification loop.
+            addToQueue(`Schedule Update (Slot ${slot + 1})`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
             closeWizard();
         }
 
@@ -707,16 +840,18 @@
                 if (currentSchedules[i]) {
                     count++;
                     list.innerHTML += `
-                    <div class="list-item">
+                    <div class="list-item" onclick="showScheduleDetails(${i})">
                         <div>
-                            <span class="item-main">Zone ${currentSchedules[i].zone} (Slot ${i + 1})</span>
+                            <span class="item-main">Zone ${currentSchedules[i].zone} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(Slot ${i + 1})</span></span>
                             <span class="item-sub">${currentSchedules[i].desc}</span>
                         </div>
-                        <button class="btn-icon" onclick="queueDeleteSchedule(${i})">🗑️</button>
+                        <button class="btn-icon" onclick="queueDeleteSchedule(${i}, event)">
+                            <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
                     </div>`;
                 }
             }
-            if(count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules.<br>Tap below to create one.</p>`;
+            if(count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules configured.<br>Tap below to create one.</p>`;
             document.getElementById('sch_count').innerText = `${count}/10`;
         }
     </script>
