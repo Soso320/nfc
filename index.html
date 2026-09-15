@@ -330,7 +330,7 @@
         <div class="nav-item" onclick="switchTab('maintenance', this)"><span class="nav-icon">🔧</span> Manual</div>
     </div>
 
-    <script>
+<script>
         // --- State Management ---
         let commandQueue = [];
         let currentSchedules = {};
@@ -371,7 +371,6 @@
             element.classList.add('active');
         }
 
-        // Epoch Math (Timezone Fix)
         function getLocalEpoch(d) {
             const year = d.getFullYear(); const mo = d.getMonth() + 1; const date = d.getDate();
             const h = d.getHours(); const m = d.getMinutes(); const s = d.getSeconds();
@@ -393,12 +392,36 @@
             return JSON.stringify(payload);
         }
 
+        // Extracts hardware telemetry and updates local UI exactly to hardware spec
+        function parseTelemetryAndSave(data) {
+            let idx = 4; // Skip system states
+            document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
+            document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
+            
+            currentSchedules = {};
+            for (let i = 0; i < 10; i++) {
+                const active = data.getUint8(idx++);
+                const zoneCode = data.getUint8(idx++);
+                const interval = data.getUint32(idx); idx += 4;
+                const epoch = data.getUint32(idx); idx += 4; 
+                const duration = data.getUint16(idx); idx += 2;
+                
+                if (active === 1) {
+                    let uiDesc = (interval >= 86400 && interval % 86400 === 0) ? `Repeats ${interval / 86400} Days` : `Repeats ${interval / 3600} Hours`;
+                    uiDesc += (duration >= 60 && duration % 60 === 0) ? ` • ${duration / 60} Mins` : ` • ${duration} Secs`;
+                    currentSchedules[i] = { zone: String.fromCharCode(zoneCode), desc: uiDesc };
+                }
+            }
+            
+            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
+            renderSchedules();
+        }
+
         // --- Hardware Scanning ---
         async function initConnection() {
             try {
                 scanAbortController = new AbortController();
                 const ndef = new NDEFReader();
-                
                 document.getElementById('screen-scan-prompt').classList.remove('hidden');
                 
                 await ndef.scan({ signal: scanAbortController.signal });
@@ -407,30 +430,7 @@
                     for (const record of event.message.records) {
                         if (record.mediaType && record.mediaType.includes("octet-stream")) {
                             try {
-                                const data = record.data; 
-                                let idx = 4; // Skip system states
-                                
-                                document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
-                                document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
-                                
-                                currentSchedules = {};
-                                for (let i = 0; i < 10; i++) {
-                                    const active = data.getUint8(idx++);
-                                    const zoneCode = data.getUint8(idx++);
-                                    const interval = data.getUint32(idx); idx += 4;
-                                    const epoch = data.getUint32(idx); idx += 4; 
-                                    const duration = data.getUint16(idx); idx += 2;
-                                    
-                                    if (active === 1) {
-                                        let uiDesc = (interval >= 86400 && interval % 86400 === 0) ? `Repeats ${interval / 86400} Days` : `Repeats ${interval / 3600} Hours`;
-                                        uiDesc += (duration >= 60 && duration % 60 === 0) ? ` • ${duration / 60} Mins` : ` • ${duration} Secs`;
-                                        currentSchedules[i] = { zone: String.fromCharCode(zoneCode), desc: uiDesc };
-                                    }
-                                }
-                                
-                                localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
-                                renderSchedules();
-                                
+                                parseTelemetryAndSave(record.data);
                                 document.getElementById('screen-scan-prompt').classList.add('hidden');
                                 document.getElementById('screen-startup').classList.add('hidden');
                                 showToast("Hardware State Synced!");
@@ -453,24 +453,61 @@
             document.getElementById('screen-scan-prompt').classList.add('hidden');
         }
 
-        // --- Instant Execution ---
+        // --- Instant Execution (With Bidirectional Handshake) ---
         async function executeImmediate(payload) {
+            const screen = document.getElementById('screen-sync');
+            const status = document.getElementById('sync-status');
+            
             try {
+                screen.classList.remove('hidden');
+                status.innerText = "Transmitting Command...\nKeep holding phone steady.";
+                status.style.color = "var(--warning)";
+
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
+                const abortController = new AbortController();
+                
+                // Start listening BEFORE writing so we don't miss the immediate STM32 ACK
+                await ndef.scan({ signal: abortController.signal });
                 await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }] });
-                showToast("Command Sent Successfully");
-            } catch (err) { showToast("Write failed: " + err.message); }
+                
+                status.innerText = "Awaiting Hardware Confirmation...\nKeep holding phone steady.";
+
+                const verified = await new Promise((resolve) => {
+                    let timeout = setTimeout(() => { ndef.onreading = null; resolve(false); }, 4000);
+
+                    ndef.onreading = event => {
+                        for (const record of event.message.records) {
+                            if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                                clearTimeout(timeout);
+                                ndef.onreading = null;
+                                resolve(true);
+                            }
+                        }
+                    };
+                });
+
+                abortController.abort();
+
+                if (verified) {
+                    status.innerText = "Command Executed Successfully!";
+                    status.style.color = "var(--success)";
+                    setTimeout(() => { screen.classList.add('hidden'); }, 1500);
+                } else {
+                    throw new Error("Hardware did not respond.");
+                }
+            } catch (err) { 
+                status.innerText = "Transmission Failed";
+                status.style.color = "var(--danger)";
+                showToast("Error: " + err.message); 
+                setTimeout(() => { screen.classList.add('hidden'); }, 3000);
+            }
         }
 
-        function overridePump() {
-            executeImmediate({ cmd: "pump", dir: parseInt(document.getElementById('maint_pump_dir').value), spd: parseInt(document.getElementById('maint_pump_spd').value), sec: parseInt(document.getElementById('maint_pump_sec').value) });
-        }
-        function overrideSol() {
-            executeImmediate({ cmd: "sol", zone: document.getElementById('maint_sol_zone').value, state: parseInt(document.getElementById('maint_sol_state').value) });
-        }
+        function overridePump() { executeImmediate({ cmd: "pump", dir: parseInt(document.getElementById('maint_pump_dir').value), spd: parseInt(document.getElementById('maint_pump_spd').value), sec: parseInt(document.getElementById('maint_pump_sec').value) }); }
+        function overrideSol() { executeImmediate({ cmd: "sol", zone: document.getElementById('maint_sol_zone').value, state: parseInt(document.getElementById('maint_sol_state').value) }); }
 
-        // --- Queue System ---
+        // --- Queue System (With Bidirectional Handshake) ---
         function updateQueueUI() {
             const banner = document.getElementById('queue-banner');
             if (commandQueue.length > 0) {
@@ -496,37 +533,77 @@
             try {
                 const ndef = new NDEFReader();
                 const encoder = new TextEncoder();
+                const abortController = new AbortController();
+                
+                await ndef.scan({ signal: abortController.signal });
+
                 for (let i = 0; i < commandQueue.length; i++) {
-                    status.innerText = `Writing change ${i + 1} of ${commandQueue.length}...`;
-                    await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(commandQueue[i].payload)) }] });
-                    if (i < commandQueue.length - 1) await new Promise(r => setTimeout(r, 1200)); 
+                    const cmd = commandQueue[i];
+                    let verified = false;
+                    let attempts = 0;
+
+                    while (!verified && attempts < 2) {
+                        attempts++;
+                        status.innerText = `Syncing ${i + 1}/${commandQueue.length}\nWriting: ${cmd.desc}...`;
+                        status.style.color = "var(--warning)";
+                        
+                        await ndef.write({ records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }] });
+                        
+                        status.innerText = `Syncing ${i + 1}/${commandQueue.length}\nVerifying with STM32...\n(Keep holding phone steady)`;
+                        
+                        verified = await new Promise((resolve) => {
+                            let timeout = setTimeout(() => { ndef.onreading = null; resolve(false); }, 4000);
+
+                            ndef.onreading = event => {
+                                for (const record of event.message.records) {
+                                    if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                                        try {
+                                            parseTelemetryAndSave(record.data);
+                                            clearTimeout(timeout);
+                                            ndef.onreading = null;
+                                            resolve(true);
+                                        } catch(e) {}
+                                    }
+                                }
+                            };
+                        });
+
+                        if (!verified && attempts < 2) {
+                            status.innerText = `Verification Timeout.\nRetrying...`;
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
+                    }
+
+                    if (!verified) {
+                        throw new Error(`STM32 failed to verify: ${cmd.desc}\nPlease align NFC properly and try again.`);
+                    }
                 }
                 
+                abortController.abort();
                 commandQueue = [];
                 updateQueueUI();
-                status.innerText = "Sync Complete!";
+                
+                status.innerText = "All Changes Verified by Hardware!";
                 status.style.color = "var(--success)";
-                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 1500);
+                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 2000);
+
             } catch (err) {
-                status.innerText = "Error: Sync Interrupted";
+                status.innerText = "Sync Failed or Interrupted";
                 status.style.color = "var(--danger)";
                 showToast(err.message);
-                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 2500);
+                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 3500);
             }
         }
 
+        // --- Standard Configuration Queues ---
         function queueOptions() {
             const delay = parseInt(document.getElementById('opt_delay').value);
             const calib = parseInt(document.getElementById('opt_calib').value) || 0;
             addToQueue("Update Config", { cmd: "opt", delay, calib });
-            localStorage.setItem('irrigationOptions', JSON.stringify({ delay, calib }));
         }
 
         function queueDeleteSchedule(slot) {
             addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
-            delete currentSchedules[slot];
-            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
-            renderSchedules();
         }
 
         // --- Wizard Logic ---
@@ -535,7 +612,6 @@
             document.getElementById('wiz_exp_date').valueAsDate = now;
             document.getElementById('wiz_exp_time').value = now.toTimeString().substring(0, 5);
             
-            // Dynamic Slot Population
             const slotSelect = document.getElementById('wiz_slot');
             slotSelect.innerHTML = '';
             let firstEmpty = -1;
@@ -574,7 +650,6 @@
             document.getElementById('mode_' + mode).classList.add('selected');
         }
 
-        let pendingScheduleConfirm = null;
         function attemptQueueSchedule() {
             const slot = parseInt(document.getElementById('wiz_slot').value);
             if (currentSchedules[slot]) {
@@ -585,9 +660,7 @@
                     closeConfirmDialog();
                     finalizeQueueSchedule(slot);
                 };
-            } else {
-                finalizeQueueSchedule(slot);
-            }
+            } else { finalizeQueueSchedule(slot); }
         }
 
         function closeConfirmDialog() { document.getElementById('dialog-confirm').classList.remove('active'); }
@@ -620,9 +693,9 @@
             }
 
             addToQueue(`Add Schedule to Zone ${zone}`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
-            currentSchedules[slot] = { zone, desc: uiDesc };
-            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
-            renderSchedules();
+            
+            // Note: We no longer artificially inject the schedule into the UI memory here.
+            // The UI will ONLY update once the STM32 has acknowledged the write in the verification loop.
             closeWizard();
         }
 
