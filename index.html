@@ -1,3 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Irrigation Controller</title>
+    <style>
+        :root {
+            --bg: #09090b; --surface: #18181b; --surface-hover: #27272a;
+            --text-main: #f4f4f5; --text-muted: #a1a1aa;
+            --border: #3f3f46; --accent: #3b82f6; --accent-glow: rgba(59, 130, 246, 0.4);
+            --danger: #ef4444; --danger-glow: rgba(239, 68, 68, 0.5);
+            --success: #22c55e; --warning: #f59e0b;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg); color: var(--text-main); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 120px; }
+
+        /* Typography */
+        h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
+        h3 { font-size: 1.15rem; font-weight: 600; }
+        p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; }
+        
+        /* Icon Masking System */
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: currentColor;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            flex-shrink: 0;
+        }
+        .icon-lg { width: 36px; height: 36px; }
+        .icon-xl { width: 48px; height: 48px; }
+
+        /* Overlays & Modals */
+        .overlay { position: fixed; inset: 0; background: rgba(9, 9, 11, 0.85); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.3s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateY(0) scale(1); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
+        .overlay.hidden .modal-box { transform: translateY(20px) scale(0.95); }
+
+        .static-icon { width: 96px; height: 96px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; color: var(--text-main); }
+        .pulse-ring { width: 80px; height: 80px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; position: relative; color: var(--accent); }
+        .pulse-ring::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+
+        /* Views */
+        .container { width: 100%; max-width: 480px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .container.active { display: flex; }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .card-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px; color: var(--text-main); }
+        
+        /* Inputs & Layouts */
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .input-row { display: flex; gap: 12px; width: 100%; }
+        .input-row > * { min-width: 0; flex: 1; } 
+        label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
+        
+        input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 14px; border-radius: 12px; font-size: 1rem; transition: all 0.2s; appearance: none; width: 100%; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+        
+        /* Tooltip & Checkboxes */
+        .checkbox-container { display: flex; align-items: center; gap: 10px; cursor: pointer; text-transform: none; font-size: 0.95rem; font-weight: 500; color: var(--text-main); letter-spacing: 0; margin-bottom: 16px; }
+        .checkbox-container input { width: auto; appearance: auto; margin: 0; width: 18px; height: 18px; accent-color: var(--accent); }
+        
+        .tooltip { position: relative; display: inline-flex; align-items: center; color: var(--text-muted); }
+        .tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: var(--bg); color: var(--text-main); text-align: left; border-radius: 8px; padding: 12px; position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; font-size: 0.85rem; border: 1px solid var(--border); font-weight: normal; line-height: 1.4; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+        /* Buttons */
+        button { background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border); padding: 16px; border-radius: 12px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; }
+        button:active { transform: scale(0.97); }
+        button.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
+        button.danger { background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 20px var(--danger-glow); }
+        .btn-icon { background: transparent; border: none; padding: 8px; width: auto; border-radius: 50%; color: var(--text-muted); box-shadow: none; }
+        .btn-icon:hover, .btn-icon:active { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: none; }
+
+        /* Bottom Navigation */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(24, 24, 27, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 12px 10px 30px 10px; z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; padding: 10px; border-radius: 12px; }
+        .nav-item.active { color: var(--accent); background: rgba(59, 130, 246, 0.12); }
+        .nav-icon { width: 24px; height: 24px; transition: transform 0.2s; }
+        .nav-item.active .nav-icon { transform: translateY(-2px); }
+
+        /* Queue Banner */
+        .queue-banner { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(150%); width: calc(100% - 40px); max-width: 440px; background: rgba(239, 68, 68, 0.1); backdrop-filter: blur(12px); border: 1px solid var(--danger); border-radius: 16px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 900; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2); }
+        .queue-banner.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+        .queue-info { display: flex; flex-direction: column; gap: 4px; }
+        .queue-title { color: var(--danger); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+        .queue-desc { color: var(--text-main); font-size: 0.85rem; opacity: 0.9; }
+        .queue-banner button { width: auto; padding: 10px 18px; font-size: 0.95rem; margin: 0; box-shadow: none; border-radius: 10px; }
+
+        /* Lists */
+        .list-item { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s; cursor: pointer; }
+        .list-item:active { border-color: var(--accent); }
+        .item-main { font-weight: 600; font-size: 1.05rem; color: var(--text-main); margin-bottom: 6px; display: block; }
+        .item-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; display: block; }
+        
+        /* Schedule Details Modal */
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; text-align: left;}
+        .detail-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .detail-label { color: var(--text-muted); font-size: 0.85rem; }
+        .detail-value { font-weight: 600; color: var(--text-main); font-size: 0.9rem;}
+
+        /* Toasts */
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
+        .toast { background: rgba(39, 39, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 14px 20px; border-radius: 16px; font-size: 0.95rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.4s 3s forwards; text-align: center; }
+        @keyframes slideDown { from { transform: translateY(-30px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+        /* Wizard */
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .mode-card { background: var(--bg); border: 1px solid var(--border); padding: 18px; border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 6px; }
+        .mode-card.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.08); box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1); }
+        .slot-configured { font-weight: 600; color: var(--text-main); }
+        .slot-available { font-weight: 400; color: var(--success); }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <!-- Static Startup Screen -->
+    <div id="screen-startup" class="overlay" style="background: var(--bg);">
+        <div class="static-icon">
+            <i class="icon icon-xl" style="-webkit-mask-image: url('contactless.svg'); mask-image: url('contactless.svg');"></i>
+        </div>
+        <h2 id="startup-title">Connect System</h2>
+        <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Press the button below, then tap your device against the controller to establish a secure connection.</p>
+        <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">
+            <i class="icon" style="-webkit-mask-image: url('nfc.svg'); mask-image: url('nfc.svg'); background-color: #fff;"></i>
+            Start Scan
+        </button>
+    </div>
+
+    <!-- Active Scanning Modal -->
+    <div id="screen-scan-prompt" class="overlay hidden">
+        <div class="modal-box">
+            <div class="pulse-ring">
+                <i class="icon icon-lg" style="-webkit-mask-image: url('transit-connection-variant.svg'); mask-image: url('transit-connection-variant.svg');"></i>
+            </div>
+            <h2>Ready to Scan</h2>
+            <p style="color: var(--accent); margin-top: 8px;">Hold your device steady against the controller's tag.</p>
+            <button onclick="cancelScan()" style="margin-top: 32px; background: transparent; border-color: var(--border);">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Sync Progress Modal -->
+    <div id="screen-sync" class="overlay hidden">
+        <div class="modal-box">
+            <div class="pulse-ring" style="border-color: var(--warning); color: var(--warning); animation-duration: 1s;">
+                <i class="icon icon-lg" style="-webkit-mask-image: url('transit-connection-variant.svg'); mask-image: url('transit-connection-variant.svg');"></i>
+            </div>
+            <h2>Synchronizing</h2>
+            <p id="sync-status" style="color: var(--warning); font-weight: 600; margin-top: 8px;">Writing configuration...</p>
+            <p style="margin-top: 8px; font-size: 0.85rem;">Please keep your device steady.</p>
+        </div>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div id="dialog-confirm" class="overlay hidden">
+        <div class="modal-box" style="padding: 24px;">
+            <div style="color: var(--warning); margin-bottom: 16px;">
+                <i class="icon icon-xl" style="-webkit-mask-image: url('alert.svg'); mask-image: url('alert.svg');"></i>
+            </div>
+            <h3 style="margin-bottom: 12px;">Overwrite Slot?</h3>
+            <p id="dialog-msg" style="margin-bottom: 24px; font-size: 0.9rem;">This slot is currently active. Continuing will replace the existing schedule.</p>
+            <div class="input-row">
+                <button onclick="closeConfirmDialog()">Cancel</button>
+                <button class="primary danger" id="dialog-btn-confirm">Overwrite</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Details Modal -->
+    <div id="modal-schedule-details" class="overlay hidden">
+        <div class="modal-box" style="padding: 24px;">
+            <div style="color: var(--accent); margin-bottom: 12px;">
+                <i class="icon icon-xl" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i>
+            </div>
+            <h3 style="margin-bottom: 20px;">Schedule Details</h3>
+            
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color: var(--success);">Active</span></div>
+            <div class="detail-row"><span class="detail-label">Target Valve</span><span class="detail-value" id="det-zone">--</span></div>
+            <div class="detail-row"><span class="detail-label">Frequency</span><span class="detail-value" id="det-freq">--</span></div>
+            <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="det-dur">--</span></div>
+            <div class="detail-row" style="margin-bottom: 24px;"><span class="detail-label">Estimated Next Run</span><span class="detail-value" id="det-next">--</span></div>
+            
+            <button class="primary" onclick="closeDetailsModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Queue Banner -->
+    <div id="queue-banner" class="queue-banner">
+        <div class="queue-info">
+            <span class="queue-title">
+                <i class="icon" style="-webkit-mask-image: url('alert.svg'); mask-image: url('alert.svg');"></i> Unsaved Changes
+            </span>
+            <span class="queue-desc" id="queue-count">0 items pending</span>
+        </div>
+        <button class="primary danger" onclick="executeQueue()">
+            <i class="icon" style="-webkit-mask-image: url('content-save-all.svg'); mask-image: url('content-save-all.svg');"></i> Save
+        </button>
+    </div>
+
+    <!-- VIEW: SCHEDULES -->
+    <div id="view-schedules" class="container active">
+        <div class="card">
+            <div class="card-title">
+                <i class="icon" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i>
+                <span>Active Schedules</span>
+                <span id="sch_count" style="margin-left: auto; color: var(--accent); font-size: 0.95rem;">0/10</span>
+            </div>
+            <div id="schedule_list">
+                <p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No schedules configured.<br>Tap below to create one.</p>
+            </div>
+            <button class="primary" onclick="openWizard()" style="margin-top: 10px;">
+                Create New Schedule
+            </button>
+        </div>
+    </div>
+
+    <!-- VIEW: OPTIONS -->
+    <div id="view-options" class="container">
+        <div class="card">
+            <div class="card-title">
+                <i class="icon" style="-webkit-mask-image: url('cog.svg'); mask-image: url('cog.svg');"></i>
+                System Configuration
+            </div>
+            <div class="input-group">
+                <label>Pipe Travel Delay (Seconds)</label>
+                <input type="number" id="opt_delay" value="12" min="0">
+            </div>
+            <div class="input-group">
+                <label>Flow Calibration Offset</label>
+                <input type="number" id="opt_calib" value="0">
+            </div>
+            <button class="primary" onclick="queueOptions()" style="margin-top: 8px;">Queue Changes</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <i class="icon" style="-webkit-mask-image: url('water.svg'); mask-image: url('water.svg');"></i> 
+                Calibration Helper
+            </div>
+            <p style="margin-bottom: 20px;">Place a cup under the pipe. The system will dispense water for 10 seconds. Weigh it in grams and update the offset above.</p>
+            <button onclick="executeImmediate({cmd: 'pump', dir: 0, spd: 100, sec: 10})">Dispense Test Volume</button>
+        </div>
+    </div>
+
+    <!-- VIEW: MAINTENANCE -->
+    <div id="view-maintenance" class="container">
+        <div class="card">
+            <div class="card-title">
+                <i class="icon" style="-webkit-mask-image: url('clock-edit-outline.svg'); mask-image: url('clock-edit-outline.svg');"></i> 
+                Clock Synchronization
+            </div>
+            <p style="margin-bottom: 20px;">The internal clock naturally drifts over time. Synchronize it with your device's accurate internet time.</p>
+            <button class="primary" onclick="executeImmediate({cmd: 'rtc'})">Synchronize Clock Now</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="color: var(--danger);">
+                <i class="icon" style="-webkit-mask-image: url('tune-variant.svg'); mask-image: url('tune-variant.svg');"></i>
+                Hardware Manual Control
+            </div>
+            <p style="margin-bottom: 20px; font-size: 0.85rem;">Warning: Overrides bypass scheduling logic and execute instantly.</p>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Pump Direction</label>
+                    <select id="maint_pump_dir"><option value="0">Forward</option><option value="1">Reverse</option></select>
+                </div>
+                <div class="input-group">
+                    <label>Power (%)</label>
+                    <input type="number" id="maint_pump_spd" value="50" min="0" max="100">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Duration (Seconds)</label>
+                <input type="number" id="maint_pump_sec" value="5" min="1">
+            </div>
+            <button class="danger" onclick="overridePump()" style="margin-bottom: 32px;">Engage Pump</button>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Solenoid Valve</label>
+                    <select id="maint_sol_zone"><option value="A">Zone A</option><option value="B">Zone B</option></select>
+                </div>
+                <div class="input-group">
+                    <label>State</label>
+                    <select id="maint_sol_state"><option value="1">OPEN</option><option value="0">CLOSED</option></select>
+                </div>
+            </div>
+            <button class="danger" onclick="overrideSol()">Toggle Solenoid</button>
+        </div>
+    </div>
+
+    <!-- WIZARD OVERLAY -->
+    <div id="screen-wizard" class="overlay hidden" style="justify-content: flex-start; padding-top: 50px;">
+        <div class="card" style="width: 100%; max-width: 480px; position: relative;">
+            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 16px; right: 16px;">
+                <i class="icon" style="-webkit-mask-image: url('close-circle.svg'); mask-image: url('close-circle.svg');"></i>
+            </button>
+            <div class="card-title" id="wiz-title">Create Schedule</div>
+            
+            <div id="wiz_1" class="wizard-step active">
+                <label style="margin-bottom: 10px; display: block;">Select Target Valve</label>
+                <select id="wiz_zone" style="margin-bottom: 30px;">
+                    <option value="A">Zone A</option>
+                    <option value="B">Zone B</option>
+                </select>
+                <button class="primary" onclick="wizGo(2)">Continue</button>
+            </div>
+
+            <div id="wiz_2" class="wizard-step">
+                <label style="margin-bottom: 10px; display: block;">Timing Mode</label>
+                <div class="mode-card selected" id="mode_interval" onclick="wizMode('interval')">
+                    <span class="item-main">Easy Interval</span>
+                    <span class="item-sub">Water routinely every few days, hours, or minutes.</span>
+                </div>
+                <div class="mode-card" id="mode_expert" onclick="wizMode('expert')">
+                    <span class="item-main">Expert Calendar</span>
+                    <span class="item-sub">Pick an exact start date and precise repetition cycle.</span>
+                </div>
+                <div class="input-row" style="margin-top: 30px;">
+                    <button onclick="wizGo(1)">Back</button>
+                    <button class="primary" onclick="wizGo(3)">Continue</button>
+                </div>
+            </div>
+
+            <div id="wiz_3a" class="wizard-step">
+                <div class="input-group">
+                    <label>Frequency (How Often)</label>
+                    <div class="input-row">
+                        <input type="number" id="wiz_int_val" value="3" min="1">
+                        <select id="wiz_int_unit">
+                            <option value="60">Minutes</option>
+                            <option value="3600">Hours</option>
+                            <option value="86400" selected>Days</option>
+                            <option value="604800">Weeks</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>Duration (How Long)</label>
+                    <div class="input-row">
+                        <input type="number" id="wiz_dur_val" value="10" min="1">
+                        <select id="wiz_dur_unit"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
+                    </div>
+                </div>
+                <div class="input-row" style="margin-top: 40px;">
+                    <button onclick="wizGo(2)">Back</button>
+                    <button class="primary" onclick="wizGo(4)">Continue</button>
+                </div>
+            </div>
+
+            <div id="wiz_3b" class="wizard-step">
+                <div class="input-group">
+                    <label>First Watering Event</label>
+                    <div class="input-row">
+                        <input type="date" id="wiz_exp_date" style="flex: 1.5;">
+                        <input type="time" id="wiz_exp_time" style="flex: 1;">
+                    </div>
+                </div>
+                
+                <label class="checkbox-container">
+                    <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()">
+                    <span>One-Time Event</span>
+                    <div class="tooltip">
+                        <i class="icon" style="width: 16px; height: 16px; -webkit-mask-image: url('information.svg'); mask-image: url('information.svg'); color: var(--text-muted);"></i>
+                        <span class="tooltiptext">When selected, the system will trigger only once on the specified date and time without repeating.</span>
+                    </div>
+                </label>
+
+                <div class="input-group" id="wiz_exp_rep_group">
+                    <label>Repeat Every</label>
+                    <div class="input-row">
+                        <input type="number" id="wiz_exp_rep_val" value="1" min="1">
+                        <select id="wiz_exp_rep_unit">
+                            <option value="60">Minutes</option>
+                            <option value="3600">Hours</option>
+                            <option value="86400" selected>Days</option>
+                            <option value="604800">Weeks</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top: 16px;">
+                    <label>Duration</label>
+                    <div class="input-row">
+                        <input type="number" id="wiz_exp_dur_val" value="10" min="1">
+                        <select id="wiz_exp_dur_unit"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
+                    </div>
+                </div>
+                <div class="input-row" style="margin-top: 30px;">
+                    <button onclick="wizGo(2)">Back</button>
+                    <button class="primary" onclick="wizGo(4)">Continue</button>
+                </div>
+            </div>
+
+            <div id="wiz_4" class="wizard-step">
+                <label style="margin-bottom: 10px; display: block;">Hardware Memory Allocation</label>
+                <select id="wiz_slot" style="margin-bottom: 30px; font-weight: 600;"></select>
+                <div class="input-row">
+                    <button onclick="wizGo(selectedWizMode === 'interval' ? '3a' : '3b')">Back</button>
+                    <button class="primary" onclick="attemptQueueSchedule()">Queue Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('schedules', this)">
+            <i class="icon nav-icon" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i> Schedules
+        </div>
+        <div class="nav-item" onclick="switchTab('options', this)">
+            <i class="icon nav-icon" style="-webkit-mask-image: url('cog.svg'); mask-image: url('cog.svg');"></i> Options
+        </div>
+        <div class="nav-item" onclick="switchTab('maintenance', this)">
+            <i class="icon nav-icon" style="-webkit-mask-image: url('tune-variant.svg'); mask-image: url('tune-variant.svg');"></i> Manual
+        </div>
+    </div>
+
 <script>
     // --- State Management ---
     let commandQueue = [];
@@ -578,3 +1014,5 @@
         document.getElementById('sch_count').innerText = `${count}/10`;
     }
 </script>
+</body>
+</html>
