@@ -23,15 +23,31 @@
         h3 { font-size: 1.15rem; font-weight: 600; }
         p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; }
         
-        svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+        /* Icon Masking System */
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: currentColor;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            flex-shrink: 0;
+        }
+        .icon-lg { width: 36px; height: 36px; }
+        .icon-xl { width: 48px; height: 48px; }
 
         /* Overlays & Modals */
         .overlay { position: fixed; inset: 0; background: rgba(9, 9, 11, 0.85); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.3s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
         .overlay.hidden { opacity: 0; pointer-events: none; }
         
-        .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateY(0) scale(1); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateY(0) scale(1); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
         .overlay.hidden .modal-box { transform: translateY(20px) scale(0.95); }
 
+        .static-icon { width: 96px; height: 96px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; color: var(--text-main); }
         .pulse-ring { width: 80px; height: 80px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; position: relative; color: var(--accent); }
         .pulse-ring::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
@@ -74,8 +90,8 @@
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(24, 24, 27, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 12px 10px 30px 10px; z-index: 1000; }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; padding: 10px; border-radius: 12px; }
         .nav-item.active { color: var(--accent); background: rgba(59, 130, 246, 0.12); }
-        .nav-icon { transition: transform 0.2s; }
-        .nav-item.active .nav-icon { transform: translateY(-2px); stroke: var(--accent); }
+        .nav-icon { width: 24px; height: 24px; transition: transform 0.2s; }
+        .nav-item.active .nav-icon { transform: translateY(-2px); }
 
         /* Queue Banner */
         .queue-banner { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(150%); width: calc(100% - 40px); max-width: 440px; background: rgba(239, 68, 68, 0.1); backdrop-filter: blur(12px); border: 1px solid var(--danger); border-radius: 16px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 900; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2); }
@@ -83,7 +99,7 @@
         .queue-info { display: flex; flex-direction: column; gap: 4px; }
         .queue-title { color: var(--danger); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
         .queue-desc { color: var(--text-main); font-size: 0.85rem; opacity: 0.9; }
-        .queue-banner button { width: auto; padding: 10px 24px; font-size: 0.95rem; margin: 0; box-shadow: none; border-radius: 10px; }
+        .queue-banner button { width: auto; padding: 10px 18px; font-size: 0.95rem; margin: 0; box-shadow: none; border-radius: 10px; }
 
         /* Lists */
         .list-item { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s; cursor: pointer; }
@@ -118,13 +134,13 @@
 
     <!-- Static Startup Screen -->
     <div id="screen-startup" class="overlay" style="background: var(--bg);">
-        <div class="pulse-ring" style="width: 100px; height: 100px; animation: none;">
-            <svg style="width: 40px; height: 40px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+        <div class="static-icon">
+            <i class="icon icon-xl" style="-webkit-mask-image: url('contactless.svg'); mask-image: url('contactless.svg');"></i>
         </div>
         <h2 id="startup-title">Connect System</h2>
         <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Press the button below, then tap your device against the controller to establish a secure connection.</p>
         <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">
-            <svg><path d="M4 11a9 9 0 0 1 9 9m-9-4a4 4 0 0 1 4 4m-4-9a14 14 0 0 1 14 14"></path></svg>
+            <i class="icon" style="-webkit-mask-image: url('nfc.svg'); mask-image: url('nfc.svg'); background-color: #fff;"></i>
             Start Scan
         </button>
     </div>
@@ -132,7 +148,9 @@
     <!-- Active Scanning Modal -->
     <div id="screen-scan-prompt" class="overlay hidden">
         <div class="modal-box">
-            <div class="pulse-ring"><svg style="width: 32px; height: 32px;"><path d="M4 11a9 9 0 0 1 9 9m-9-4a4 4 0 0 1 4 4m-4-9a14 14 0 0 1 14 14"></path></svg></div>
+            <div class="pulse-ring">
+                <i class="icon icon-lg" style="-webkit-mask-image: url('transit-connection-variant.svg'); mask-image: url('transit-connection-variant.svg');"></i>
+            </div>
             <h2>Ready to Scan</h2>
             <p style="color: var(--accent); margin-top: 8px;">Hold your device steady against the controller's tag.</p>
             <button onclick="cancelScan()" style="margin-top: 32px; background: transparent; border-color: var(--border);">Cancel</button>
@@ -142,7 +160,9 @@
     <!-- Sync Progress Modal -->
     <div id="screen-sync" class="overlay hidden">
         <div class="modal-box">
-            <div class="pulse-ring" style="border-color: var(--warning); color: var(--warning); animation-duration: 1s;"><svg style="width: 32px; height: 32px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+            <div class="pulse-ring" style="border-color: var(--warning); color: var(--warning); animation-duration: 1s;">
+                <i class="icon icon-lg" style="-webkit-mask-image: url('transit-connection-variant.svg'); mask-image: url('transit-connection-variant.svg');"></i>
+            </div>
             <h2>Synchronizing</h2>
             <p id="sync-status" style="color: var(--warning); font-weight: 600; margin-top: 8px;">Writing configuration...</p>
             <p style="margin-top: 8px; font-size: 0.85rem;">Please keep your device steady.</p>
@@ -152,7 +172,9 @@
     <!-- Confirmation Dialog -->
     <div id="dialog-confirm" class="overlay hidden">
         <div class="modal-box" style="padding: 24px;">
-            <div style="color: var(--warning); margin-bottom: 16px;"><svg style="width: 40px; height: 40px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+            <div style="color: var(--warning); margin-bottom: 16px;">
+                <i class="icon icon-xl" style="-webkit-mask-image: url('alert.svg'); mask-image: url('alert.svg');"></i>
+            </div>
             <h3 style="margin-bottom: 12px;">Overwrite Slot?</h3>
             <p id="dialog-msg" style="margin-bottom: 24px; font-size: 0.9rem;">This slot is currently active. Continuing will replace the existing schedule.</p>
             <div class="input-row">
@@ -165,7 +187,9 @@
     <!-- Schedule Details Modal -->
     <div id="modal-schedule-details" class="overlay hidden">
         <div class="modal-box" style="padding: 24px;">
-            <div style="color: var(--accent); margin-bottom: 12px;"><svg style="width: 40px; height: 40px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+            <div style="color: var(--accent); margin-bottom: 12px;">
+                <i class="icon icon-xl" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i>
+            </div>
             <h3 style="margin-bottom: 20px;">Schedule Details</h3>
             
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color: var(--success);">Active</span></div>
@@ -181,17 +205,21 @@
     <!-- Queue Banner -->
     <div id="queue-banner" class="queue-banner">
         <div class="queue-info">
-            <span class="queue-title"><svg style="width: 16px; height: 16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Unsaved Changes</span>
+            <span class="queue-title">
+                <i class="icon" style="-webkit-mask-image: url('alert.svg'); mask-image: url('alert.svg');"></i> Unsaved Changes
+            </span>
             <span class="queue-desc" id="queue-count">0 items pending</span>
         </div>
-        <button class="primary danger" onclick="executeQueue()">SYNC</button>
+        <button class="primary danger" onclick="executeQueue()">
+            <i class="icon" style="-webkit-mask-image: url('content-save-all.svg'); mask-image: url('content-save-all.svg');"></i> Save
+        </button>
     </div>
 
     <!-- VIEW: SCHEDULES -->
     <div id="view-schedules" class="container active">
         <div class="card">
             <div class="card-title">
-                <svg><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <i class="icon" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i>
                 <span>Active Schedules</span>
                 <span id="sch_count" style="margin-left: auto; color: var(--accent); font-size: 0.95rem;">0/10</span>
             </div>
@@ -199,7 +227,7 @@
                 <p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No schedules configured.<br>Tap below to create one.</p>
             </div>
             <button class="primary" onclick="openWizard()" style="margin-top: 10px;">
-                <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Schedule
+                Create New Schedule
             </button>
         </div>
     </div>
@@ -208,7 +236,7 @@
     <div id="view-options" class="container">
         <div class="card">
             <div class="card-title">
-                <svg><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <i class="icon" style="-webkit-mask-image: url('cog.svg'); mask-image: url('cog.svg');"></i>
                 System Configuration
             </div>
             <div class="input-group">
@@ -224,7 +252,8 @@
 
         <div class="card">
             <div class="card-title">
-                <svg><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg> Calibration Helper
+                <i class="icon" style="-webkit-mask-image: url('water.svg'); mask-image: url('water.svg');"></i> 
+                Calibration Helper
             </div>
             <p style="margin-bottom: 20px;">Place a cup under the pipe. The system will dispense water for 10 seconds. Weigh it in grams and update the offset above.</p>
             <button onclick="executeImmediate({cmd: 'pump', dir: 0, spd: 100, sec: 10})">Dispense Test Volume</button>
@@ -235,7 +264,8 @@
     <div id="view-maintenance" class="container">
         <div class="card">
             <div class="card-title">
-                <svg><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Clock Synchronization
+                <i class="icon" style="-webkit-mask-image: url('clock-edit-outline.svg'); mask-image: url('clock-edit-outline.svg');"></i> 
+                Clock Synchronization
             </div>
             <p style="margin-bottom: 20px;">The internal clock naturally drifts over time. Synchronize it with your device's accurate internet time.</p>
             <button class="primary" onclick="executeImmediate({cmd: 'rtc'})">Synchronize Clock Now</button>
@@ -243,7 +273,7 @@
 
         <div class="card">
             <div class="card-title" style="color: var(--danger);">
-                <svg><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                <i class="icon" style="-webkit-mask-image: url('tune-variant.svg'); mask-image: url('tune-variant.svg');"></i>
                 Hardware Manual Control
             </div>
             <p style="margin-bottom: 20px; font-size: 0.85rem;">Warning: Overrides bypass scheduling logic and execute instantly.</p>
@@ -281,7 +311,9 @@
     <!-- WIZARD OVERLAY -->
     <div id="screen-wizard" class="overlay hidden" style="justify-content: flex-start; padding-top: 50px;">
         <div class="card" style="width: 100%; max-width: 480px; position: relative;">
-            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 16px; right: 16px;"><svg><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 16px; right: 16px;">
+                <i class="icon" style="-webkit-mask-image: url('close-circle.svg'); mask-image: url('close-circle.svg');"></i>
+            </button>
             <div class="card-title" id="wiz-title">Create Schedule</div>
             
             <div id="wiz_1" class="wizard-step active">
@@ -348,7 +380,7 @@
                     <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()">
                     <span>One-Time Event</span>
                     <div class="tooltip">
-                        <svg style="width:16px; height:16px; color:var(--text-muted);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <i class="icon" style="width: 16px; height: 16px; -webkit-mask-image: url('information.svg'); mask-image: url('information.svg'); color: var(--text-muted);"></i>
                         <span class="tooltiptext">When selected, the system will trigger only once on the specified date and time without repeating.</span>
                     </div>
                 </label>
@@ -391,9 +423,15 @@
 
     <!-- Bottom Navigation -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('schedules', this)"><svg class="nav-icon"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Schedules</div>
-        <div class="nav-item" onclick="switchTab('options', this)"><svg class="nav-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Options</div>
-        <div class="nav-item" onclick="switchTab('maintenance', this)"><svg class="nav-icon"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg> Manual</div>
+        <div class="nav-item active" onclick="switchTab('schedules', this)">
+            <i class="icon nav-icon" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i> Schedules
+        </div>
+        <div class="nav-item" onclick="switchTab('options', this)">
+            <i class="icon nav-icon" style="-webkit-mask-image: url('cog.svg'); mask-image: url('cog.svg');"></i> Options
+        </div>
+        <div class="nav-item" onclick="switchTab('maintenance', this)">
+            <i class="icon nav-icon" style="-webkit-mask-image: url('tune-variant.svg'); mask-image: url('tune-variant.svg');"></i> Manual
+        </div>
     </div>
 
     <script>
@@ -687,7 +725,7 @@
         }
 
         function queueDeleteSchedule(slot, event) {
-            if(event) event.stopPropagation(); // Prevent opening details modal
+            if(event) event.stopPropagation();
             addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
         }
 
@@ -710,11 +748,10 @@
                 document.getElementById('det-freq').innerText = fDesc;
             }
 
-            // Estimate next run date relative to local time math
             let currentLocalEpoch = getLocalEpoch(new Date());
             let nextRunEpoch = sch.rawEpoch + sch.rawInterval;
-            
             let diffSecs = nextRunEpoch - currentLocalEpoch;
+            
             if (diffSecs < 0 && sch.rawInterval === ONE_SHOT_INTERVAL) {
                 document.getElementById('det-next').innerText = "Executed (Complete)";
                 document.getElementById('det-next').style.color = "var(--text-muted)";
@@ -745,10 +782,10 @@
                 const opt = document.createElement('option');
                 opt.value = i;
                 if (currentSchedules[i]) {
-                    opt.innerText = `Slot ${i + 1}  [ 🟢 Configured ]`;
+                    opt.innerText = `Slot ${i + 1}  [ Configured ]`;
                     opt.className = 'slot-configured';
                 } else {
-                    opt.innerText = `Slot ${i + 1}  [ ⚪ Available ]`;
+                    opt.innerText = `Slot ${i + 1}  [ Available ]`;
                     opt.className = 'slot-available';
                     if (firstEmpty === -1) firstEmpty = i;
                 }
@@ -820,7 +857,7 @@
                 duration = dv * du;
 
                 if (document.getElementById('wiz_exp_oneshot').checked) {
-                    interval = ONE_SHOT_INTERVAL; // 10 years offset trick for one-shot execution
+                    interval = ONE_SHOT_INTERVAL; 
                 } else {
                     let v = parseInt(document.getElementById('wiz_exp_rep_val').value);
                     let u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
@@ -846,7 +883,7 @@
                             <span class="item-sub">${currentSchedules[i].desc}</span>
                         </div>
                         <button class="btn-icon" onclick="queueDeleteSchedule(${i}, event)">
-                            <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <i class="icon" style="-webkit-mask-image: url('trash-can-outline.svg'); mask-image: url('trash-can-outline.svg');"></i>
                         </button>
                     </div>`;
                 }
