@@ -465,14 +465,14 @@
                     </div>
 
                     <p style="font-size: 0.9rem;"><strong>Crucial:</strong> Your tubes must be entirely full of water. If there is air in the lines, tap below to purge.</p>
-                    <button class="btn" style="margin-top: 16px;" onclick="calibPrime()">Tap Device to Prime (15s)</button>
+                    <button class="btn" style="margin-top: 16px;" onclick="calibPrime()">Tap Device to Purge (15s)</button>
                 </div>
 
                 <div id="calib-step-2" class="calib-step hidden">
                     <h3 style="margin-top: 0; font-size: 1.1rem;">Step 2: Dispense Test <span id="calib-pass-label" style="font-size: 0.85rem; color: var(--primary); font-weight: 500; margin-left: 8px;">(Pass 1 of 2)</span></h3>
                     <ol style="padding-left: 16px; line-height: 1.6; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
-                        <li>Place an empty cup on a digital kitchen scale.</li>
-                        <li><strong>Tare the scale to exactly 0 grams.</strong></li>
+                        <li>Place an empty cup on a scale.</li>
+                        <li><strong>Tare the scale.</strong></li>
                         <li>Place the cup beneath the <strong>Zone A</strong> nozzle.</li>
                         <li>Tap the button below and scan your controller.</li>
                     </ol>
@@ -482,10 +482,10 @@
 
                 <div id="calib-step-3" class="calib-step hidden">
                     <h3 style="margin-top: 0; font-size: 1.1rem;">Step 3: Measure Weight</h3>
-                    <p class="card-desc">Weigh the water currently in the cup. Because 1 gram of water equals exactly 1 milliliter, enter the scale's reading below.</p>
+                    <p class="card-desc">Weigh the water currently in the cup, and enter the scale's reading below.</p>
                     
                     <div style="margin: 24px 0;">
-                        <span class="label">Measured Weight (grams)</span>
+                        <span class="label">Measured Weight (mL)</span>
                         <input type="number" id="calib-weight" placeholder="e.g. 17.5" step="0.1" style="font-size: 1.5rem; text-align: center; padding: 16px;">
                     </div>
                 </div>
