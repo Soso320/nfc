@@ -35,7 +35,7 @@
             --text-muted: #9ca3af;
             --border: #4b5563;
             --danger: #ef4444;
-            --danger-bg: rgba(239, 68, 68, 0.1);
+            --danger-bg: #451a1a;
             --success: #22c55e;
             --warning: #f97316;
             --warning-bg: rgba(249, 115, 22, 0.1);
@@ -52,7 +52,6 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* THE FIX: Missing utility class that broke the wizards */
         .hidden { display: none !important; }
 
         /* --- FLUID TRANSITION ENGINE --- */
@@ -95,11 +94,10 @@
         img.icon-sm { width: 18px; height: 18px; display: block; opacity: 0.7; }
         img.icon-lg { width: 48px; height: 48px; display: block; opacity: 0.8; }
         
-        [data-theme="dark"] img.icon { filter: invert(0.8); }
-        [data-theme="dark"] img.icon-sm { filter: invert(0.8); }
+        [data-theme="dark"] img.icon, 
+        [data-theme="dark"] img.icon-sm, 
         [data-theme="dark"] img.icon-lg { filter: invert(0.8); }
 
-        /* Force primary color for active tab regardless of theme */
         .nav-item.active img.icon { filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%) !important; opacity: 1; }
 
         /* --- COMPONENTS --- */
@@ -132,7 +130,7 @@
         
         /* Segmented Control */
         .segmented-control { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; transition: border-color 0.3s; }
-        .seg-btn { flex: 1; padding: 10px; text-align: center; font-size: 0.9rem; font-weight: 500; background: var(--surface); color: var(--text-muted); cursor: pointer; transition: 0.2s; border: none; }
+        .seg-btn { flex: 1; padding: 10px; text-align: center; font-size: 0.9rem; font-weight: 600; background: var(--surface); color: var(--text-muted); cursor: pointer; transition: 0.2s; border: none; }
         .seg-btn.active { background: var(--primary); color: white; }
 
         /* Custom Toggle Switch */
@@ -172,7 +170,8 @@
         .modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
         .modal-body { padding: 20px; overflow-y: auto; max-height: 60vh; }
         .modal-footer { padding: 16px 20px; background: var(--surface-hover); border-top: 1px solid var(--border); display: flex; gap: 12px; transition: background-color 0.3s, border-color 0.3s; }
-        .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+        .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: opacity 0.2s; }
+        .btn-icon:hover { opacity: 1; }
 
         /* Toast & Banners */
         #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; }
@@ -182,7 +181,7 @@
 
         .queue-banner {
             position: fixed; bottom: 70px; left: 15px; right: 15px;
-            background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning);
+            background: var(--warning-bg); border: 1px solid #fed7aa; color: var(--warning);
             padding: 12px 16px; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center;
             z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease;
@@ -194,16 +193,20 @@
             position: fixed; inset: 0; background: var(--surface); z-index: 500;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; text-align: center;
-            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.3s;
+            opacity: 0; visibility: hidden; pointer-events: none; 
+            transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.5s ease;
         }
         .fullscreen-state.open { opacity: 1; visibility: visible; pointer-events: auto; }
+        
+        /* Red Fade Error State */
+        .fullscreen-state.error-state { background-color: var(--danger-bg) !important; }
 
-        /* Verbose Terminal Logging */
-        .terminal-log {
-            width: 100%; max-width: 380px; height: 160px; margin-top: 20px;
-            background: #0a0a0a; color: #10b981; font-family: monospace; font-size: 0.75rem;
-            text-align: left; padding: 12px; border-radius: var(--radius); border: 1px solid #333;
-            overflow-y: auto; box-sizing: border-box; white-space: pre-wrap;
+        /* Subtle Power User Log */
+        .subtle-log {
+            color: var(--text-muted); font-size: 0.8rem;
+            margin-top: 16px; line-height: 1.5;
+            min-height: 40px; text-align: center;
+            transition: opacity 0.3s;
         }
 
         .flex-row { display: flex; gap: 12px; align-items: center; }
@@ -225,7 +228,7 @@
 
     <!-- STARTUP SCREEN -->
     <div id="screen-startup" class="fullscreen-state open">
-        <img src="contactless.svg" class="icon-lg" style="margin-bottom: 24px;" alt="NFC">
+        <img src="contactless.svg" class="icon-lg" style="margin-bottom: 24px; opacity: 0.8;" alt="NFC">
         <h1 style="font-size: 2rem; color: var(--text-main); margin: 0 0 12px 0;">System Overview</h1>
         <p style="color: var(--text-muted); max-width: 300px; line-height: 1.5; margin-bottom: 30px;">Tap your phone against the hardware controller to authenticate and load configuration.</p>
         <button class="btn btn-primary" style="max-width: 250px;" onclick="initConnection()">
@@ -241,18 +244,16 @@
         <button class="btn" style="max-width: 200px;" onclick="cancelScan()">Cancel</button>
     </div>
 
-    <!-- SYNCING OVERLAY WITH VERBOSE TERMINAL -->
+    <!-- SYNCING OVERLAY (With Cancel & Error capabilities) -->
     <div id="screen-sync" class="fullscreen-state" style="z-index: 9999;">
         <img src="transit-connection-variant.svg" class="icon-lg" style="margin-bottom: 20px; opacity: 0.5;" alt="Syncing">
-        <h2 id="sync-status" style="margin: 0 0 16px 0; color: var(--text-main);">Communicating...</h2>
+        <h2 id="sync-status" style="margin: 0; color: var(--text-main); white-space: pre-wrap;">Communicating...</h2>
         
-        <!-- Progress Bar -->
-        <div style="width: 100%; max-width: 380px; height: 6px; background: var(--border); border-radius: 4px; overflow: hidden;">
-            <div id="sync-progress" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
-        </div>
-
-        <!-- Diagnostic Log -->
-        <div id="sync-log" class="terminal-log">Waiting for command initiation...</div>
+        <p id="sync-error-msg" style="color: var(--danger); font-weight: 600; margin: 12px 0 0 0; display: none;"></p>
+        
+        <div id="sync-log" class="subtle-log hidden"></div>
+        
+        <button id="btn-sync-cancel" class="btn" style="max-width: 200px; margin-top: 30px;" onclick="cancelSync()">Cancel Action</button>
     </div>
 
     <!-- TABS NAVIGATION -->
@@ -327,13 +328,22 @@
         <h2 class="header-title">System Settings</h2>
         
         <div class="card">
+            <h3 class="card-title" style="margin:0 0 12px 0;">Appearance Theme</h3>
+            <div class="segmented-control" style="margin-bottom: 0;">
+                <button id="theme-btn-system" class="seg-btn active" onclick="setTheme('system')">Auto</button>
+                <button id="theme-btn-light" class="seg-btn" onclick="setTheme('light')">Light</button>
+                <button id="theme-btn-dark" class="seg-btn" onclick="setTheme('dark')">Dark</button>
+            </div>
+        </div>
+        
+        <div class="card">
             <div class="flex-row" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <h3 class="card-title" style="margin:0;">Dark Mode</h3>
-                    <p class="card-desc" style="margin: 4px 0 0 0;">Toggle the application interface theme.</p>
+                    <h3 class="card-title" style="margin:0;">Verbose NFC Logging</h3>
+                    <p class="card-desc" style="margin: 4px 0 0 0;">Show diagnostic transmission steps.</p>
                 </div>
                 <label class="switch">
-                    <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+                    <input type="checkbox" id="power-user-toggle" onchange="togglePowerUser()">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -487,13 +497,13 @@
             </div>
             <div class="modal-body">
                 <span class="label">Target Zone</span>
-                <p id="det-zone" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main);"></p>
+                <p id="det-zone" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem;"></p>
                 
                 <span class="label">Amount / Duration</span>
                 <p id="det-dur" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem; color: var(--primary);"></p>
                 
                 <span class="label">Frequency</span>
-                <p id="det-freq" style="margin: 0 0 24px 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main);"></p>
+                <p id="det-freq" style="margin: 0 0 24px 0; font-weight: 600; font-size: 1.1rem;"></p>
                 
                 <div style="background: var(--surface-hover); border: 1px solid var(--primary); border-radius: var(--radius); padding: 16px; text-align: center;">
                     <span class="label" style="margin-bottom: 4px;">Next Execution</span>
@@ -540,12 +550,12 @@
                     <p class="card-desc" style="font-size: 0.95rem;">Select the scheduling logic for this zone:</p>
                     
                     <div id="mode_interval" class="card selected" style="cursor:pointer; border-color:var(--primary); box-shadow: 0 0 0 1px var(--primary);" onclick="wizMode('interval')">
-                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Simple Repeating</h4>
+                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem;">Simple Repeating</h4>
                         <p class="card-desc" style="margin-bottom:0;">Start watering immediately and repeat at a fixed interval.</p>
                     </div>
 
                     <div id="mode_expert" class="card" style="cursor:pointer;" onclick="wizMode('expert')">
-                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Advanced Schedule</h4>
+                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem;">Advanced Schedule</h4>
                         <p class="card-desc" style="margin-bottom:0;">Specify an exact starting date/time, or configure one-shot events.</p>
                     </div>
                 </div>
@@ -621,7 +631,7 @@
 
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 16px; background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
                         <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()" style="width: auto; margin: 0;">
-                        <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">One-Shot Event (Do not repeat)</span>
+                        <span style="font-weight: 500; font-size: 0.95rem;">One-Shot Event (Do not repeat)</span>
                     </label>
 
                     <div id="wiz_exp_rep_group">
@@ -673,34 +683,56 @@
         let globalNDEF = null; 
         let isNfcScanning = false;
         let isSyncing = false; 
+        
+        // Cancellation and Abort Logic
+        let syncCancelled = false;
+        let nfcAbortController = null;
 
         // --- Fluid UI Toggles ---
         function openModal(id) { document.getElementById(id).classList.add('open'); }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-        // --- Dark Mode Logic ---
-        function toggleTheme() {
-            const toggle = document.getElementById('theme-toggle');
-            if (toggle.checked) {
+        // --- Theme Engine ---
+        function applyTheme() {
+            const mode = localStorage.getItem('theme') || 'system';
+            document.querySelectorAll('.seg-btn').forEach(b => {
+                if(b.id.startsWith('theme-btn')) b.classList.remove('active');
+            });
+            const btn = document.getElementById('theme-btn-' + mode);
+            if(btn) btn.classList.add('active');
+
+            if (mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
             } else {
                 document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
             }
         }
 
-        // --- Diagnostic Terminal Logger ---
-        function clearLog() {
-            document.getElementById('sync-log').innerHTML = '';
-        }
-        function logSync(msg) {
-            const logWindow = document.getElementById('sync-log');
-            const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit'});
-            logWindow.innerHTML += `[${time}] ${msg}\n`;
-            logWindow.scrollTop = logWindow.scrollHeight;
+        function setTheme(mode) {
+            localStorage.setItem('theme', mode);
+            applyTheme();
         }
 
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if ((localStorage.getItem('theme') || 'system') === 'system') applyTheme();
+        });
+
+        // --- Power User Diagnostics ---
+        function togglePowerUser() {
+            const isChecked = document.getElementById('power-user-toggle').checked;
+            localStorage.setItem('powerUser', isChecked);
+            const logBox = document.getElementById('sync-log');
+            if (isChecked) logBox.classList.remove('hidden');
+            else logBox.classList.add('hidden');
+        }
+
+        function logSync(msg) {
+            if (localStorage.getItem('powerUser') !== 'true') return;
+            const logBox = document.getElementById('sync-log');
+            logBox.innerHTML = `<div>${msg}</div>` + logBox.innerHTML;
+        }
+
+        // --- Core Application Init ---
         const defaultNFCReadHandler = (event) => {
             for (const record of event.message.records) {
                 if (record.mediaType && record.mediaType.includes("octet-stream")) {
@@ -712,8 +744,14 @@
         async function ensureScanning() {
             if (!globalNDEF) globalNDEF = new NDEFReader();
             if (!isNfcScanning) {
-                await globalNDEF.scan();
-                isNfcScanning = true;
+                // Attach our abort controller signal if one exists
+                const options = nfcAbortController ? { signal: nfcAbortController.signal } : {};
+                try {
+                    await globalNDEF.scan(options);
+                    isNfcScanning = true;
+                } catch(e) {
+                    if (e.name !== 'AbortError') throw e;
+                }
             }
         }
 
@@ -725,11 +763,11 @@
                 return;
             }
 
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                document.getElementById('theme-toggle').checked = true;
-            }
+            applyTheme(); // Init theme
+            
+            const isPowerUser = localStorage.getItem('powerUser') === 'true';
+            document.getElementById('power-user-toggle').checked = isPowerUser;
+            if (isPowerUser) document.getElementById('sync-log').classList.remove('hidden');
 
             const storedSch = localStorage.getItem('irrigationSchedules');
             if (storedSch) {
@@ -748,7 +786,6 @@
             }
         };
 
-        // --- Core Utilities ---
         function showToast(msg) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -792,7 +829,41 @@
             return `${sec} Secs`;
         }
 
-        // --- NFC Polling & Hardware Handshake ---
+        // --- NFC Handshake & Execution ---
+        function cancelSync() {
+            syncCancelled = true;
+            if (nfcAbortController) {
+                nfcAbortController.abort();
+            }
+        }
+
+        function handleSyncError(err) {
+            const status = document.getElementById('sync-status');
+            const errorMsg = document.getElementById('sync-error-msg');
+            const screen = document.getElementById('screen-sync');
+            
+            if (err.name === 'AbortError' || syncCancelled) {
+                status.innerText = "Cancelled";
+                logSync("Action aborted by user.");
+                setTimeout(() => closeModal('screen-sync'), 800);
+            } else {
+                status.innerText = "Sync Failed";
+                status.style.color = "var(--danger)";
+                errorMsg.innerText = err.message;
+                errorMsg.style.display = "block";
+                screen.classList.add('error-state');
+                
+                setTimeout(() => {
+                    closeModal('screen-sync');
+                    setTimeout(() => {
+                        screen.classList.remove('error-state');
+                        errorMsg.style.display = "none";
+                        status.style.color = "var(--text-main)";
+                    }, 400); // Wait for modal to hide before resetting colors
+                }, 3000);
+            }
+        }
+
         function parseTelemetryAndSave(data) {
             let idx = 4; // Skip hardware states
             idx += 2; // Skip legacy pipe delay
@@ -837,11 +908,15 @@
         async function initConnection() {
             if (!("NDEFReader" in window) || isSyncing) return;
             isSyncing = true;
+            syncCancelled = false;
+            nfcAbortController = new AbortController();
+
             try {
                 openModal('screen-scan-prompt');
                 await ensureScanning();
 
                 globalNDEF.onreading = event => {
+                    if (syncCancelled) return;
                     let synced = false;
                     for (const record of event.message.records) {
                         if (record.mediaType && record.mediaType.includes("octet-stream")) {
@@ -856,13 +931,16 @@
                     isSyncing = false;
                 };
             } catch (err) {
+                if (err.name !== 'AbortError') {
+                    showToast("Scan Failed: " + err.message);
+                }
                 closeModal('screen-scan-prompt');
-                showToast("Scan Failed: " + err.message);
                 isSyncing = false;
             }
         }
 
         function cancelScan() {
+            cancelSync();
             closeModal('screen-scan-prompt');
             isSyncing = false;
             if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
@@ -871,46 +949,48 @@
         async function executeImmediate(payload) {
             if (isSyncing) return;
             isSyncing = true;
+            syncCancelled = false;
+            nfcAbortController = new AbortController();
 
             const status = document.getElementById('sync-status');
-            const progress = document.getElementById('sync-progress');
             
             try {
-                clearLog();
+                document.getElementById('sync-log').innerHTML = ''; // Clear logs
                 openModal('screen-sync');
                 
-                logSync(">>> Initiating Direct Command...");
+                logSync("Command Initiated...");
                 status.innerText = "Transmitting...\nHold phone steady.";
-                progress.style.width = '10%';
 
                 const encoder = new TextEncoder();
                 const pl = buildNFCPayload(payload);
-                logSync(`Compiling JSON Payload:`);
-                logSync(`${pl}`);
+                logSync(`Payload size: ${pl.length} bytes`);
                 
                 await ensureScanning();
-                
-                logSync(`Payload size: ${pl.length} bytes.`);
-                logSync(`Transmitting via Web NFC...`);
-                progress.style.width = '30%';
+                if (syncCancelled) throw new DOMException("Aborted", "AbortError");
 
                 await globalNDEF.write({
                     records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(pl) }]
-                });
+                }, { signal: nfcAbortController.signal });
+
+                if (syncCancelled) throw new DOMException("Aborted", "AbortError");
 
                 status.innerText = "Awaiting Verification...\nHold phone steady.";
-                logSync(`Transmission OK.`);
-                logSync(`Awaiting ST25DV binary telemetry overwrite...`);
-                progress.style.width = '60%';
+                logSync(`Write OK. Waiting for ST25DV validation...`);
 
-                const verified = await new Promise((resolve) => {
+                const verified = await new Promise((resolve, reject) => {
                     const timeout = setTimeout(() => resolve(false), 4500);
+
+                    // Add listener to abort controller to reject early if cancelled while waiting
+                    nfcAbortController.signal.addEventListener('abort', () => {
+                        clearTimeout(timeout);
+                        reject(new DOMException("Aborted", "AbortError"));
+                    });
 
                     globalNDEF.onreading = event => {
                         for (const record of event.message.records) {
                             if (record.mediaType && record.mediaType.includes("octet-stream")) {
                                 clearTimeout(timeout);
-                                logSync(`<<< Telemetry received (${record.data.byteLength} bytes)`);
+                                logSync(`Verification received (${record.data.byteLength} bytes).`);
                                 parseTelemetryAndSave(record.data); 
                                 resolve(true);
                             }
@@ -919,23 +999,19 @@
                 });
 
                 if (verified) {
-                    logSync(`Hardware validation successful.`);
-                    progress.style.width = '100%';
                     status.innerText = "Command Executed";
+                    status.style.color = "var(--success)";
                     await new Promise(r => setTimeout(r, 1200));
+                    closeModal('screen-sync');
                 } else {
-                    throw new Error("Controller did not verify in time.");
+                    throw new Error("Controller did not verify in time. Is it powered?");
                 }
             } catch (err) {
-                status.innerText = "Transmission Failed";
-                logSync(`ERROR: ${err.message}`);
-                showToast("Error: " + err.message);
-                progress.style.width = '0%';
-                await new Promise(r => setTimeout(r, 2500));
+                handleSyncError(err);
             } finally {
-                closeModal('screen-sync');
                 isSyncing = false;
                 if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
+                status.style.color = "var(--text-main)"; // Reset
             }
         }
 
@@ -943,7 +1019,6 @@
         function overridePump() {
             const spd = parseInt(document.getElementById('maint_pump_spd').value);
             const sec = parseInt(document.getElementById('maint_pump_sec').value);
-
             if (isNaN(spd) || spd < 0 || spd > 100) { showToast("Enter speed between 0-100%"); return; }
             if (isNaN(sec) || sec <= 0) { showToast("Enter a duration greater than 0"); return; }
             executeImmediate({ cmd: "pump", dir: 1, spd: spd, sec: sec });
@@ -989,25 +1064,24 @@
         async function executeQueue() {
             if (commandQueue.length === 0 || isSyncing) return;
             isSyncing = true;
+            syncCancelled = false;
+            nfcAbortController = new AbortController();
             
             const status = document.getElementById('sync-status');
-            const progress = document.getElementById('sync-progress');
             
             try {
-                clearLog();
+                document.getElementById('sync-log').innerHTML = ''; // Clear
                 openModal('screen-sync');
                 const encoder = new TextEncoder();
                 await ensureScanning(); 
+                if (syncCancelled) throw new DOMException("Aborted", "AbortError");
 
                 for (let i = 0; i < commandQueue.length; i++) {
                     const cmd = commandQueue[i];
                     let verified = false;
                     let attempts = 0;
                     
-                    let phasePercent = ((i) / commandQueue.length) * 100;
-                    progress.style.width = phasePercent + '%';
-
-                    logSync(`\n=== Processing Item ${i + 1} of ${commandQueue.length} ===`);
+                    logSync(`Processing Item ${i + 1}/${commandQueue.length}`);
                     logSync(`Task: ${cmd.desc}`);
 
                     while (!verified && attempts < 2) {
@@ -1015,17 +1089,23 @@
                         status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\n${cmd.desc}...`;
                         
                         const pl = buildNFCPayload(cmd.payload);
-                        logSync(`Attempt ${attempts} - Payload size: ${pl.length} bytes`);
                         
                         await globalNDEF.write({
                             records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(pl) }]
-                        });
+                        }, { signal: nfcAbortController.signal });
+                        
+                        if (syncCancelled) throw new DOMException("Aborted", "AbortError");
 
                         status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\nVerifying...\n(Keep phone steady)`;
-                        logSync(`Write OK. Waiting for ST25DV validation...`);
+                        logSync(`Write OK. Verifying...`);
 
-                        verified = await new Promise((resolve) => {
+                        verified = await new Promise((resolve, reject) => {
                             const timeout = setTimeout(() => resolve(false), 4500);
+
+                            nfcAbortController.signal.addEventListener('abort', () => {
+                                clearTimeout(timeout);
+                                reject(new DOMException("Aborted", "AbortError"));
+                            });
 
                             globalNDEF.onreading = event => {
                                 for (const record of event.message.records) {
@@ -1033,7 +1113,7 @@
                                         try {
                                             parseTelemetryAndSave(record.data);
                                             clearTimeout(timeout);
-                                            logSync(`<<< Telemetry verified (${record.data.byteLength} bytes)`);
+                                            logSync(`Telemetry verified.`);
                                             resolve(true);
                                         } catch (e) {}
                                     }
@@ -1043,30 +1123,27 @@
 
                         if (!verified && attempts < 2) {
                             status.innerText = "Timeout. Retrying...";
-                            logSync(`Timeout. Hardware failed to ACK within 4.5s.`);
+                            logSync(`Timeout. Retrying...`);
                             await new Promise(r => setTimeout(r, 1000));
                         }
                     }
-                    if (!verified) throw new Error(`Timeout on: ${cmd.desc}. Ensure controller is plugged in.`);
+                    if (!verified) throw new Error(`Timeout on: ${cmd.desc}.`);
                 }
 
                 commandQueue = [];
                 updateQueueUI();
-                progress.style.width = '100%';
                 status.innerText = "All Changes Verified";
-                logSync(`\n=== SYNC COMPLETE ===`);
+                status.style.color = "var(--success)";
+                logSync(`SYNC COMPLETE`);
                 await new Promise(r => setTimeout(r, 1500));
+                closeModal('screen-sync');
 
             } catch (err) {
-                status.innerText = "Sync Interrupted";
-                logSync(`\nERROR: ${err.message}`);
-                showToast(err.message);
-                progress.style.width = '0%';
-                await new Promise(r => setTimeout(r, 3000));
+                handleSyncError(err);
             } finally {
-                closeModal('screen-sync');
                 isSyncing = false;
                 if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
+                status.style.color = "var(--text-main)"; // Reset
             }
         }
 
@@ -1312,12 +1389,9 @@
         function wizMode(mode) {
             selectedWizMode = mode;
             document.getElementById('mode_interval').style.borderColor = 'var(--border)';
-            document.getElementById('mode_interval').style.boxShadow = 'none';
             document.getElementById('mode_expert').style.borderColor = 'var(--border)';
-            document.getElementById('mode_expert').style.boxShadow = 'none';
             
             document.getElementById('mode_' + mode).style.borderColor = 'var(--primary)';
-            document.getElementById('mode_' + mode).style.boxShadow = '0 0 0 1px var(--primary)';
         }
 
         function toggleOneShot() {
