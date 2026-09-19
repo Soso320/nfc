@@ -233,9 +233,9 @@
     <div id="screen-startup" class="fullscreen-state open">
         <img src="contactless.svg" class="icon-lg" style="margin-bottom: 24px; opacity: 0.8;" alt="NFC">
         <h1 style="font-size: 2rem; color: var(--text-main); margin: 0 0 12px 0;">System Overview</h1>
-        <p style="color: var(--text-muted); max-width: 300px; line-height: 1.5; margin-bottom: 30px;">Tap your phone against the hardware controller to authenticate and load configuration.</p>
+        <p style="color: var(--text-muted); max-width: 300px; line-height: 1.5; margin-bottom: 30px;">Tap your phone against the device to begin.</p>
         <button class="btn btn-primary" style="max-width: 250px;" onclick="initConnection()">
-            <img src="transit-connection-variant.svg" class="icon" style="filter: invert(1);" alt="Connect"> Connect Controller
+            <img src="nfc_drawing.svg" class="icon" style="filter: invert(1);" alt="Connect"> Connect
         </button>
     </div>
 
@@ -243,7 +243,7 @@
     <div id="screen-scan-prompt" class="fullscreen-state">
         <img src="nfc.svg" class="icon-lg" style="margin-bottom: 20px; filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%);" alt="Scanning">
         <h2 style="margin: 0 0 8px 0; color: var(--primary);">Ready to Scan</h2>
-        <p style="color: var(--text-muted); margin-bottom: 30px;">Hold phone perfectly still against the NFC icon.</p>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Hold phone against the NFC icon.</p>
         <button class="btn" style="max-width: 200px;" onclick="cancelScan()">Cancel</button>
     </div>
 
@@ -309,7 +309,7 @@
                 <img src="measuring_cup.svg" class="icon" alt="Measure">
                 <h3 class="card-title" style="margin:0;">Precise Volume Dispense</h3>
             </div>
-            <p class="card-desc">Dispense an exact liquid volume based on calibrated metrics.</p>
+            <p class="card-desc">Dispense an exact liquid volume based on calibration data.</p>
             
             <span class="label">Target Zone</span>
             <select id="maint_disp_zone">
