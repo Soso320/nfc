@@ -283,7 +283,7 @@
             <div class="flex-row">
                 <img src="sprinkler.svg" class="icon-lg" style="filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%);" alt="Sprinkler">
                 <div style="flex: 1;">
-                    <span class="label" style="color: var(--primary);">Next Upcoming Watering</span>
+                    <span class="label" style="color: var(--primary);">Next Watering</span>
                     <div id="next-wat-time" style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 2px;"></div>
                     <div style="font-size: 0.9rem; color: var(--text-muted);">
                         <span id="next-wat-zone" style="font-weight: 600;"></span> • <span id="next-wat-amt"></span>
@@ -320,7 +320,7 @@
             <span class="label">Volume (mL)</span>
             <input type="number" id="maint_disp_ml" value="50" min="5">
             
-            <button id="btn_override_dispense" class="btn btn-primary" onclick="overrideDispense()">Execute Dispense</button>
+            <button id="btn_override_dispense" class="btn btn-primary" onclick="overrideDispense()">Dispense</button>
             
             <!-- Uncalibrated Lock Warning -->
             <div id="maint_disp_lock" style="display:none; background: var(--danger-bg); border: 1px solid #fca5a5; color: var(--danger); padding: 10px; border-radius: var(--radius); font-size: 0.85rem; margin-top: 12px;">
@@ -332,9 +332,9 @@
         <div class="card">
             <div class="flex-row" style="margin-bottom: 8px;">
                 <img src="water.svg" class="icon" alt="Prime">
-                <h3 class="card-title" style="margin:0;">Prime System</h3>
+                <h3 class="card-title" style="margin:0;">Purge System</h3>
             </div>
-            <p class="card-desc">Flush compressible air from the lines to guarantee volumetric accuracy.</p>
+            <p class="card-desc">Purge air from the lines to guarantee volumetric accuracy, or water for safe storage.</p>
             
             <span class="label">Target Zone</span>
             <select id="prime_zone">
@@ -344,7 +344,7 @@
             
             <span class="label">Duration (Seconds)</span>
             <input type="number" id="prime_sec" value="15" min="1">
-            <button class="btn" onclick="executePrime()">Prime Lines Now</button>
+            <button class="btn" onclick="executePrime()">Purge</button>
         </div>
     </div>
 
@@ -353,7 +353,7 @@
         <h2 class="header-title">System Settings</h2>
         
         <div class="card">
-            <h3 class="card-title" style="margin:0 0 12px 0;">Appearance Theme</h3>
+            <h3 class="card-title" style="margin:0 0 12px 0;">Appearance</h3>
             <div class="segmented-control" style="margin-bottom: 0;">
                 <button id="theme-btn-system" class="seg-btn active" onclick="setTheme('system')">Auto</button>
                 <button id="theme-btn-light" class="seg-btn" onclick="setTheme('light')">Light</button>
@@ -365,7 +365,7 @@
             <div class="flex-row" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h3 class="card-title" style="margin:0;">Verbose NFC Logging</h3>
-                    <p class="card-desc" style="margin: 4px 0 0 0;">Show diagnostic transmission steps.</p>
+                    <p class="card-desc" style="margin: 4px 0 0 0;">Show diagnostic transmission logs.</p>
                 </div>
                 <label class="switch">
                     <input type="checkbox" id="power-user-toggle" onchange="togglePowerUser()">
@@ -383,7 +383,7 @@
             
             <span class="label">Current Base Rate (mL/min)</span>
             <input type="number" id="opt_calib" value="0">
-            <button class="btn" onclick="openCalibration()">Launch Volumetric Wizard</button>
+            <button class="btn" onclick="openCalibration()">Calibration Wizard</button>
             <button class="btn btn-primary" style="margin-top: 16px;" onclick="queueOptions()">
                 <img src="content-save-all.svg" class="icon" style="filter: invert(1);" alt="Save"> Save Configuration
             </button>
@@ -405,7 +405,7 @@
     <div id="modal-maintenance" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="color: var(--warning);">Hardware Sandbox</h3>
+                <h3 style="color: var(--warning);">Hardware Testing</h3>
                 <button class="btn-icon" onclick="closeModal('modal-maintenance')"><img src="close-circle.svg" class="icon" alt="Close"></button>
             </div>
             <div class="modal-body">
@@ -419,8 +419,8 @@
                     <option value="O">All Zones</option>
                 </select>
                 <select id="maint_sol_state">
-                    <option value="1">Force Open Valve</option>
-                    <option value="0">Force Close Valve</option>
+                    <option value="1">Open Valve</option>
+                    <option value="0">Close Valve [Default]</option>
                 </select>
                 <button class="btn" style="margin-bottom: 24px;" onclick="overrideSol()">Actuate Valve</button>
 
@@ -572,7 +572,7 @@
 
                 <!-- STEP 2: Mode Selection -->
                 <div id="wiz_2" class="wizard-step hidden">
-                    <p class="card-desc" style="font-size: 0.95rem;">Select the scheduling logic for this zone:</p>
+                    <p class="card-desc" style="font-size: 0.95rem;">Select the scheduling type for this zone:</p>
                     
                     <div id="mode_interval" class="card selected" style="cursor:pointer; border-color:var(--primary); box-shadow: 0 0 0 1px var(--primary);" onclick="wizMode('interval')">
                         <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Simple Repeating</h4>
