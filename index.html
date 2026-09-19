@@ -6,80 +6,103 @@
     <title>Irrigation Controller</title>
     <style>
         :root {
-            --bg-main: #0a0a0a;
-            --bg-card: #141414;
             --accent: #00d2ff;
+            --accent-glow: rgba(0, 210, 255, 0.4);
             --text-main: #ffffff;
-            --text-muted: #888888;
+            --text-muted: #a0aec0;
             --danger: #ff4757;
             --success: #2ed573;
             --warning: #ffa502;
         }
 
+        /* --- LIQUID GLASS BACKGROUND --- */
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-main);
+            background-color: #0f172a;
             color: var(--text-main);
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        .mesh-bg {
+            position: fixed; inset: 0; z-index: -1; overflow: hidden; background: #0f172a;
+        }
+        .blob-1 {
+            position: absolute; top: -20%; left: -20%; width: 70vw; height: 70vw;
+            background: radial-gradient(circle, rgba(0,210,255,0.15) 0%, rgba(0,0,0,0) 60%);
+            filter: blur(40px);
+        }
+        .blob-2 {
+            position: absolute; bottom: -10%; right: -20%; width: 80vw; height: 80vw;
+            background: radial-gradient(circle, rgba(138,43,226,0.15) 0%, rgba(0,0,0,0) 60%);
+            filter: blur(50px);
         }
 
         .hidden { display: none !important; }
         
         .container {
-            padding: 20px;
-            padding-bottom: 80px;
-            display: none;
+            padding: 20px; padding-bottom: 120px; display: none;
+            animation: fadeup 0.4s ease-out;
         }
         .container.active { display: block; }
+        @keyframes fadeup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- GLASSMORPHISM CORE CLASS --- */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+        }
 
         /* Navigation */
         .nav-bar {
-            position: fixed;
-            bottom: 0; width: 100%;
-            background: var(--bg-card);
+            position: fixed; bottom: 15px; left: 15px; right: 15px;
             display: flex; justify-content: space-around;
-            padding: 15px 0; border-top: 1px solid #333;
-            z-index: 50;
+            padding: 15px 0; z-index: 50;
         }
         .nav-item {
             color: var(--text-muted); font-size: 0.9rem;
-            text-align: center; cursor: pointer;
+            text-align: center; cursor: pointer; transition: all 0.2s;
         }
-        .nav-item.active { color: var(--accent); font-weight: bold; }
+        .nav-item.active { color: var(--accent); font-weight: bold; text-shadow: 0 0 8px var(--accent-glow); }
 
         /* Cards & Inputs */
-        .card {
-            background: var(--bg-card);
-            border-radius: 12px; padding: 15px;
-            margin-bottom: 15px; border: 1px solid #222;
-        }
+        .card { padding: 18px; margin-bottom: 18px; }
+        
         input, select {
-            width: 100%; padding: 12px; margin-top: 5px;
-            background: #1e1e1e; color: white;
-            border: 1px solid #333; border-radius: 8px;
-            box-sizing: border-box; font-size: 1rem;
+            width: 100%; padding: 14px; margin-top: 8px; margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.2); color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+            box-sizing: border-box; font-size: 1rem; transition: border 0.2s;
         }
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
         
         /* Buttons */
         .btn-main {
-            width: 100%; padding: 15px;
-            background: var(--accent); color: #000;
-            border: none; border-radius: 8px;
-            font-size: 1rem; font-weight: bold;
-            cursor: pointer; margin-top: 10px;
+            width: 100%; padding: 16px;
+            background: rgba(0, 210, 255, 0.15); color: var(--accent);
+            border: 1px solid rgba(0, 210, 255, 0.3); border-radius: 12px;
+            font-size: 1rem; font-weight: bold; cursor: pointer;
+            margin-top: 10px; transition: all 0.2s;
+            backdrop-filter: blur(4px);
         }
-        .btn-danger { background: var(--danger); color: white; }
+        .btn-main:active { background: rgba(0, 210, 255, 0.25); transform: scale(0.98); }
+        .btn-solid { background: var(--accent); color: #000; border: none; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-danger { background: rgba(255, 71, 87, 0.15); border-color: rgba(255, 71, 87, 0.3); color: var(--danger); }
         .btn-icon { background: none; border: none; color: inherit; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         
         /* Lists */
         .list-item {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; border-bottom: 1px solid #222;
-            background: var(--bg-card);
+            padding: 16px; margin-bottom: 10px; cursor: pointer;
+            transition: background 0.2s;
         }
-        .item-main { font-weight: bold; display: block; }
-        .item-sub { color: var(--text-muted); font-size: 0.85rem; }
+        .list-item:active { background: rgba(255, 255, 255, 0.08); }
+        .item-main { font-weight: bold; display: block; font-size: 1.05rem; }
+        .item-sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; display: block; }
 
         /* Overlays & Alerts */
         #toast-container {
@@ -87,236 +110,257 @@
             z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%;
         }
         .toast {
-            background: #333; color: white; padding: 12px 20px;
-            border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            background: rgba(20, 20, 20, 0.85); backdrop-filter: blur(12px); color: white; 
+            padding: 14px 20px; border-radius: 12px; text-align: center; 
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             animation: fadein 0.3s, fadeout 0.3s 3.1s forwards;
         }
-        @keyframes fadein { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeout { to { opacity: 0; transform: translateY(-20px); } }
 
         .queue-banner {
-            position: sticky; top: 0; background: var(--warning); color: #000;
-            padding: 12px; text-align: center; font-weight: bold; z-index: 100;
-            display: flex; justify-content: space-between; align-items: center;
+            position: fixed; bottom: 85px; left: 15px; right: 15px;
+            background: rgba(255, 165, 2, 0.2); backdrop-filter: blur(12px); border: 1px solid rgba(255, 165, 2, 0.4);
+            color: var(--warning); padding: 12px 18px; border-radius: 14px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
 
         .screen-overlay {
-            position: fixed; inset: 0;
-            background: var(--bg-main); z-index: 200;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: fixed; inset: 0; background: rgba(10, 15, 25, 0.85); backdrop-filter: blur(20px);
+            z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; text-align: center;
         }
 
         /* Wizard & Modals */
         .wizard-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 300; padding: 20px;
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 300; padding: 15px;
         }
         .wizard-modal {
-            background: var(--bg-card); border: 1px solid #333;
-            border-radius: 12px; width: 100%; max-width: 450px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column;
+            width: 100%; max-width: 420px; display: flex; flex-direction: column;
+            overflow: hidden; /* Glass applied via class */
         }
-        .wizard-header, .wizard-footer {
-            padding: 15px 20px; background: #111;
-        }
-        .wizard-header { border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .wizard-footer { border-top: 1px solid #333; display: flex; justify-content: space-between; }
-        .wizard-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        .wizard-header, .wizard-footer { padding: 18px 22px; background: rgba(0,0,0,0.2); }
+        .wizard-header { border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .wizard-footer { border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; gap: 10px; }
+        .wizard-body { padding: 22px; max-height: 60vh; overflow-y: auto; }
         
         .wizard-step-indicator {
-            display: flex; justify-content: center; gap: 8px; padding: 15px;
-            background: #111; border-bottom: 1px solid #333;
+            display: flex; justify-content: center; gap: 10px; padding: 15px;
+            background: rgba(0,0,0,0.1); border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .wiz-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
-        .wiz-dot.active { background: var(--accent); }
+        .wiz-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.3s; }
+        .wiz-dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); transform: scale(1.3); }
     </style>
 </head>
 <body>
 
+    <!-- Liquid Glass Background -->
+    <div class="mesh-bg">
+        <div class="blob-1"></div>
+        <div class="blob-2"></div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container"></div>
 
-    <!-- Queue Banner -->
+    <!-- Floating Sync Banner -->
     <div id="queue-banner" class="queue-banner hidden">
-        <span id="queue-count">0 items pending</span>
-        <button onclick="executeQueue()" style="background:#000; color:var(--warning); border:none; padding:8px 15px; border-radius:6px; font-weight:bold;">Sync to Hardware</button>
+        <span id="queue-count" style="font-weight: 600;">0 items pending</span>
+        <button onclick="executeQueue()" style="background: var(--warning); color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer;">Sync Device</button>
     </div>
 
     <!-- STARTUP SCREEN -->
     <div id="screen-startup" class="screen-overlay">
-        <h1 id="startup-title" style="color: var(--accent);">Irrigation Control</h1>
-        <p id="startup-desc" style="color: var(--text-muted); margin-bottom: 30px;">Tap your phone against the controller to connect and load configuration.</p>
-        <button id="btn-startup" class="btn-main" onclick="initConnection()">Connect Device</button>
+        <h1 id="startup-title" style="color: var(--text-main); font-size: 2.5rem; margin-bottom: 10px;">Irrigation<span style="color: var(--accent);">OS</span></h1>
+        <p id="startup-desc" style="color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem;">Tap your phone against the hardware controller to synchronize.</p>
+        <button id="btn-startup" class="btn-main btn-solid" style="max-width: 250px;" onclick="initConnection()">Connect Device</button>
     </div>
 
     <!-- SCAN PROMPT -->
-    <div id="screen-scan-prompt" class="screen-overlay hidden" style="background: rgba(10,10,10,0.95);">
-        <h2>Ready to Scan</h2>
-        <p style="color: var(--text-muted);">Hold your phone near the NFC icon on the controller.</p>
-        <button class="btn-main" style="background: #444; color: white; width: 200px;" onclick="cancelScan()">Cancel</button>
+    <div id="screen-scan-prompt" class="screen-overlay hidden">
+        <div class="glass" style="padding: 40px; border-radius: 24px;">
+            <h2 style="margin-top: 0;">Ready to Scan</h2>
+            <p style="color: var(--text-muted); margin-bottom: 30px;">Hold your phone near the NFC icon.</p>
+            <button class="btn-main" style="border-color: rgba(255,255,255,0.2); color: white;" onclick="cancelScan()">Cancel</button>
+        </div>
     </div>
 
     <!-- SYNCING OVERLAY -->
-    <div id="screen-sync" class="screen-overlay hidden" style="background: rgba(10,10,10,0.95); z-index: 9999;">
-        <h2 id="sync-status" style="color: var(--warning);">Communicating...</h2>
+    <div id="screen-sync" class="screen-overlay hidden" style="z-index: 9999;">
+        <div class="glass" style="padding: 40px; border-radius: 24px; min-width: 200px;">
+            <h2 id="sync-status" style="margin: 0; color: var(--accent);">Communicating...</h2>
+        </div>
     </div>
 
     <!-- TABS NAVIGATION -->
-    <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('schedules', this)">Schedules</div>
-        <div class="nav-item" onclick="switchTab('manual', this)">Manual Run</div>
+    <nav class="nav-bar glass">
+        <div class="nav-item active" onclick="switchTab('schedules', this)">Routines</div>
+        <div class="nav-item" onclick="switchTab('manual', this)">Water Now</div>
         <div class="nav-item" onclick="switchTab('settings', this)">Settings</div>
     </nav>
 
     <!-- SCHEDULES VIEW -->
     <div id="view-schedules" class="container active">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="margin:0;">Active Routines</h2>
-            <span id="sch_count" style="color: var(--text-muted); font-size: 0.9rem;">0/10</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin:0; font-size: 1.8rem;">Active Routines</h2>
+            <span id="sch_count" style="color: var(--accent); font-weight: bold; font-size: 1.1rem; background: rgba(0,210,255,0.1); padding: 4px 12px; border-radius: 20px;">0/10</span>
         </div>
-        <button class="btn-main" style="margin-bottom: 20px;" onclick="openWizard()">+ Add New Schedule</button>
-        <div id="schedule_list" style="border-radius: 12px; overflow: hidden; border: 1px solid #222;"></div>
+        <button class="btn-main btn-solid" style="margin-bottom: 25px;" onclick="openWizard()">+ Create New Schedule</button>
+        <div id="schedule_list"></div>
     </div>
 
-    <!-- MANUAL VIEW -->
+    <!-- WATER NOW VIEW -->
     <div id="view-manual" class="container">
-        <h2>Manual Override</h2>
+        <h2 style="font-size: 1.8rem; margin-bottom: 20px;">Water Now</h2>
 
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--accent);">Volumetric Dispense</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">Dispense a specific liquid volume based on your saved calibration data.</p>
-            <label>Target Zone</label>
+        <div class="card glass">
+            <h3 style="margin-top:0; color:var(--text-main);">Dispense Volume</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">Precision dispense based on your calibrated hardware metrics.</p>
+            <label style="font-size: 0.9rem; color: var(--text-muted);">Target Zone</label>
             <select id="maint_disp_zone">
+                <option value="A">Zone A (Main)</option>
+                <option value="B">Zone B (Secondary)</option>
+            </select>
+            <label style="font-size: 0.9rem; color: var(--text-muted);">Volume (mL)</label>
+            <input type="number" id="maint_disp_ml" value="50" min="5">
+            <button class="btn-main btn-solid" onclick="overrideDispense()">Start Dispensing</button>
+        </div>
+
+        <div class="card glass">
+            <h3 style="margin-top:0; color:var(--text-main);">Prime System</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">Purge compressible air from the lines to ensure volumetric accuracy.</p>
+            <label style="font-size: 0.9rem; color: var(--text-muted);">Target Zone</label>
+            <select id="prime_zone">
                 <option value="A">Zone A</option>
                 <option value="B">Zone B</option>
             </select>
-            <label>Volume to Dispense (mL)</label>
-            <input type="number" id="maint_disp_ml" value="50" min="1">
-            <button class="btn-main" onclick="overrideDispense()">Dispense Volume</button>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--accent);">Pump Raw Control</h3>
-            <label>Direction</label>
-            <select id="maint_pump_dir">
-                <option value="1">Forward (Dispense)</option>
-                <option value="2">Reverse (Flush)</option>
-            </select>
-            <label>Speed (%)</label>
-            <input type="number" id="maint_pump_spd" value="100" min="0" max="100">
-            <label>Duration (Seconds)</label>
-            <input type="number" id="maint_pump_sec" value="30" min="1">
-            <button class="btn-main" onclick="overridePump()">Execute Pump Run</button>
-            <button class="btn-main btn-danger" onclick="executeImmediate({cmd:'pump', dir:0, spd:0, sec:0})">Force Stop Pump</button>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--accent);">Valve Control</h3>
-            <label>Target Zone</label>
-            <select id="maint_sol_zone">
-                <option value="A">Zone A</option>
-                <option value="B">Zone B</option>
-                <option value="O">All Zones</option>
-            </select>
-            <label>State</label>
-            <select id="maint_sol_state">
-                <option value="1">Open Valve</option>
-                <option value="0">Close Valve</option>
-            </select>
-            <button class="btn-main" onclick="overrideSol()">Actuate Valve</button>
+            <label style="font-size: 0.9rem; color: var(--text-muted);">Duration (Seconds)</label>
+            <input type="number" id="prime_sec" value="15" min="1">
+            <button class="btn-main" style="border-color: rgba(255,255,255,0.2); color: white;" onclick="executePrime()">Prime Lines</button>
         </div>
     </div>
 
     <!-- SETTINGS VIEW -->
     <div id="view-settings" class="container">
-        <h2>System Configuration</h2>
+        <h2 style="font-size: 1.8rem; margin-bottom: 20px;">System Config</h2>
         
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--accent);">Flow Calibration</h3>
+        <div class="card glass">
+            <h3 style="margin-top:0; color:var(--text-main);">Flow Calibration</h3>
             <p style="font-size: 0.85rem; color: var(--text-muted);">Calibrate the physical flow rate to enable precise volume scheduling.</p>
-            <label>Current Base Rate (mL/min)</label>
+            <label style="font-size: 0.9rem; color: var(--text-muted);">Current Base Rate (mL/min)</label>
             <input type="number" id="opt_calib" value="600">
-            <button class="btn-main" onclick="openCalibration()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">Launch Volumetric Wizard</button>
+            <button class="btn-main" onclick="openCalibration()">Launch Volumetric Wizard</button>
+            <button class="btn-main btn-solid" style="margin-top: 15px;" onclick="queueOptions()">Save Configuration</button>
         </div>
 
-        <div class="card">
-            <h3 style="margin-top:0; color:var(--accent);">Pipe Delays</h3>
-            <label>Travel Delay (Seconds)</label>
-            <input type="number" id="opt_delay" value="0">
+        <div class="card glass" style="margin-top: 30px; border-color: rgba(255,165,2,0.3);">
+            <h3 style="margin-top:0; color:var(--warning);">Hardware Maintenance</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Advanced diagnostic overrides for solenoids and motors.</p>
+            <button class="btn-main" style="color: var(--warning); border-color: rgba(255,165,2,0.3); background: rgba(255,165,2,0.1);" onclick="document.getElementById('modal-maintenance').classList.remove('hidden')">Open Maintenance Panel</button>
         </div>
-        
-        <button class="btn-main" onclick="queueOptions()">Queue Configuration Update</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: MAINTENANCE PANEL                   -->
+    <!-- ========================================== -->
+    <div id="modal-maintenance" class="wizard-overlay hidden">
+        <div class="wizard-modal glass">
+            <div class="wizard-header">
+                <h3 style="margin:0; color:var(--warning);">Hardware Diagnostics</h3>
+                <button class="btn-icon" onclick="document.getElementById('modal-maintenance').classList.add('hidden')" style="color: var(--text-muted);">✕</button>
+            </div>
+            <div class="wizard-body">
+                <h4 style="margin-top: 0; color: var(--text-main);">Manual Solenoid Actuation</h4>
+                <select id="maint_sol_zone">
+                    <option value="A">Zone A</option>
+                    <option value="B">Zone B</option>
+                    <option value="O">All Zones</option>
+                </select>
+                <select id="maint_sol_state">
+                    <option value="1">Force Open Valve</option>
+                    <option value="0">Force Close Valve</option>
+                </select>
+                <button class="btn-main" style="margin-bottom: 25px;" onclick="overrideSol()">Actuate Valve</button>
+
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 25px;"></div>
+
+                <h4 style="margin-top: 0; color: var(--text-main);">Direct Motor Override</h4>
+                <label style="font-size: 0.85rem; color: var(--text-muted);">Speed (%)</label>
+                <input type="number" id="maint_pump_spd" value="100" min="0" max="100">
+                <label style="font-size: 0.85rem; color: var(--text-muted);">Duration (Seconds)</label>
+                <input type="number" id="maint_pump_sec" value="10" min="1">
+                <button class="btn-main" onclick="overridePump()">Execute Motor Run</button>
+                <button class="btn-main btn-danger" onclick="executeImmediate({cmd:'pump', dir:0, spd:0, sec:0})">Force Stop Motor</button>
+            </div>
+        </div>
     </div>
 
     <!-- ========================================== -->
     <!-- WIZARD: VOLUMETRIC CALIBRATION             -->
     <!-- ========================================== -->
     <div id="modal-calibration" class="wizard-overlay hidden">
-        <div class="wizard-modal">
+        <div class="wizard-modal glass">
             <div class="wizard-header">
                 <h2 style="margin: 0; font-size: 1.2rem; color: var(--accent);">Volumetric Setup</h2>
                 <button class="btn-icon" onclick="closeCalibration()" style="color: var(--text-muted);">✕</button>
             </div>
 
-            <div style="height: 4px; background: #333; width: 100%;">
-                <div id="calib-progress" style="height: 100%; background: var(--accent); width: 25%; transition: width 0.3s ease;"></div>
+            <div style="height: 4px; background: rgba(0,0,0,0.3); width: 100%;">
+                <div id="calib-progress" style="height: 100%; background: var(--accent); width: 25%; transition: width 0.3s ease; box-shadow: 0 0 10px var(--accent-glow);"></div>
             </div>
 
             <div class="wizard-body">
                 <div id="calib-step-1" class="calib-step active">
                     <h3 style="margin-top: 0;">Step 1: System Prep</h3>
-                    <p style="font-size: 0.95rem; color: #ccc;">This wizard measures your pump's exact flow rate, allowing you to schedule watering by precise volumes (mL) instead of timers.</p>
+                    <p style="font-size: 0.95rem; color: var(--text-muted);">This wizard measures your pump's exact flow rate, allowing precise volume scheduling.</p>
                     
-                    <div style="background: rgba(255, 193, 7, 0.1); border-left: 4px solid var(--warning); padding: 10px; margin: 15px 0;">
+                    <div class="glass" style="border-left: 4px solid var(--warning); padding: 12px; margin: 15px 0;">
                         <strong style="color: var(--warning); font-size: 0.9rem;">Precision Note:</strong>
-                        <p style="margin: 5px 0 0 0; font-size: 0.85rem;">Due to the mechanical pulsing of diaphragm pumps and shifting reservoir levels, expect a real-world accuracy of <strong>±1 to 3 mL</strong> per run.</p>
+                        <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">Expect a real-world accuracy of <strong>±1 to 3 mL</strong> per run.</p>
                     </div>
 
-                    <p style="font-size: 0.95rem;"><strong>Crucial:</strong> Your tubes must be entirely full of water. If there is air in the lines, place the hose in a bucket and tap below.</p>
-                    <button class="btn-main" onclick="calibPrime()" style="margin-top: 10px; background: #333; color: white;">Tap Device to Prime Lines (15s)</button>
+                    <p style="font-size: 0.95rem;"><strong>Crucial:</strong> Your tubes must be entirely full of water. If there is air in the lines, tap below to purge.</p>
+                    <button class="btn-main" style="margin-top: 10px; border-color: rgba(255,255,255,0.2); color: white;" onclick="calibPrime()">Tap Device to Prime (15s)</button>
                 </div>
 
                 <div id="calib-step-2" class="calib-step hidden">
                     <h3 style="margin-top: 0;">Step 2: Dispense Test <span id="calib-pass-label" style="font-size: 0.9rem; color: var(--accent);">(Pass 1 of 2)</span></h3>
-                    <ol style="padding-left: 20px; line-height: 1.6; font-size: 0.95rem; color: #ccc;">
+                    <ol style="padding-left: 20px; line-height: 1.6; font-size: 0.95rem; color: var(--text-muted);">
                         <li>Place an empty cup on a digital kitchen scale.</li>
                         <li><strong>Tare the scale to exactly 0 grams.</strong></li>
                         <li>Place the cup beneath the <strong>Zone A</strong> nozzle.</li>
                         <li>Tap the button below and scan your controller.</li>
                     </ol>
-                    <button class="btn-main" onclick="calibDispense()" style="margin: 15px 0;">Tap Device to Dispense 50mL</button>
+                    <button class="btn-main btn-solid" onclick="calibDispense()" style="margin: 15px 0;">Tap Device to Dispense 50mL</button>
                     <p style="font-size: 0.85rem; color: var(--warning); text-align: center; margin: 0;">Wait for the pump to completely stop before clicking Next.</p>
                 </div>
 
                 <div id="calib-step-3" class="calib-step hidden">
                     <h3 style="margin-top: 0;">Step 3: Measure Weight</h3>
-                    <p style="font-size: 0.95rem; color: #ccc;">Weigh the water currently in the cup. Because 1 gram of water equals exactly 1 milliliter, enter the scale's reading directly below.</p>
+                    <p style="font-size: 0.95rem; color: var(--text-muted);">Weigh the water currently in the cup. Because 1 gram of water equals 1 milliliter, enter the scale's reading below.</p>
                     
                     <div style="margin: 25px 0;">
                         <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">Measured Weight (grams):</label>
-                        <input type="number" id="calib-weight" placeholder="e.g. 17.5" step="0.1" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #121212; color: white; font-size: 1.2rem;">
+                        <input type="number" id="calib-weight" placeholder="e.g. 17.5" step="0.1" style="font-size: 1.3rem; text-align: center;">
                     </div>
                 </div>
 
                 <div id="calib-step-4" class="calib-step hidden">
                     <h3 style="color: var(--success); margin-top: 0;">Calibration Complete</h3>
-                    <p style="font-size: 0.95rem; color: #ccc;">Your system's hardware flow rate has been successfully mapped based on your 2-pass average.</p>
+                    <p style="font-size: 0.95rem; color: var(--text-muted);">Your hardware flow rate has been mapped based on your 2-pass average.</p>
                     
-                    <div style="background: #121212; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid #333;">
-                        <span style="font-size: 0.9rem; color: var(--text-muted); display: block; text-transform: uppercase; letter-spacing: 1px;">Calculated Base Rate</span>
-                        <strong style="font-size: 2.2rem; color: var(--accent);"><span id="calib-result"></span> <span style="font-size: 1rem; color: #888;">mL/min</span></strong>
+                    <div class="glass" style="padding: 20px; text-align: center; margin: 20px 0;">
+                        <span style="font-size: 0.8rem; color: var(--text-muted); display: block; text-transform: uppercase; letter-spacing: 1px;">Calculated Base Rate</span>
+                        <strong style="font-size: 2.2rem; color: var(--accent);"><span id="calib-result"></span> <span style="font-size: 1rem; color: var(--text-muted);">mL/min</span></strong>
                     </div>
-
-                    <p style="font-size: 0.85rem; color: var(--warning); margin-bottom: 0;">Clicking Save will queue this configuration to be written permanently to the hardware's EEPROM.</p>
+                    <p style="font-size: 0.85rem; color: var(--warning); margin-bottom: 0;">Clicking Save will queue this configuration for permanent EEPROM storage.</p>
                 </div>
             </div>
 
             <div class="wizard-footer">
-                <button id="btn-calib-back" class="btn-main" onclick="calibBack()" style="background: transparent; border: 1px solid #555; width: 45%; color: white; margin-top: 0;">Back</button>
-                <button id="btn-calib-next" class="btn-main" onclick="calibNextStep()" style="width: 45%; margin-top: 0;">Lines are full ➔</button>
+                <button id="btn-calib-back" class="btn-main" onclick="calibBack()" style="border-color: rgba(255,255,255,0.2); color: white; margin-top: 0;">Back</button>
+                <button id="btn-calib-next" class="btn-main btn-solid" onclick="calibNextStep()" style="margin-top: 0;">Lines are full ➔</button>
             </div>
         </div>
     </div>
@@ -325,16 +369,23 @@
     <!-- MODAL: SCHEDULE DETAILS                    -->
     <!-- ========================================== -->
     <div id="modal-schedule-details" class="wizard-overlay hidden">
-        <div class="wizard-modal" style="max-width: 350px;">
+        <div class="wizard-modal glass" style="max-width: 350px;">
             <div class="wizard-header">
-                <h3 style="margin:0; color:var(--accent);">Schedule Info</h3>
+                <h3 style="margin:0; color:var(--text-main);">Schedule Info</h3>
                 <button class="btn-icon" onclick="document.getElementById('modal-schedule-details').classList.add('hidden')" style="color: var(--text-muted);">✕</button>
             </div>
             <div class="wizard-body">
-                <p><strong>Target:</strong> <span id="det-zone"></span></p>
-                <p><strong>Dispensing:</strong> <span id="det-dur"></span></p>
-                <p><strong>Frequency:</strong> <span id="det-freq"></span></p>
-                <p style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #333;"><strong>Next Execution:</strong><br><span id="det-next" style="display:inline-block; margin-top:5px; font-weight:bold;"></span></p>
+                <p style="color: var(--text-muted); margin-top: 0;"><strong>Target:</strong> <span id="det-zone" style="color: white;"></span></p>
+                <p style="color: var(--text-muted);"><strong>Amount:</strong> <span id="det-dur" style="color: var(--accent); font-weight: bold;"></span></p>
+                <p style="color: var(--text-muted);"><strong>Frequency:</strong> <span id="det-freq" style="color: white;"></span></p>
+                
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">Next Execution:</p>
+                    <p id="det-next" style="margin: 5px 0 0 0; font-weight:bold; font-size: 1.1rem; color: white;"></p>
+                </div>
+
+                <input type="hidden" id="det-slot-memory">
+                <button class="btn-main" style="margin-top: 25px;" onclick="editSchedule()">Edit Schedule</button>
             </div>
         </div>
     </div>
@@ -343,9 +394,9 @@
     <!-- WIZARD: SCHEDULE CREATOR                   -->
     <!-- ========================================== -->
     <div id="screen-wizard" class="wizard-overlay hidden">
-        <div class="wizard-modal">
+        <div class="wizard-modal glass">
             <div class="wizard-header">
-                <h2 style="margin: 0; font-size: 1.2rem; color: var(--accent);">Create Schedule</h2>
+                <h2 style="margin: 0; font-size: 1.2rem; color: var(--text-main);">Routine Configuration</h2>
                 <button class="btn-icon" onclick="closeWizard()" style="color: var(--text-muted);">✕</button>
             </div>
 
@@ -358,36 +409,30 @@
             <div class="wizard-body">
                 <!-- STEP 1: Core Target -->
                 <div id="wiz_1" class="wizard-step active">
-                    <label>Target Zone</label>
+                    <label style="font-size: 0.9rem; color: var(--text-muted);">Target Zone</label>
                     <select id="wiz_zone">
                         <option value="A">Zone A (Main)</option>
                         <option value="B">Zone B (Secondary)</option>
                     </select>
 
-                    <label style="margin-top: 15px; display:block;">Hardware Memory Slot</label>
+                    <label style="margin-top: 15px; display:block; font-size: 0.9rem; color: var(--text-muted);">Hardware Memory Slot</label>
                     <select id="wiz_slot"></select>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Selecting a configured slot will overwrite it.</p>
                     
-                    <button class="btn-main" onclick="wizGo(2)" style="margin-top: 20px;">Next Step ➔</button>
+                    <button class="btn-main btn-solid" onclick="wizNextToStep2()" style="margin-top: 25px;">Next Step ➔</button>
                 </div>
 
                 <!-- STEP 2: Mode Selection -->
                 <div id="wiz_2" class="wizard-step hidden">
-                    <p style="color: var(--text-muted); margin-top:0;">How do you want to schedule this zone?</p>
+                    <p style="color: var(--text-muted); margin-top:0; font-size: 0.95rem;">How do you want to schedule this zone?</p>
                     
-                    <div id="mode_interval" class="card selected" style="cursor:pointer; border-color:var(--accent);" onclick="wizMode('interval')">
-                        <h4 style="margin:0;">Easy Interval</h4>
+                    <div id="mode_interval" class="card glass selected" style="cursor:pointer; border-color:var(--accent);" onclick="wizMode('interval')">
+                        <h4 style="margin:0; color: white;">Easy Interval</h4>
                         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0;">Start watering immediately and repeat at a fixed frequency (e.g. Every 2 Days).</p>
                     </div>
 
-                    <div id="mode_expert" class="card" style="cursor:pointer;" onclick="wizMode('expert')">
-                        <h4 style="margin:0;">Expert Time</h4>
+                    <div id="mode_expert" class="card glass" style="cursor:pointer;" onclick="wizMode('expert')">
+                        <h4 style="margin:0; color: white;">Expert Time</h4>
                         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0;">Specify an exact starting date and time, and configure complex repetitions.</p>
-                    </div>
-
-                    <div style="display:flex; justify-content:space-between; margin-top:20px;">
-                        <button class="btn-main" onclick="wizGo(1)" style="width:48%; background:transparent; border:1px solid #555; color:white;">Back</button>
-                        <button class="btn-main" onclick="wizGo(3)" style="width:48%;">Next Step ➔</button>
                     </div>
                 </div>
 
@@ -395,7 +440,7 @@
                 <div id="wiz_3a" class="wizard-step hidden">
                     <h3 style="margin-top:0;">Frequency & Amount</h3>
                     
-                    <label>Water Every:</label>
+                    <label style="font-size: 0.9rem; color: var(--text-muted);">Water Every:</label>
                     <div style="display: flex; gap: 10px;">
                         <input type="number" id="wiz_int_val" value="1" min="1" style="flex: 1;">
                         <select id="wiz_int_unit" style="flex: 2;">
@@ -406,16 +451,16 @@
                         </select>
                     </div>
 
-                    <label style="margin-top: 20px; display:block;">Watering Amount Setup:</label>
+                    <label style="margin-top: 20px; display:block; font-size: 0.9rem; color: var(--text-muted);">Watering Amount Setup:</label>
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button id="btn_wiz_int_type_vol" class="btn-main" style="margin-top:0; border:1px solid var(--accent); background:var(--accent); color:#000;" onclick="setWizIntType('vol')">By Volume (mL)</button>
-                        <button id="btn_wiz_int_type_time" class="btn-main" style="margin-top:0; border:1px solid #555; background:transparent; color:white;" onclick="setWizIntType('time')">By Time</button>
+                        <button id="btn_wiz_int_type_vol" class="btn-main" style="margin-top:0; background:var(--accent); color:#000;" onclick="setWizIntType('vol')">By Volume (mL)</button>
+                        <button id="btn_wiz_int_type_time" class="btn-main" style="margin-top:0; border-color: rgba(255,255,255,0.2); color:white; background: transparent;" onclick="setWizIntType('time')">By Time</button>
                     </div>
 
                     <!-- Volume Inputs -->
                     <div id="wiz_int_vol_inputs" style="display: flex; gap: 10px;">
-                        <input type="number" id="wiz_int_vol_val" value="50" min="1" style="flex: 1;">
-                        <span style="flex: 2; padding: 12px; color: var(--text-muted); display:flex; align-items:center;">Milliliters (mL)</span>
+                        <input type="number" id="wiz_int_vol_val" value="50" min="5" style="flex: 1;">
+                        <span style="flex: 2; padding: 14px; color: var(--text-muted); display:flex; align-items:center;">Milliliters (mL)</span>
                     </div>
 
                     <!-- Time Inputs -->
@@ -426,11 +471,6 @@
                             <option value="60">Minutes</option>
                         </select>
                     </div>
-
-                    <div style="display:flex; justify-content:space-between; margin-top:25px;">
-                        <button class="btn-main" onclick="wizGo(2)" style="width:48%; background:transparent; border:1px solid #555; color:white;">Back</button>
-                        <button class="btn-main" onclick="attemptQueueSchedule()" style="width:48%; background:var(--success);">Finish & Queue</button>
-                    </div>
                 </div>
 
                 <!-- STEP 3B: Expert Mode -->
@@ -439,25 +479,25 @@
                     
                     <div style="display: flex; gap: 10px;">
                         <div style="flex:1;">
-                            <label>Start Date</label>
+                            <label style="font-size: 0.9rem; color: var(--text-muted);">Start Date</label>
                             <input type="date" id="wiz_exp_date">
                         </div>
                         <div style="flex:1;">
-                            <label>Time</label>
+                            <label style="font-size: 0.9rem; color: var(--text-muted);">Time</label>
                             <input type="time" id="wiz_exp_time">
                         </div>
                     </div>
 
-                    <label style="margin-top: 20px; display:block;">Watering Amount Setup:</label>
+                    <label style="margin-top: 20px; display:block; font-size: 0.9rem; color: var(--text-muted);">Watering Amount Setup:</label>
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button id="btn_wiz_exp_type_vol" class="btn-main" style="margin-top:0; border:1px solid var(--accent); background:var(--accent); color:#000;" onclick="setWizExpType('vol')">By Volume (mL)</button>
-                        <button id="btn_wiz_exp_type_time" class="btn-main" style="margin-top:0; border:1px solid #555; background:transparent; color:white;" onclick="setWizExpType('time')">By Time</button>
+                        <button id="btn_wiz_exp_type_vol" class="btn-main" style="margin-top:0; background:var(--accent); color:#000;" onclick="setWizExpType('vol')">By Volume (mL)</button>
+                        <button id="btn_wiz_exp_type_time" class="btn-main" style="margin-top:0; border-color: rgba(255,255,255,0.2); color:white; background: transparent;" onclick="setWizExpType('time')">By Time</button>
                     </div>
 
                     <!-- Volume Inputs -->
                     <div id="wiz_exp_vol_inputs" style="display: flex; gap: 10px;">
-                        <input type="number" id="wiz_exp_vol_val" value="50" min="1" style="flex: 1;">
-                        <span style="flex: 2; padding: 12px; color: var(--text-muted); display:flex; align-items:center;">Milliliters (mL)</span>
+                        <input type="number" id="wiz_exp_vol_val" value="50" min="5" style="flex: 1;">
+                        <span style="flex: 2; padding: 14px; color: var(--text-muted); display:flex; align-items:center;">Milliliters (mL)</span>
                     </div>
 
                     <!-- Time Inputs -->
@@ -469,15 +509,15 @@
                         </select>
                     </div>
 
-                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: white;">
                             <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()" style="width: 20px; margin: 0;">
-                            <strong>One-Shot Event (Do not repeat)</strong>
+                            One-Shot Event (Do not repeat)
                         </label>
                     </div>
 
                     <div id="wiz_exp_rep_group">
-                        <label style="margin-top: 15px; display:block;">Repeat Every:</label>
+                        <label style="margin-top: 15px; display:block; font-size: 0.9rem; color: var(--text-muted);">Repeat Every:</label>
                         <div style="display: flex; gap: 10px;">
                             <input type="number" id="wiz_exp_rep_val" value="1" min="1" style="flex: 1;">
                             <select id="wiz_exp_rep_unit" style="flex: 2;">
@@ -488,24 +528,22 @@
                             </select>
                         </div>
                     </div>
-
-                    <div style="display:flex; justify-content:space-between; margin-top:25px;">
-                        <button class="btn-main" onclick="wizGo(2)" style="width:48%; background:transparent; border:1px solid #555; color:white;">Back</button>
-                        <button class="btn-main" onclick="attemptQueueSchedule()" style="width:48%; background:var(--success);">Finish & Queue</button>
-                    </div>
                 </div>
             </div>
+
+            <!-- Dynamic footer injected by JS based on step -->
+            <div id="wizard_footer_dynamic" class="wizard-footer"></div>
         </div>
     </div>
 
-    <!-- CONFIRMATION DIALOG -->
+    <!-- OVERWRITE WARNING DIALOG -->
     <div id="dialog-confirm" class="wizard-overlay hidden" style="z-index: 9999;">
-        <div class="wizard-modal" style="max-width: 300px; padding: 20px; text-align: center;">
-            <h3 style="margin-top:0; color:var(--danger);">Overwrite Slot?</h3>
-            <p style="color:var(--text-muted); font-size:0.9rem;">The selected slot already has a schedule. Overwrite it?</p>
-            <div style="display:flex; justify-content:space-between; margin-top:20px;">
-                <button class="btn-main" onclick="closeConfirmDialog()" style="width:45%; background:#333; color:white;">Cancel</button>
-                <button class="btn-main btn-danger" id="dialog-btn-confirm" style="width:45%;">Overwrite</button>
+        <div class="wizard-modal glass" style="max-width: 320px; padding: 25px; text-align: center;">
+            <h3 style="margin-top:0; color:var(--warning);">Overwrite Slot?</h3>
+            <p style="color:var(--text-muted); font-size:0.95rem;">The selected memory slot already contains an active routine. Proceed and overwrite?</p>
+            <div style="display:flex; justify-content:space-between; margin-top:25px; gap: 10px;">
+                <button class="btn-main" onclick="closeConfirmDialog()" style="margin-top:0; border-color:rgba(255,255,255,0.2); color:white;">Cancel</button>
+                <button class="btn-main" id="dialog-btn-confirm" style="margin-top:0; background:var(--warning); color:#000;">Overwrite</button>
             </div>
         </div>
     </div>
@@ -521,6 +559,7 @@
         let selectedWizMode = 'interval';
         let wizIntType = 'vol';
         let wizExpType = 'vol';
+        let isEditingMode = false;
         
         let globalNDEF = null; 
         let isNfcScanning = false;
@@ -544,7 +583,7 @@
         window.onload = () => {
             if (!("NDEFReader" in window)) {
                 document.getElementById('startup-title').innerText = "Unsupported Device";
-                document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support.";
+                document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with Web NFC support.";
                 document.getElementById('btn-startup').style.display = 'none';
                 return;
             }
@@ -561,7 +600,6 @@
             if (storedOpt) {
                 try {
                     const opt = JSON.parse(storedOpt);
-                    if (opt.delay !== undefined) document.getElementById('opt_delay').value = opt.delay;
                     if (opt.calib !== undefined) document.getElementById('opt_calib').value = opt.calib;
                 } catch (e) {}
             }
@@ -614,7 +652,7 @@
         // --- NFC Polling & Hardware Handshake ---
         function parseTelemetryAndSave(data) {
             let idx = 4; // Skip system hardware states
-            document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
+            idx += 2; // Skip legacy delay
             document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
             
             const currentCalib = parseInt(document.getElementById('opt_calib').value) || 600;
@@ -635,9 +673,8 @@
                     else if (interval >= 3600 && interval % 3600 === 0) uiDesc = `Repeats ${interval / 3600} Hours`;
                     else uiDesc = `Repeats ${Math.round(interval / 60)} Mins`;
 
-                    // Reverse calculation for estimated volume
                     const est_ml = Math.round(((duration + 1) * currentCalib) / 60);
-                    uiDesc += ` • ${formatDuration(duration)} (~${est_ml} mL)`;
+                    uiDesc += ` • ~${est_ml} mL`;
 
                     currentSchedules[i] = {
                         zone: String.fromCharCode(zoneCode),
@@ -650,10 +687,7 @@
                 }
             }
             localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
-            localStorage.setItem('irrigationOptions', JSON.stringify({
-                delay: parseInt(document.getElementById('opt_delay').value) || 0,
-                calib: currentCalib
-            }));
+            localStorage.setItem('irrigationOptions', JSON.stringify({ calib: currentCalib }));
             renderSchedules();
         }
 
@@ -738,13 +772,12 @@
 
         // --- Manual Control Logic ---
         function overridePump() {
-            const dir = parseInt(document.getElementById('maint_pump_dir').value);
             const spd = parseInt(document.getElementById('maint_pump_spd').value);
             const sec = parseInt(document.getElementById('maint_pump_sec').value);
 
             if (isNaN(spd) || spd < 0 || spd > 100) { showToast("Enter speed between 0-100%"); return; }
             if (isNaN(sec) || sec <= 0) { showToast("Enter a duration greater than 0"); return; }
-            executeImmediate({ cmd: "pump", dir: dir, spd: spd, sec: sec });
+            executeImmediate({ cmd: "pump", dir: 1, spd: spd, sec: sec }); // Dir firmly set to 1
         }
 
         function overrideSol() {
@@ -756,8 +789,15 @@
         function overrideDispense() {
             const zone = document.getElementById('maint_disp_zone').value;
             const ml = parseInt(document.getElementById('maint_disp_ml').value);
-            if (isNaN(ml) || ml <= 0) { showToast("Enter a valid volume"); return; }
+            if (isNaN(ml) || ml < 5) { showToast("Minimum dispense volume is 5mL."); return; }
             executeImmediate({ cmd: "disp", zone: zone, ml: ml });
+        }
+
+        function executePrime() {
+            const zone = document.getElementById('prime_zone').value;
+            const sec = parseInt(document.getElementById('prime_sec').value);
+            if (isNaN(sec) || sec <= 0) { showToast("Enter a valid duration."); return; }
+            executeImmediate({ cmd: "prime", zone: zone, sec: sec });
         }
 
         // --- Command Queue ---
@@ -801,7 +841,7 @@
                             records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }]
                         });
 
-                        status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\nVerifying with controller...\n(Keep device steady)`;
+                        status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\nVerifying...\n(Keep device steady)`;
 
                         verified = await new Promise((resolve) => {
                             const timeout = setTimeout(() => {
@@ -828,7 +868,7 @@
                             await new Promise(r => setTimeout(r, 1000));
                         }
                     }
-                    if (!verified) throw new Error(`Timeout on: ${cmd.desc}. Ensure the controller is plugged into power.`);
+                    if (!verified) throw new Error(`Timeout on: ${cmd.desc}. Ensure controller is plugged in.`);
                 }
 
                 commandQueue = [];
@@ -848,10 +888,8 @@
         }
 
         function queueOptions() {
-            const delay = parseInt(document.getElementById('opt_delay').value);
             const calib = parseInt(document.getElementById('opt_calib').value) || 0;
-            if (isNaN(delay) || delay < 0) { showToast("Enter a valid travel delay"); return; }
-            addToQueue("Update Configuration", { cmd: "opt", delay, calib });
+            addToQueue("Update Configuration", { cmd: "opt", delay: 0, calib });
         }
 
         function queueDeleteSchedule(slot, event) {
@@ -866,26 +904,20 @@
         let accumulatedCalib = 0;
 
         function openCalibration() {
-            calibStep = 1;
-            calibPasses = 0;
-            accumulatedCalib = 0;
+            calibStep = 1; calibPasses = 0; accumulatedCalib = 0;
             document.getElementById('calib-weight').value = '';
             document.getElementById('modal-calibration').classList.remove('hidden');
-            updateWizardUI();
+            updateCalibUI();
         }
 
-        function closeCalibration() {
-            document.getElementById('modal-calibration').classList.add('hidden');
-        }
+        function closeCalibration() { document.getElementById('modal-calibration').classList.add('hidden'); }
 
-        function updateWizardUI() {
+        function updateCalibUI() {
             document.querySelectorAll('.calib-step').forEach(el => el.classList.add('hidden'));
             document.getElementById('calib-step-' + calibStep).classList.remove('hidden');
             document.getElementById('calib-progress').style.width = (calibStep * 25) + '%';
             
-            if (calibStep === 2) {
-                document.getElementById('calib-pass-label').innerText = `(Pass ${calibPasses + 1} of 2)`;
-            }
+            if (calibStep === 2) document.getElementById('calib-pass-label').innerText = `(Pass ${calibPasses + 1} of 2)`;
 
             const btnBack = document.getElementById('btn-calib-back');
             const btnNext = document.getElementById('btn-calib-next');
@@ -893,12 +925,12 @@
             if (calibStep === 1) {
                 btnBack.style.visibility = 'hidden';
                 btnNext.innerText = 'Lines are full ➔';
-                btnNext.onclick = () => { calibStep = 2; updateWizardUI(); };
+                btnNext.onclick = () => { calibStep = 2; updateCalibUI(); };
             } 
             else if (calibStep === 2) {
                 btnBack.style.visibility = 'visible';
                 btnNext.innerText = 'Water Dispensed ➔';
-                btnNext.onclick = () => { calibStep = 3; updateWizardUI(); };
+                btnNext.onclick = () => { calibStep = 3; updateCalibUI(); };
             } 
             else if (calibStep === 3) {
                 btnBack.style.visibility = 'visible';
@@ -912,51 +944,34 @@
             }
         }
 
-        function calibBack() {
-            if (calibStep > 1) { calibStep--; updateWizardUI(); }
-        }
-
-        function calibNextStep() {
-            if (calibStep === 1) { calibStep = 2; updateWizardUI(); }
-            else if (calibStep === 2) { calibStep = 3; updateWizardUI(); }
-        }
-
-        function calibPrime() {
-            executeImmediate({ cmd: "prime", zone: "A" });
-        }
-
-        function calibDispense() {
-            executeImmediate({ cmd: "disp", zone: "A", ml: calibTargetML });
-        }
+        function calibBack() { if (calibStep > 1) { calibStep--; updateCalibUI(); } }
+        function calibNextStep() { if (calibStep === 1) { calibStep = 2; updateCalibUI(); } else if (calibStep === 2) { calibStep = 3; updateCalibUI(); } }
+        function calibPrime() { executeImmediate({ cmd: "prime", zone: "A", sec: 15 }); }
+        function calibDispense() { executeImmediate({ cmd: "disp", zone: "A", ml: calibTargetML }); }
 
         function processCalibWeight() {
             let weight = parseFloat(document.getElementById('calib-weight').value);
             if (isNaN(weight) || weight <= 0 || weight > 200) { showToast("Please enter a valid weight in grams."); return; }
 
-            let currentBase = parseInt(document.getElementById('opt_calib').value);
-            if (isNaN(currentBase) || currentBase === 0) currentBase = 600; 
-
+            let currentBase = parseInt(document.getElementById('opt_calib').value) || 600;
             let calculatedFlow = Math.round((weight / calibTargetML) * currentBase);
             accumulatedCalib += calculatedFlow;
             calibPasses++;
 
             if (calibPasses < 2) {
-                calibStep = 2;
-                document.getElementById('calib-weight').value = '';
+                calibStep = 2; document.getElementById('calib-weight').value = '';
                 showToast("Pass 1 recorded. Empty the cup, tare, and repeat!");
-                updateWizardUI();
+                updateCalibUI();
             } else {
                 let finalCalib = Math.round(accumulatedCalib / 2);
                 document.getElementById('calib-result').innerText = finalCalib;
-                calibStep = 4;
-                updateWizardUI();
+                calibStep = 4; updateCalibUI();
             }
         }
 
         function calibSave() {
             let finalCalib = parseInt(document.getElementById('calib-result').innerText);
-            let delay = parseInt(document.getElementById('opt_delay').value) || 0;
-            addToQueue("Update System Flow Rate", { cmd: "opt", delay: delay, calib: finalCalib });
+            addToQueue("Update System Flow Rate", { cmd: "opt", delay: 0, calib: finalCalib });
             document.getElementById('opt_calib').value = finalCalib;
             closeCalibration();
         }
@@ -968,14 +983,12 @@
             const btnTime = document.getElementById('btn_wiz_int_type_time');
             if (type === 'vol') {
                 btnVol.style.background = 'var(--accent)'; btnVol.style.color = '#000'; btnVol.style.borderColor = 'var(--accent)';
-                btnTime.style.background = 'transparent'; btnTime.style.color = 'white'; btnTime.style.borderColor = '#555';
-                document.getElementById('wiz_int_vol_inputs').style.display = 'flex';
-                document.getElementById('wiz_int_time_inputs').style.display = 'none';
+                btnTime.style.background = 'transparent'; btnTime.style.color = 'white'; btnTime.style.borderColor = 'rgba(255,255,255,0.2)';
+                document.getElementById('wiz_int_vol_inputs').style.display = 'flex'; document.getElementById('wiz_int_time_inputs').style.display = 'none';
             } else {
                 btnTime.style.background = 'var(--accent)'; btnTime.style.color = '#000'; btnTime.style.borderColor = 'var(--accent)';
-                btnVol.style.background = 'transparent'; btnVol.style.color = 'white'; btnVol.style.borderColor = '#555';
-                document.getElementById('wiz_int_vol_inputs').style.display = 'none';
-                document.getElementById('wiz_int_time_inputs').style.display = 'flex';
+                btnVol.style.background = 'transparent'; btnVol.style.color = 'white'; btnVol.style.borderColor = 'rgba(255,255,255,0.2)';
+                document.getElementById('wiz_int_vol_inputs').style.display = 'none'; document.getElementById('wiz_int_time_inputs').style.display = 'flex';
             }
         }
 
@@ -985,14 +998,12 @@
             const btnTime = document.getElementById('btn_wiz_exp_type_time');
             if (type === 'vol') {
                 btnVol.style.background = 'var(--accent)'; btnVol.style.color = '#000'; btnVol.style.borderColor = 'var(--accent)';
-                btnTime.style.background = 'transparent'; btnTime.style.color = 'white'; btnTime.style.borderColor = '#555';
-                document.getElementById('wiz_exp_vol_inputs').style.display = 'flex';
-                document.getElementById('wiz_exp_time_inputs').style.display = 'none';
+                btnTime.style.background = 'transparent'; btnTime.style.color = 'white'; btnTime.style.borderColor = 'rgba(255,255,255,0.2)';
+                document.getElementById('wiz_exp_vol_inputs').style.display = 'flex'; document.getElementById('wiz_exp_time_inputs').style.display = 'none';
             } else {
                 btnTime.style.background = 'var(--accent)'; btnTime.style.color = '#000'; btnTime.style.borderColor = 'var(--accent)';
-                btnVol.style.background = 'transparent'; btnVol.style.color = 'white'; btnVol.style.borderColor = '#555';
-                document.getElementById('wiz_exp_vol_inputs').style.display = 'none';
-                document.getElementById('wiz_exp_time_inputs').style.display = 'flex';
+                btnVol.style.background = 'transparent'; btnVol.style.color = 'white'; btnVol.style.borderColor = 'rgba(255,255,255,0.2)';
+                document.getElementById('wiz_exp_vol_inputs').style.display = 'none'; document.getElementById('wiz_exp_time_inputs').style.display = 'flex';
             }
         }
 
@@ -1001,7 +1012,9 @@
             if (!sch) return;
 
             document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
-            document.getElementById('det-dur').innerText = `${formatDuration(sch.rawDuration)} (~${sch.estVol} mL)`;
+            document.getElementById('det-dur').innerText = `~${sch.estVol} mL (${formatDuration(sch.rawDuration)})`;
+            document.getElementById('det-slot-memory').value = slot;
+
             const currentLocalEpoch = getLocalEpoch(new Date());
 
             if (sch.rawInterval === 0) {
@@ -1013,7 +1026,7 @@
                 } else {
                     const targetDate = new Date(Date.now() + (diffSecs * 1000));
                     document.getElementById('det-next').innerText = targetDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    document.getElementById('det-next').style.color = "var(--text-main)";
+                    document.getElementById('det-next').style.color = "white";
                 }
             } else {
                 let fDesc = "";
@@ -1027,18 +1040,25 @@
                 const diffSecs = nextRunEpoch - currentLocalEpoch;
                 const targetDate = new Date(Date.now() + (diffSecs * 1000));
                 document.getElementById('det-next').innerText = targetDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                document.getElementById('det-next').style.color = "var(--text-main)";
+                document.getElementById('det-next').style.color = "white";
             }
             document.getElementById('modal-schedule-details').classList.remove('hidden');
         }
 
-        function openWizard() {
+        function editSchedule() {
+            document.getElementById('modal-schedule-details').classList.add('hidden');
+            const slot = parseInt(document.getElementById('det-slot-memory').value);
+            openWizard(slot);
+        }
+
+        function openWizard(editSlot = -1) {
             const now = new Date();
             document.getElementById('wiz_exp_date').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             document.getElementById('wiz_exp_time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
             setWizIntType('vol');
             setWizExpType('vol');
+            isEditingMode = (editSlot !== -1);
 
             const slotSelect = document.getElementById('wiz_slot');
             slotSelect.innerHTML = '';
@@ -1047,15 +1067,23 @@
             for (let i = 0; i < 10; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
-                if (currentSchedules[i]) {
-                    opt.innerText = `Slot ${i + 1}  [ Configured ]`;
-                } else {
+                if (currentSchedules[i]) opt.innerText = `Slot ${i + 1}  [ Configured ]`;
+                else {
                     opt.innerText = `Slot ${i + 1}  [ Available ]`;
                     if (firstEmpty === -1) firstEmpty = i;
                 }
                 slotSelect.appendChild(opt);
             }
-            slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
+            
+            if (isEditingMode) {
+                slotSelect.value = editSlot;
+                document.getElementById('wiz_zone').value = currentSchedules[editSlot].zone;
+                document.getElementById('wiz_int_vol_val').value = currentSchedules[editSlot].estVol;
+                document.getElementById('wiz_exp_vol_val').value = currentSchedules[editSlot].estVol;
+            } else {
+                slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
+            }
+
             document.getElementById('screen-wizard').classList.remove('hidden');
             wizGo(1);
         }
@@ -1070,19 +1098,50 @@
             document.querySelectorAll('.wizard-step').forEach(w => w.classList.add('hidden'));
             document.querySelectorAll('.wiz-dot').forEach(d => d.classList.remove('active'));
             
-            if (step === 1) { document.getElementById('wiz_1').classList.remove('hidden'); document.getElementById('wiz_dot_1').classList.add('active'); }
-            if (step === 2) { document.getElementById('wiz_2').classList.remove('hidden'); document.getElementById('wiz_dot_2').classList.add('active'); }
+            const footer = document.getElementById('wizard_footer_dynamic');
+            
+            if (step === 1) { 
+                document.getElementById('wiz_1').classList.remove('hidden'); 
+                document.getElementById('wiz_dot_1').classList.add('active'); 
+                footer.innerHTML = ''; // Next button is inline for step 1
+            }
+            if (step === 2) { 
+                document.getElementById('wiz_2').classList.remove('hidden'); 
+                document.getElementById('wiz_dot_2').classList.add('active'); 
+                footer.innerHTML = `
+                    <button class="btn-main" onclick="wizGo(1)" style="width:48%; border-color:rgba(255,255,255,0.2); color:white; margin-top:0;">Back</button>
+                    <button class="btn-main btn-solid" onclick="wizGo(3)" style="width:48%; margin-top:0;">Next Step ➔</button>`;
+            }
             if (step === 3) {
                 document.getElementById('wiz_dot_3').classList.add('active');
                 if (selectedWizMode === 'interval') document.getElementById('wiz_3a').classList.remove('hidden');
                 else document.getElementById('wiz_3b').classList.remove('hidden');
+                
+                footer.innerHTML = `
+                    <button class="btn-main" onclick="wizGo(2)" style="width:48%; border-color:rgba(255,255,255,0.2); color:white; margin-top:0;">Back</button>
+                    <button class="btn-main btn-solid" onclick="finalizeQueueSchedule()" style="width:48%; margin-top:0; background:var(--success);">Finish & Queue</button>`;
+            }
+        }
+
+        function wizNextToStep2() {
+            const slot = parseInt(document.getElementById('wiz_slot').value);
+            if (!isEditingMode && currentSchedules[slot]) {
+                document.getElementById('dialog-confirm').classList.remove('hidden');
+                document.getElementById('dialog-btn-confirm').onclick = () => { closeConfirmDialog(); wizGo(2); };
+            } else {
+                wizGo(2);
             }
         }
 
         function wizMode(mode) {
             selectedWizMode = mode;
-            document.getElementById('mode_interval').style.borderColor = (mode === 'interval') ? 'var(--accent)' : '#222';
-            document.getElementById('mode_expert').style.borderColor = (mode === 'expert') ? 'var(--accent)' : '#222';
+            document.getElementById('mode_interval').classList.remove('selected');
+            document.getElementById('mode_interval').style.borderColor = 'rgba(255,255,255,0.1)';
+            document.getElementById('mode_expert').classList.remove('selected');
+            document.getElementById('mode_expert').style.borderColor = 'rgba(255,255,255,0.1)';
+            
+            document.getElementById('mode_' + mode).classList.add('selected');
+            document.getElementById('mode_' + mode).style.borderColor = 'var(--accent)';
         }
 
         function toggleOneShot() {
@@ -1090,19 +1149,10 @@
             document.getElementById('wiz_exp_rep_group').style.display = isChecked ? 'none' : 'block';
         }
 
-        function attemptQueueSchedule() {
-            const slot = parseInt(document.getElementById('wiz_slot').value);
-            if (currentSchedules[slot]) {
-                document.getElementById('dialog-confirm').classList.remove('hidden');
-                document.getElementById('dialog-btn-confirm').onclick = () => { closeConfirmDialog(); finalizeQueueSchedule(slot); };
-            } else {
-                finalizeQueueSchedule(slot);
-            }
-        }
-
         function closeConfirmDialog() { document.getElementById('dialog-confirm').classList.add('hidden'); }
 
-        function finalizeQueueSchedule(slot) {
+        function finalizeQueueSchedule() {
+            const slot = parseInt(document.getElementById('wiz_slot').value);
             const zone = document.getElementById('wiz_zone').value;
             let interval = 0, duration = 0, startEpoch = 0;
             const currentCalib = parseInt(document.getElementById('opt_calib').value) || 600;
@@ -1115,7 +1165,7 @@
 
                 if (wizIntType === 'vol') {
                     const ml = parseInt(document.getElementById('wiz_int_vol_val').value);
-                    if (isNaN(ml) || ml <= 0) { showToast("Enter a valid volume."); return; }
+                    if (isNaN(ml) || ml < 5) { showToast("Minimum dispense volume is 5mL."); return; }
                     duration = Math.max(1, Math.round((ml * 60) / currentCalib) - 1);
                 } else {
                     const dv = parseInt(document.getElementById('wiz_dur_val').value);
@@ -1134,7 +1184,7 @@
 
                 if (wizExpType === 'vol') {
                     const ml = parseInt(document.getElementById('wiz_exp_vol_val').value);
-                    if (isNaN(ml) || ml <= 0) { showToast("Enter a valid volume."); return; }
+                    if (isNaN(ml) || ml < 5) { showToast("Minimum dispense volume is 5mL."); return; }
                     duration = Math.max(1, Math.round((ml * 60) / currentCalib) - 1);
                 } else {
                     const dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
@@ -1152,7 +1202,7 @@
                 }
             }
 
-            addToQueue(`Save Schedule (Slot ${slot + 1})`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
+            addToQueue(`Save Routine (Slot ${slot + 1})`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
             closeWizard();
         }
 
@@ -1164,16 +1214,16 @@
                 if (currentSchedules[i]) {
                     count++;
                     list.innerHTML += `
-                    <div class="list-item" onclick="showScheduleDetails(${i})">
+                    <div class="list-item glass" onclick="showScheduleDetails(${i})">
                         <div>
                             <span class="item-main">Zone ${currentSchedules[i].zone} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(Slot ${i + 1})</span></span>
                             <span class="item-sub">${currentSchedules[i].desc}</span>
                         </div>
-                        <button class="btn-icon" onclick="queueDeleteSchedule(${i}, event)">✕</button>
+                        <button class="btn-icon" style="color: rgba(255,255,255,0.3); font-size: 1.5rem;" onclick="queueDeleteSchedule(${i}, event)">✕</button>
                     </div>`;
                 }
             }
-            if (count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules configured.</p>`;
+            if (count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">No active routines configured.</p>`;
             document.getElementById('sch_count').innerText = `${count}/10`;
         }
     </script>
