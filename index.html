@@ -38,7 +38,7 @@
             --danger-bg: #451a1a;
             --success: #22c55e;
             --warning: #f97316;
-            --warning-bg: rgba(249, 115, 22, 0.1);
+            --warning-bg: #3f1a06; /* Solid dark background to prevent transparency overlap */
             --modal-bg: rgba(0, 0, 0, 0.8);
         }
 
@@ -90,13 +90,13 @@
         }
 
         /* --- ICONS --- */
-        img.icon { width: 24px; height: 24px; display: block; opacity: 0.7; transition: filter 0.3s, opacity 0.3s; }
-        img.icon-sm { width: 18px; height: 18px; display: block; opacity: 0.7; }
-        img.icon-lg { width: 48px; height: 48px; display: block; opacity: 0.8; }
+        img.icon { width: 24px; height: 24px; display: block; opacity: 0.95; transition: filter 0.3s, opacity 0.3s; }
+        img.icon-sm { width: 18px; height: 18px; display: block; opacity: 0.95; }
+        img.icon-lg { width: 48px; height: 48px; display: block; opacity: 1; }
         
         [data-theme="dark"] img.icon, 
         [data-theme="dark"] img.icon-sm, 
-        [data-theme="dark"] img.icon-lg { filter: invert(0.8); }
+        [data-theme="dark"] img.icon-lg { filter: invert(0.85) brightness(1.2); }
 
         .nav-item.active img.icon { filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%) !important; opacity: 1; }
 
@@ -247,10 +247,15 @@
         <button class="btn" style="max-width: 200px;" onclick="cancelScan()">Cancel</button>
     </div>
 
-    <!-- SYNCING OVERLAY (With Cancel & Error capabilities) -->
+    <!-- SYNCING OVERLAY (With Cancel, Error, and Progress) -->
     <div id="screen-sync" class="fullscreen-state" style="z-index: 9999;">
         <img src="transit-connection-variant.svg" class="icon-lg" style="margin-bottom: 20px; opacity: 0.5;" alt="Syncing">
         <h2 id="sync-status" style="margin: 0; color: var(--text-main); white-space: pre-wrap;">Communicating...</h2>
+        
+        <!-- Animated Progress Bar -->
+        <div style="width: 100%; max-width: 300px; height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 16px 0;">
+            <div id="sync-progress" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
+        </div>
         
         <p id="sync-error-msg" style="color: var(--danger); font-weight: 600; margin: 12px 0 0 0; display: none;"></p>
         
@@ -572,7 +577,7 @@
 
                 <!-- STEP 2: Mode Selection -->
                 <div id="wiz_2" class="wizard-step hidden">
-                    <p class="card-desc" style="font-size: 0.95rem;">Select the scheduling type for this zone:</p>
+                    <p class="card-desc" style="font-size: 0.95rem;">Select the scheduling logic for this zone:</p>
                     
                     <div id="mode_interval" class="card selected" style="cursor:pointer; border-color:var(--primary); box-shadow: 0 0 0 1px var(--primary);" onclick="wizMode('interval')">
                         <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Simple Repeating</h4>
@@ -943,9 +948,11 @@
             const status = document.getElementById('sync-status');
             const errorMsg = document.getElementById('sync-error-msg');
             const screen = document.getElementById('screen-sync');
+            const progress = document.getElementById('sync-progress');
             
             if (err.name === 'AbortError' || syncCancelled) {
                 status.innerText = "Cancelled";
+                if(progress) progress.style.width = '0%';
                 logSync("Action aborted by user.");
                 setTimeout(() => closeModal('screen-sync'), 800);
             } else {
@@ -953,6 +960,7 @@
                 status.style.color = "var(--danger)";
                 errorMsg.innerText = err.message;
                 errorMsg.style.display = "block";
+                if(progress) progress.style.width = '0%';
                 screen.classList.add('error-state');
                 
                 setTimeout(() => {
@@ -1058,11 +1066,13 @@
             nfcAbortController = new AbortController();
 
             const status = document.getElementById('sync-status');
+            const progress = document.getElementById('sync-progress');
             
             try {
                 document.getElementById('sync-log').innerHTML = ''; 
                 openModal('screen-sync');
                 
+                if(progress) progress.style.width = '10%';
                 logSync("Command Initiated...");
                 status.innerText = "Transmitting...\nHold phone steady.";
 
@@ -1073,12 +1083,14 @@
                 await ensureScanning();
                 if (syncCancelled) throw new DOMException("Aborted", "AbortError");
 
+                if(progress) progress.style.width = '40%';
                 await globalNDEF.write({
                     records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(pl) }]
                 }, { signal: nfcAbortController.signal });
 
                 if (syncCancelled) throw new DOMException("Aborted", "AbortError");
 
+                if(progress) progress.style.width = '70%';
                 status.innerText = "Awaiting Verification...\nHold phone steady.";
                 logSync(`Write OK. Waiting for ST25DV validation...`);
 
@@ -1103,6 +1115,7 @@
                 });
 
                 if (verified) {
+                    if(progress) progress.style.width = '100%';
                     status.innerText = "Command Executed";
                     status.style.color = "var(--success)";
                     await new Promise(r => setTimeout(r, 1200));
@@ -1186,6 +1199,8 @@
                     let verified = false;
                     let attempts = 0;
                     
+                    if(progress) progress.style.width = ((i / commandQueue.length) * 100) + '%';
+                    
                     logSync(`Processing Item ${i + 1}/${commandQueue.length}`);
                     logSync(`Task: ${cmd.desc}`);
 
@@ -1237,6 +1252,7 @@
 
                 commandQueue = [];
                 updateQueueUI();
+                if(progress) progress.style.width = '100%';
                 status.innerText = "All Changes Verified";
                 status.style.color = "var(--success)";
                 logSync(`SYNC COMPLETE`);
@@ -1447,6 +1463,14 @@
 
             isEditingMode = (editSlot !== -1);
 
+            // Calculate pending slots to prevent overwrite accidents
+            let pendingSlots = {};
+            commandQueue.forEach(cmd => {
+                if (cmd.payload && cmd.payload.cmd === 'sch' && cmd.payload.idx !== undefined) {
+                    pendingSlots[cmd.payload.idx] = true;
+                }
+            });
+
             const slotSelect = document.getElementById('wiz_slot');
             slotSelect.innerHTML = '';
             let firstEmpty = -1;
@@ -1454,10 +1478,13 @@
             for (let i = 0; i < 10; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
-                if (currentSchedules[i]) opt.innerText = `Slot ${i + 1}  [ Configured ]`;
-                else {
+                if (pendingSlots[i]) {
+                    opt.innerText = `Slot ${i + 1}  [ Pending Sync ]`;
+                } else if (currentSchedules[i]) {
+                    opt.innerText = `Slot ${i + 1}  [ Configured ]`;
+                } else {
                     opt.innerText = `Slot ${i + 1}  [ Available ]`;
-                    if (firstEmpty === -1) firstEmpty = i;
+                    if (firstEmpty === -1 && !pendingSlots[i]) firstEmpty = i;
                 }
                 slotSelect.appendChild(opt);
             }
@@ -1522,9 +1549,12 @@
         function wizMode(mode) {
             selectedWizMode = mode;
             document.getElementById('mode_interval').style.borderColor = 'var(--border)';
+            document.getElementById('mode_interval').style.boxShadow = 'none';
             document.getElementById('mode_expert').style.borderColor = 'var(--border)';
+            document.getElementById('mode_expert').style.boxShadow = 'none';
             
             document.getElementById('mode_' + mode).style.borderColor = 'var(--primary)';
+            document.getElementById('mode_' + mode).style.boxShadow = '0 0 0 1px var(--primary)';
         }
 
         function toggleOneShot() {
