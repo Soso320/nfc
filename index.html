@@ -243,6 +243,9 @@
                 <label>Pipe Travel Delay (Seconds)</label>
                 <input type="number" id="opt_delay" value="12" min="0">
             </div>
+            <button class="btn-main" onclick="openCalibration()" style="margin-top: 15px; background: var(--accent); color: #000;">
+    Launch Volumetric Calibration Wizard
+</button>
             <div class="input-group">
                 <label>Flow Calibration Offset</label>
                 <input type="number" id="opt_calib" value="0">
@@ -307,7 +310,75 @@
             <button class="danger" onclick="overrideSol()">Toggle Solenoid</button>
         </div>
     </div>
+    <!-- VOLUMETRIC CALIBRATION WIZARD -->
+    <div id="screen-calibration" class="screen hidden" style="z-index: 100; background: var(--bg-main); position: fixed; inset: 0; overflow-y: auto; padding-bottom: 20px;">
+        <div class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--bg-card); border-bottom: 1px solid #333;">
+            <h2 style="margin: 0; font-size: 1.2rem;">Volumetric Calibration</h2>
+            <button class="btn-icon" onclick="closeCalibration()" style="color: var(--text-muted);">✕</button>
+        </div>
 
+        <div style="height: 4px; background: #333; width: 100%;">
+            <div id="calib-progress" style="height: 100%; background: var(--accent); width: 25%; transition: width 0.3s ease;"></div>
+        </div>
+
+        <div style="padding: 20px;">
+            <!-- Step 1: Welcome & Prime -->
+            <div id="calib-step-1" class="calib-step active">
+                <h3 style="color: var(--accent); margin-top: 0;">Step 1: System Prep</h3>
+                <p>Welcome to the Volume Calibration Wizard. This process measures your pump's true flow rate, allowing you to schedule watering by precise volumes (mL) instead of timers.</p>
+                
+                <div style="background: rgba(255, 193, 7, 0.1); border-left: 4px solid var(--warning); padding: 10px; margin: 15px 0;">
+                    <strong style="color: var(--warning);">Precision Expectations:</strong>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Due to the physical pulsing of diaphragm pumps and changing water levels, this system achieves a real-world accuracy of <strong>±1 to 3 mL</strong> per run.</p>
+                </div>
+
+                <p><strong>Crucial:</strong> Your tubes must be completely full of water. If there is air in the lines, place the hose in a bucket and tap below to purge the system.</p>
+                <button class="btn-main" onclick="calibPrime()" style="margin-bottom: 15px;">Tap to Prime Lines (15s)</button>
+                <button class="btn-main" onclick="calibNext(2)" style="background: #444;">Lines are full. Next ➔</button>
+            </div>
+
+            <!-- Step 2: Dispense -->
+            <div id="calib-step-2" class="calib-step hidden">
+                <h3 style="color: var(--accent); margin-top: 0;">Step 2: Dispense Test <span id="calib-pass-label" style="font-size: 0.9rem; color: #888;">(Pass 1 of 2)</span></h3>
+                <ol style="padding-left: 20px; line-height: 1.6;">
+                    <li>Place an empty cup on a digital kitchen scale.</li>
+                    <li><strong>Tare the scale to 0 grams.</strong></li>
+                    <li>Place the cup beneath the <strong>Zone A</strong> nozzle.</li>
+                    <li>Tap the button below and scan your controller.</li>
+                </ol>
+                <button class="btn-main" onclick="calibDispense()" style="margin: 20px 0;">Tap to Dispense 50mL</button>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Wait for the pump to completely finish its soft-stop before tapping next.</p>
+                <button class="btn-main" onclick="calibNext(3)" style="background: #444;">Water dispensed. Next ➔</button>
+            </div>
+
+            <!-- Step 3: Measure -->
+            <div id="calib-step-3" class="calib-step hidden">
+                <h3 style="color: var(--accent); margin-top: 0;">Step 3: Measure Weight</h3>
+                <p>Weigh the water currently in the cup. Because 1 gram of water equals exactly 1 milliliter, you can enter the scale's reading directly below.</p>
+                
+                <div style="margin: 20px 0;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Measured Weight (grams):</label>
+                    <input type="number" id="calib-weight" placeholder="e.g. 48.5" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #1a1a1a; color: white; font-size: 1.1rem;">
+                </div>
+                
+                <button class="btn-main" onclick="processCalibWeight()">Submit Weight</button>
+            </div>
+
+            <!-- Step 4: Finalize -->
+            <div id="calib-step-4" class="calib-step hidden">
+                <h3 style="color: var(--success); margin-top: 0;">Calibration Complete!</h3>
+                <p>Your system's flow rate has been successfully mapped.</p>
+                
+                <div style="background: #1a1a1a; border-radius: 8px; padding: 15px; text-align: center; margin: 20px 0; border: 1px solid #333;">
+                    <span style="font-size: 0.9rem; color: var(--text-muted); display: block;">Calculated Flow Rate</span>
+                    <strong style="font-size: 1.8rem; color: var(--accent);"><span id="calib-result"></span> mL/min</strong>
+                </div>
+
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">This value will be queued to write to the device memory. Future firmware updates will use this metric for exact volume scheduling.</p>
+                <button class="btn-main" onclick="calibSave()">Queue Configuration ➔</button>
+            </div>
+        </div>
+    </div>
     <!-- WIZARD OVERLAY -->
     <div id="screen-wizard" class="overlay hidden" style="justify-content: flex-start; padding-top: 50px;">
         <div class="card" style="width: 100%; max-width: 480px; position: relative;">
@@ -1017,6 +1088,95 @@
             list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules configured.<br>Tap below to create one.</p>`;
         }
         document.getElementById('sch_count').innerText = `${count}/10`;
+    }
+
+    // --- CALIBRATION WIZARD LOGIC ---
+    let calibStep = 1;
+    let calibTargetML = 50; // The fixed test amount
+    let calibPasses = 0;
+    let accumulatedCalib = 0;
+
+    function openCalibration() {
+        calibStep = 1;
+        calibPasses = 0;
+        accumulatedCalib = 0;
+        document.getElementById('calib-weight').value = '';
+        document.getElementById('screen-calibration').classList.remove('hidden');
+        renderCalibStep();
+    }
+
+    function closeCalibration() {
+        document.getElementById('screen-calibration').classList.add('hidden');
+    }
+
+    function renderCalibStep() {
+        document.querySelectorAll('.calib-step').forEach(el => el.classList.add('hidden'));
+        document.getElementById('calib-step-' + calibStep).classList.remove('hidden');
+        
+        // Progress bar visual (25% per step)
+        document.getElementById('calib-progress').style.width = (calibStep * 25) + '%';
+        
+        if (calibStep === 2) {
+            document.getElementById('calib-pass-label').innerText = `(Pass ${calibPasses + 1} of 2)`;
+        }
+    }
+
+    function calibNext(step) {
+        calibStep = step;
+        renderCalibStep();
+    }
+
+    function calibPrime() {
+        executeImmediate({ cmd: "prime", zone: "A" });
+        showToast("Priming... Pump will run for 15 seconds.");
+    }
+
+    function calibDispense() {
+        executeImmediate({ cmd: "disp", zone: "A", ml: calibTargetML });
+        showToast("Command sent! Waiting for water...");
+    }
+
+    function processCalibWeight() {
+        let weight = parseFloat(document.getElementById('calib-weight').value);
+        if (isNaN(weight) || weight <= 0 || weight > 200) {
+            showToast("Please enter a valid weight in grams.");
+            return;
+        }
+
+        // Retrieve what the STM32 currently thinks its flow rate is (default 600 if 0)
+        let currentBase = parseInt(document.getElementById('opt_calib').value);
+        if (isNaN(currentBase) || currentBase === 0) currentBase = 600; 
+
+        // Mathematical Extrapolation: (Measured / Target) * Base Flow Rate
+        let calculatedFlow = Math.round((weight / calibTargetML) * currentBase);
+        accumulatedCalib += calculatedFlow;
+        calibPasses++;
+
+        if (calibPasses < 2) {
+            // Loop back for Pass 2
+            calibStep = 2;
+            document.getElementById('calib-weight').value = '';
+            showToast("Pass 1 recorded. Empty the cup, tare, and repeat!");
+            renderCalibStep();
+        } else {
+            // Average the two passes and finish
+            let finalCalib = Math.round(accumulatedCalib / 2);
+            document.getElementById('calib-result').innerText = finalCalib;
+            calibNext(4);
+        }
+    }
+
+    function calibSave() {
+        let finalCalib = parseInt(document.getElementById('calib-result').innerText);
+        let delay = parseInt(document.getElementById('opt_delay').value) || 0;
+        
+        // Push to the command queue system
+        addToQueue("Update System Flow Rate", { cmd: "opt", delay: delay, calib: finalCalib });
+        
+        // Update local UI immediately so the user sees it saved
+        document.getElementById('opt_calib').value = finalCalib;
+        
+        closeCalibration();
     }
 </script>
 </body>
