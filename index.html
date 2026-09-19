@@ -184,8 +184,22 @@
     <!-- MANUAL VIEW -->
     <div id="view-manual" class="container">
         <h2>Manual Override</h2>
+
         <div class="card">
-            <h3 style="margin-top:0; color:var(--accent);">Pump Control</h3>
+            <h3 style="margin-top:0; color:var(--accent);">Volumetric Dispense</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0;">Dispense a specific liquid volume based on your saved calibration data.</p>
+            <label>Target Zone</label>
+            <select id="maint_disp_zone">
+                <option value="A">Zone A</option>
+                <option value="B">Zone B</option>
+            </select>
+            <label>Volume to Dispense (mL)</label>
+            <input type="number" id="maint_disp_ml" value="50" min="1">
+            <button class="btn-main" onclick="overrideDispense()">Dispense Volume</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0; color:var(--accent);">Pump Raw Control</h3>
             <label>Direction</label>
             <select id="maint_pump_dir">
                 <option value="1">Forward (Dispense)</option>
@@ -222,7 +236,7 @@
         
         <div class="card">
             <h3 style="margin-top:0; color:var(--accent);">Flow Calibration</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Calibrate the physical flow rate to enable precise volume dispensing.</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Calibrate the physical flow rate to enable precise volume scheduling.</p>
             <label>Current Base Rate (mL/min)</label>
             <input type="number" id="opt_calib" value="600">
             <button class="btn-main" onclick="openCalibration()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">Launch Volumetric Wizard</button>
@@ -247,13 +261,11 @@
                 <button class="btn-icon" onclick="closeCalibration()" style="color: var(--text-muted);">✕</button>
             </div>
 
-            <!-- Progress Bar -->
             <div style="height: 4px; background: #333; width: 100%;">
                 <div id="calib-progress" style="height: 100%; background: var(--accent); width: 25%; transition: width 0.3s ease;"></div>
             </div>
 
             <div class="wizard-body">
-                <!-- Step 1: Welcome & Prime -->
                 <div id="calib-step-1" class="calib-step active">
                     <h3 style="margin-top: 0;">Step 1: System Prep</h3>
                     <p style="font-size: 0.95rem; color: #ccc;">This wizard measures your pump's exact flow rate, allowing you to schedule watering by precise volumes (mL) instead of timers.</p>
@@ -267,7 +279,6 @@
                     <button class="btn-main" onclick="calibPrime()" style="margin-top: 10px; background: #333; color: white;">Tap Device to Prime Lines (15s)</button>
                 </div>
 
-                <!-- Step 2: Dispense -->
                 <div id="calib-step-2" class="calib-step hidden">
                     <h3 style="margin-top: 0;">Step 2: Dispense Test <span id="calib-pass-label" style="font-size: 0.9rem; color: var(--accent);">(Pass 1 of 2)</span></h3>
                     <ol style="padding-left: 20px; line-height: 1.6; font-size: 0.95rem; color: #ccc;">
@@ -280,18 +291,16 @@
                     <p style="font-size: 0.85rem; color: var(--warning); text-align: center; margin: 0;">Wait for the pump to completely stop before clicking Next.</p>
                 </div>
 
-                <!-- Step 3: Measure -->
                 <div id="calib-step-3" class="calib-step hidden">
                     <h3 style="margin-top: 0;">Step 3: Measure Weight</h3>
                     <p style="font-size: 0.95rem; color: #ccc;">Weigh the water currently in the cup. Because 1 gram of water equals exactly 1 milliliter, enter the scale's reading directly below.</p>
                     
                     <div style="margin: 25px 0;">
                         <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">Measured Weight (grams):</label>
-                        <input type="number" id="calib-weight" placeholder="e.g. 48.5" step="0.1" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #121212; color: white; font-size: 1.2rem;">
+                        <input type="number" id="calib-weight" placeholder="e.g. 17.5" step="0.1" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #121212; color: white; font-size: 1.2rem;">
                     </div>
                 </div>
 
-                <!-- Step 4: Finalize -->
                 <div id="calib-step-4" class="calib-step hidden">
                     <h3 style="color: var(--success); margin-top: 0;">Calibration Complete</h3>
                     <p style="font-size: 0.95rem; color: #ccc;">Your system's hardware flow rate has been successfully mapped based on your 2-pass average.</p>
@@ -323,7 +332,7 @@
             </div>
             <div class="wizard-body">
                 <p><strong>Target:</strong> <span id="det-zone"></span></p>
-                <p><strong>Duration:</strong> <span id="det-dur"></span></p>
+                <p><strong>Dispensing:</strong> <span id="det-dur"></span></p>
                 <p><strong>Frequency:</strong> <span id="det-freq"></span></p>
                 <p style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #333;"><strong>Next Execution:</strong><br><span id="det-next" style="display:inline-block; margin-top:5px; font-weight:bold;"></span></p>
             </div>
@@ -347,7 +356,7 @@
             </div>
 
             <div class="wizard-body">
-                <!-- WIZARD STEP 1: Core Target -->
+                <!-- STEP 1: Core Target -->
                 <div id="wiz_1" class="wizard-step active">
                     <label>Target Zone</label>
                     <select id="wiz_zone">
@@ -362,7 +371,7 @@
                     <button class="btn-main" onclick="wizGo(2)" style="margin-top: 20px;">Next Step ➔</button>
                 </div>
 
-                <!-- WIZARD STEP 2: Mode Selection -->
+                <!-- STEP 2: Mode Selection -->
                 <div id="wiz_2" class="wizard-step hidden">
                     <p style="color: var(--text-muted); margin-top:0;">How do you want to schedule this zone?</p>
                     
@@ -382,9 +391,9 @@
                     </div>
                 </div>
 
-                <!-- WIZARD STEP 3A: Interval Mode -->
+                <!-- STEP 3A: Interval Mode -->
                 <div id="wiz_3a" class="wizard-step hidden">
-                    <h3 style="margin-top:0;">Frequency & Duration</h3>
+                    <h3 style="margin-top:0;">Frequency & Amount</h3>
                     
                     <label>Water Every:</label>
                     <div style="display: flex; gap: 10px;">
@@ -397,8 +406,20 @@
                         </select>
                     </div>
 
-                    <label style="margin-top: 15px; display:block;">For a Duration of:</label>
-                    <div style="display: flex; gap: 10px;">
+                    <label style="margin-top: 20px; display:block;">Watering Amount Setup:</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button id="btn_wiz_int_type_vol" class="btn-main" style="margin-top:0; border:1px solid var(--accent); background:var(--accent); color:#000;" onclick="setWizIntType('vol')">By Volume (mL)</button>
+                        <button id="btn_wiz_int_type_time" class="btn-main" style="margin-top:0; border:1px solid #555; background:transparent; color:white;" onclick="setWizIntType('time')">By Time</button>
+                    </div>
+
+                    <!-- Volume Inputs -->
+                    <div id="wiz_int_vol_inputs" style="display: flex; gap: 10px;">
+                        <input type="number" id="wiz_int_vol_val" value="50" min="1" style="flex: 1;">
+                        <span style="flex: 2; padding: 12px; color: var(--text-muted); display:flex; align-items:center;">Milliliters (mL)</span>
+                    </div>
+
+                    <!-- Time Inputs -->
+                    <div id="wiz_int_time_inputs" style="display: none; gap: 10px;">
                         <input type="number" id="wiz_dur_val" value="5" min="1" style="flex: 1;">
                         <select id="wiz_dur_unit" style="flex: 2;">
                             <option value="1" selected>Seconds</option>
@@ -412,7 +433,7 @@
                     </div>
                 </div>
 
-                <!-- WIZARD STEP 3B: Expert Mode -->
+                <!-- STEP 3B: Expert Mode -->
                 <div id="wiz_3b" class="wizard-step hidden">
                     <h3 style="margin-top:0;">Exact Start & Repeat</h3>
                     
@@ -427,8 +448,20 @@
                         </div>
                     </div>
 
-                    <label style="margin-top: 15px; display:block;">Watering Duration:</label>
-                    <div style="display: flex; gap: 10px;">
+                    <label style="margin-top: 20px; display:block;">Watering Amount Setup:</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button id="btn_wiz_exp_type_vol" class="btn-main" style="margin-top:0; border:1px solid var(--accent); background:var(--accent); color:#000;" onclick="setWizExpType('vol')">By Volume (mL)</button>
+                        <button id="btn_wiz_exp_type_time" class="btn-main" style="margin-top:0; border:1px solid #555; background:transparent; color:white;" onclick="setWizExpType('time')">By Time</button>
+                    </div>
+
+                    <!-- Volume Inputs -->
+                    <div id="wiz_exp_vol_inputs" style="display: flex; gap: 10px;">
+                        <input type="number" id="wiz_exp_vol_val" value="50" min="1" style="flex: 1;">
+                        <span style="flex: 2; padding: 12px; color: var(--text-muted); display:flex; align-items:center;">Milliliters (mL)</span>
+                    </div>
+
+                    <!-- Time Inputs -->
+                    <div id="wiz_exp_time_inputs" style="display: none; gap: 10px;">
                         <input type="number" id="wiz_exp_dur_val" value="5" min="1" style="flex: 1;">
                         <select id="wiz_exp_dur_unit" style="flex: 2;">
                             <option value="1" selected>Seconds</option>
@@ -484,12 +517,14 @@
         // --- State Management ---
         let commandQueue = [];
         let currentSchedules = {};
+        
         let selectedWizMode = 'interval';
+        let wizIntType = 'vol';
+        let wizExpType = 'vol';
         
         let globalNDEF = null; 
         let isNfcScanning = false;
 
-        // Background listener logic
         const defaultNFCReadHandler = (event) => {
             for (const record of event.message.records) {
                 if (record.mediaType && record.mediaType.includes("octet-stream")) {
@@ -509,7 +544,7 @@
         window.onload = () => {
             if (!("NDEFReader" in window)) {
                 document.getElementById('startup-title').innerText = "Unsupported Device";
-                document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support (such as Chrome on Android).";
+                document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support.";
                 document.getElementById('btn-startup').style.display = 'none';
                 return;
             }
@@ -519,9 +554,7 @@
                 try {
                     currentSchedules = JSON.parse(storedSch);
                     renderSchedules();
-                } catch (e) {
-                    currentSchedules = {};
-                }
+                } catch (e) { currentSchedules = {}; }
             }
 
             const storedOpt = localStorage.getItem('irrigationOptions');
@@ -583,6 +616,8 @@
             let idx = 4; // Skip system hardware states
             document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
             document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
+            
+            const currentCalib = parseInt(document.getElementById('opt_calib').value) || 600;
 
             currentSchedules = {};
             for (let i = 0; i < 10; i++) {
@@ -600,21 +635,24 @@
                     else if (interval >= 3600 && interval % 3600 === 0) uiDesc = `Repeats ${interval / 3600} Hours`;
                     else uiDesc = `Repeats ${Math.round(interval / 60)} Mins`;
 
-                    uiDesc += ` • ${formatDuration(duration)}`;
+                    // Reverse calculation for estimated volume
+                    const est_ml = Math.round(((duration + 1) * currentCalib) / 60);
+                    uiDesc += ` • ${formatDuration(duration)} (~${est_ml} mL)`;
 
                     currentSchedules[i] = {
                         zone: String.fromCharCode(zoneCode),
                         desc: uiDesc,
                         rawInterval: interval,
                         rawDuration: duration,
-                        rawEpoch: epoch
+                        rawEpoch: epoch,
+                        estVol: est_ml
                     };
                 }
             }
             localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
             localStorage.setItem('irrigationOptions', JSON.stringify({
                 delay: parseInt(document.getElementById('opt_delay').value) || 0,
-                calib: parseInt(document.getElementById('opt_calib').value) || 0
+                calib: currentCalib
             }));
             renderSchedules();
         }
@@ -635,7 +673,6 @@
                     document.getElementById('screen-scan-prompt').classList.add('hidden');
                     document.getElementById('screen-startup').classList.add('hidden');
                     showToast(synced ? "Controller Synchronized" : "Connected. Memory empty.");
-                    
                     globalNDEF.onreading = defaultNFCReadHandler; 
                 };
             } catch (err) {
@@ -699,6 +736,7 @@
             }
         }
 
+        // --- Manual Control Logic ---
         function overridePump() {
             const dir = parseInt(document.getElementById('maint_pump_dir').value);
             const spd = parseInt(document.getElementById('maint_pump_spd').value);
@@ -713,6 +751,13 @@
             const zone = document.getElementById('maint_sol_zone').value;
             const state = parseInt(document.getElementById('maint_sol_state').value);
             executeImmediate({ cmd: "sol", zone: zone, state: state });
+        }
+
+        function overrideDispense() {
+            const zone = document.getElementById('maint_disp_zone').value;
+            const ml = parseInt(document.getElementById('maint_disp_ml').value);
+            if (isNaN(ml) || ml <= 0) { showToast("Enter a valid volume"); return; }
+            executeImmediate({ cmd: "disp", zone: zone, ml: ml });
         }
 
         // --- Command Queue ---
@@ -871,6 +916,11 @@
             if (calibStep > 1) { calibStep--; updateWizardUI(); }
         }
 
+        function calibNextStep() {
+            if (calibStep === 1) { calibStep = 2; updateWizardUI(); }
+            else if (calibStep === 2) { calibStep = 3; updateWizardUI(); }
+        }
+
         function calibPrime() {
             executeImmediate({ cmd: "prime", zone: "A" });
         }
@@ -912,12 +962,46 @@
         }
 
         // --- Schedule Wizard & Display ---
+        function setWizIntType(type) {
+            wizIntType = type;
+            const btnVol = document.getElementById('btn_wiz_int_type_vol');
+            const btnTime = document.getElementById('btn_wiz_int_type_time');
+            if (type === 'vol') {
+                btnVol.style.background = 'var(--accent)'; btnVol.style.color = '#000'; btnVol.style.borderColor = 'var(--accent)';
+                btnTime.style.background = 'transparent'; btnTime.style.color = 'white'; btnTime.style.borderColor = '#555';
+                document.getElementById('wiz_int_vol_inputs').style.display = 'flex';
+                document.getElementById('wiz_int_time_inputs').style.display = 'none';
+            } else {
+                btnTime.style.background = 'var(--accent)'; btnTime.style.color = '#000'; btnTime.style.borderColor = 'var(--accent)';
+                btnVol.style.background = 'transparent'; btnVol.style.color = 'white'; btnVol.style.borderColor = '#555';
+                document.getElementById('wiz_int_vol_inputs').style.display = 'none';
+                document.getElementById('wiz_int_time_inputs').style.display = 'flex';
+            }
+        }
+
+        function setWizExpType(type) {
+            wizExpType = type;
+            const btnVol = document.getElementById('btn_wiz_exp_type_vol');
+            const btnTime = document.getElementById('btn_wiz_exp_type_time');
+            if (type === 'vol') {
+                btnVol.style.background = 'var(--accent)'; btnVol.style.color = '#000'; btnVol.style.borderColor = 'var(--accent)';
+                btnTime.style.background = 'transparent'; btnTime.style.color = 'white'; btnTime.style.borderColor = '#555';
+                document.getElementById('wiz_exp_vol_inputs').style.display = 'flex';
+                document.getElementById('wiz_exp_time_inputs').style.display = 'none';
+            } else {
+                btnTime.style.background = 'var(--accent)'; btnTime.style.color = '#000'; btnTime.style.borderColor = 'var(--accent)';
+                btnVol.style.background = 'transparent'; btnVol.style.color = 'white'; btnVol.style.borderColor = '#555';
+                document.getElementById('wiz_exp_vol_inputs').style.display = 'none';
+                document.getElementById('wiz_exp_time_inputs').style.display = 'flex';
+            }
+        }
+
         function showScheduleDetails(slot) {
             const sch = currentSchedules[slot];
             if (!sch) return;
 
             document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
-            document.getElementById('det-dur').innerText = formatDuration(sch.rawDuration);
+            document.getElementById('det-dur').innerText = `${formatDuration(sch.rawDuration)} (~${sch.estVol} mL)`;
             const currentLocalEpoch = getLocalEpoch(new Date());
 
             if (sch.rawInterval === 0) {
@@ -952,6 +1036,9 @@
             const now = new Date();
             document.getElementById('wiz_exp_date').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             document.getElementById('wiz_exp_time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            setWizIntType('vol');
+            setWizExpType('vol');
 
             const slotSelect = document.getElementById('wiz_slot');
             slotSelect.innerHTML = '';
@@ -1018,15 +1105,24 @@
         function finalizeQueueSchedule(slot) {
             const zone = document.getElementById('wiz_zone').value;
             let interval = 0, duration = 0, startEpoch = 0;
+            const currentCalib = parseInt(document.getElementById('opt_calib').value) || 600;
 
             if (selectedWizMode === 'interval') {
                 const v = parseInt(document.getElementById('wiz_int_val').value);
                 const u = parseInt(document.getElementById('wiz_int_unit').value);
-                const dv = parseInt(document.getElementById('wiz_dur_val').value);
-                const du = parseInt(document.getElementById('wiz_dur_unit').value);
+                if (isNaN(v) || v <= 0) { showToast("Enter positive interval frequency."); return; }
+                interval = v * u;
 
-                if (isNaN(v) || v <= 0 || isNaN(dv) || dv <= 0) { showToast("Enter positive numbers."); return; }
-                interval = v * u; duration = dv * du;
+                if (wizIntType === 'vol') {
+                    const ml = parseInt(document.getElementById('wiz_int_vol_val').value);
+                    if (isNaN(ml) || ml <= 0) { showToast("Enter a valid volume."); return; }
+                    duration = Math.max(1, Math.round((ml * 60) / currentCalib) - 1);
+                } else {
+                    const dv = parseInt(document.getElementById('wiz_dur_val').value);
+                    const du = parseInt(document.getElementById('wiz_dur_unit').value);
+                    if (isNaN(dv) || dv <= 0) { showToast("Enter a valid duration."); return; }
+                    duration = dv * du;
+                }
             } else {
                 const dateStr = document.getElementById('wiz_exp_date').value;
                 const timeStr = document.getElementById('wiz_exp_time').value;
@@ -1036,10 +1132,16 @@
                 const targetDate = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10), parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0);
                 startEpoch = getLocalEpoch(targetDate);
 
-                const dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
-                const du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
-                if (isNaN(dv) || dv <= 0) { showToast("Enter valid duration."); return; }
-                duration = dv * du;
+                if (wizExpType === 'vol') {
+                    const ml = parseInt(document.getElementById('wiz_exp_vol_val').value);
+                    if (isNaN(ml) || ml <= 0) { showToast("Enter a valid volume."); return; }
+                    duration = Math.max(1, Math.round((ml * 60) / currentCalib) - 1);
+                } else {
+                    const dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
+                    const du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
+                    if (isNaN(dv) || dv <= 0) { showToast("Enter valid duration."); return; }
+                    duration = dv * du;
+                }
 
                 if (document.getElementById('wiz_exp_oneshot').checked) interval = 0; 
                 else {
