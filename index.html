@@ -115,23 +115,26 @@
             box-sizing: border-box; font-size: 1rem; transition: border 0.2s, background-color 0.3s, color 0.3s;
         }
         input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 153, 153, 0.1); }
+        input:disabled, select:disabled { opacity: 0.5; cursor: not-allowed; background: var(--bg-color); }
         
         /* Buttons */
         .btn {
             width: 100%; padding: 14px; display: flex; justify-content: center; align-items: center; gap: 8px;
             background: var(--surface); color: var(--text-main); border: 1px solid var(--border);
             border-radius: var(--radius); font-size: 0.95rem; font-weight: 600; cursor: pointer;
-            transition: background 0.15s, border 0.15s, color 0.3s;
+            transition: background 0.15s, border 0.15s, color 0.3s, opacity 0.3s;
         }
-        .btn:active { background: var(--surface-hover); }
+        .btn:active:not(:disabled) { background: var(--surface-hover); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-primary:active { background: var(--primary-hover); }
+        .btn-primary:active:not(:disabled) { background: var(--primary-hover); }
         .btn-danger { background: var(--danger-bg); color: var(--danger); border-color: #fca5a5; }
         
         /* Segmented Control */
         .segmented-control { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; transition: border-color 0.3s; }
         .seg-btn { flex: 1; padding: 10px; text-align: center; font-size: 0.9rem; font-weight: 600; background: var(--surface); color: var(--text-muted); cursor: pointer; transition: 0.2s; border: none; }
-        .seg-btn.active { background: var(--primary); color: white; }
+        .seg-btn.active:not(:disabled) { background: var(--primary); color: white; }
+        .seg-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--bg-color); }
 
         /* Custom Toggle Switch */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
@@ -181,7 +184,7 @@
 
         .queue-banner {
             position: fixed; bottom: 70px; left: 15px; right: 15px;
-            background: var(--warning-bg); border: 1px solid #fed7aa; color: var(--warning);
+            background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning);
             padding: 12px 16px; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center;
             z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease;
@@ -274,6 +277,21 @@
 
     <!-- SCHEDULES VIEW -->
     <div id="view-schedules" class="container active">
+        
+        <!-- NEXT WATERING BANNER -->
+        <div id="next-watering-banner" class="card" style="display: none; background: var(--surface-hover); border-left: 4px solid var(--primary); padding: 16px;">
+            <div class="flex-row">
+                <img src="sprinkler.svg" class="icon-lg" style="filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%);" alt="Sprinkler">
+                <div style="flex: 1;">
+                    <span class="label" style="color: var(--primary);">Next Upcoming Watering</span>
+                    <div id="next-wat-time" style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 2px;"></div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted);">
+                        <span id="next-wat-zone" style="font-weight: 600;"></span> • <span id="next-wat-amt"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
             <h2 class="header-title" style="margin: 0;">Active Routines</h2>
             <span id="sch_count" class="badge">0/10 Used</span>
@@ -286,9 +304,9 @@
     <div id="view-manual" class="container">
         <h2 class="header-title">Water Now</h2>
 
-        <div class="card">
+        <div class="card" id="maint_disp_card">
             <div class="flex-row" style="margin-bottom: 8px;">
-                <img src="pump.svg" class="icon" alt="Pump">
+                <img src="measuring_cup.svg" class="icon" alt="Measure">
                 <h3 class="card-title" style="margin:0;">Precise Volume Dispense</h3>
             </div>
             <p class="card-desc">Dispense an exact liquid volume based on calibrated metrics.</p>
@@ -301,7 +319,14 @@
             
             <span class="label">Volume (mL)</span>
             <input type="number" id="maint_disp_ml" value="50" min="5">
-            <button class="btn btn-primary" onclick="overrideDispense()">Execute Dispense</button>
+            
+            <button id="btn_override_dispense" class="btn btn-primary" onclick="overrideDispense()">Execute Dispense</button>
+            
+            <!-- Uncalibrated Lock Warning -->
+            <div id="maint_disp_lock" style="display:none; background: var(--danger-bg); border: 1px solid #fca5a5; color: var(--danger); padding: 10px; border-radius: var(--radius); font-size: 0.85rem; margin-top: 12px;">
+                <img src="calibration.svg" class="icon-sm" style="display:inline-block; vertical-align:middle; filter: invert(36%) sepia(80%) saturate(2000%) hue-rotate(345deg) brightness(97%) contrast(92%); margin-right: 4px;" alt="Warning"> 
+                System uncalibrated. Please run the Volumetric Wizard to enable.
+            </div>
         </div>
 
         <div class="card">
@@ -351,13 +376,13 @@
 
         <div class="card">
             <div class="flex-row" style="margin-bottom: 8px;">
-                <img src="information.svg" class="icon" alt="Info">
+                <img src="calibration.svg" class="icon" alt="Calibration">
                 <h3 class="card-title" style="margin:0;">Flow Calibration</h3>
             </div>
             <p class="card-desc">Map the physical hardware flow rate to enable precise volume scheduling.</p>
             
             <span class="label">Current Base Rate (mL/min)</span>
-            <input type="number" id="opt_calib" value="600">
+            <input type="number" id="opt_calib" value="0">
             <button class="btn" onclick="openCalibration()">Launch Volumetric Wizard</button>
             <button class="btn btn-primary" style="margin-top: 16px;" onclick="queueOptions()">
                 <img src="content-save-all.svg" class="icon" style="filter: invert(1);" alt="Save"> Save Configuration
@@ -497,13 +522,13 @@
             </div>
             <div class="modal-body">
                 <span class="label">Target Zone</span>
-                <p id="det-zone" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem;"></p>
+                <p id="det-zone" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main);"></p>
                 
                 <span class="label">Amount / Duration</span>
                 <p id="det-dur" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem; color: var(--primary);"></p>
                 
                 <span class="label">Frequency</span>
-                <p id="det-freq" style="margin: 0 0 24px 0; font-weight: 600; font-size: 1.1rem;"></p>
+                <p id="det-freq" style="margin: 0 0 24px 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main);"></p>
                 
                 <div style="background: var(--surface-hover); border: 1px solid var(--primary); border-radius: var(--radius); padding: 16px; text-align: center;">
                     <span class="label" style="margin-bottom: 4px;">Next Execution</span>
@@ -550,12 +575,12 @@
                     <p class="card-desc" style="font-size: 0.95rem;">Select the scheduling logic for this zone:</p>
                     
                     <div id="mode_interval" class="card selected" style="cursor:pointer; border-color:var(--primary); box-shadow: 0 0 0 1px var(--primary);" onclick="wizMode('interval')">
-                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem;">Simple Repeating</h4>
+                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Simple Repeating</h4>
                         <p class="card-desc" style="margin-bottom:0;">Start watering immediately and repeat at a fixed interval.</p>
                     </div>
 
                     <div id="mode_expert" class="card" style="cursor:pointer;" onclick="wizMode('expert')">
-                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem;">Advanced Schedule</h4>
+                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Advanced Schedule</h4>
                         <p class="card-desc" style="margin-bottom:0;">Specify an exact starting date/time, or configure one-shot events.</p>
                     </div>
                 </div>
@@ -577,6 +602,11 @@
                     <div class="segmented-control">
                         <button id="btn_wiz_int_type_vol" class="seg-btn active" onclick="setWizIntType('vol')">By Volume</button>
                         <button id="btn_wiz_int_type_time" class="seg-btn" onclick="setWizIntType('time')">By Time</button>
+                    </div>
+
+                    <!-- Volume Uncalibrated Warning -->
+                    <div id="wiz-vol-warning" style="display: none; background: var(--warning-bg); color: var(--warning); padding: 10px; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 12px; border: 1px solid #fed7aa;">
+                        <img src="calibration.svg" class="icon-sm" style="display: inline-block; vertical-align: middle; filter: invert(0.5) sepia(1) saturate(5) hue-rotate(320deg);" alt="Warning"> System uncalibrated. Volumetric scheduling is disabled.
                     </div>
 
                     <!-- Volume Inputs -->
@@ -614,6 +644,11 @@
                         <button id="btn_wiz_exp_type_time" class="seg-btn" onclick="setWizExpType('time')">By Time</button>
                     </div>
 
+                    <!-- Volume Uncalibrated Warning -->
+                    <div id="wiz-vol-warning-exp" style="display: none; background: var(--warning-bg); color: var(--warning); padding: 10px; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 12px; border: 1px solid #fed7aa;">
+                        <img src="calibration.svg" class="icon-sm" style="display: inline-block; vertical-align: middle; filter: invert(0.5) sepia(1) saturate(5) hue-rotate(320deg);" alt="Warning"> System uncalibrated. Volumetric scheduling is disabled.
+                    </div>
+
                     <!-- Volume Inputs -->
                     <div id="wiz_exp_vol_inputs" class="flex-row" style="margin-bottom: 20px;">
                         <input type="number" id="wiz_exp_vol_val" value="50" min="5" class="flex-1" style="margin:0;">
@@ -631,7 +666,7 @@
 
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 16px; background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
                         <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()" style="width: auto; margin: 0;">
-                        <span style="font-weight: 500; font-size: 0.95rem;">One-Shot Event (Do not repeat)</span>
+                        <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">One-Shot Event (Do not repeat)</span>
                     </label>
 
                     <div id="wiz_exp_rep_group">
@@ -744,7 +779,6 @@
         async function ensureScanning() {
             if (!globalNDEF) globalNDEF = new NDEFReader();
             if (!isNfcScanning) {
-                // Attach our abort controller signal if one exists
                 const options = nfcAbortController ? { signal: nfcAbortController.signal } : {};
                 try {
                     await globalNDEF.scan(options);
@@ -763,7 +797,7 @@
                 return;
             }
 
-            applyTheme(); // Init theme
+            applyTheme(); 
             
             const isPowerUser = localStorage.getItem('powerUser') === 'true';
             document.getElementById('power-user-toggle').checked = isPowerUser;
@@ -784,6 +818,8 @@
                     if (opt.calib !== undefined) document.getElementById('opt_calib').value = opt.calib;
                 } catch (e) {}
             }
+            
+            updateAppState();
         };
 
         function showToast(msg) {
@@ -829,6 +865,72 @@
             return `${sec} Secs`;
         }
 
+        // --- App State & UI Logic ---
+        function updateAppState() {
+            const calib = parseInt(document.getElementById('opt_calib').value) || 0;
+            const isCalib = calib > 0;
+
+            // Manual Dispense Lockout
+            const dispBtn = document.getElementById('btn_override_dispense');
+            const dispInput = document.getElementById('maint_disp_ml');
+            const dispLock = document.getElementById('maint_disp_lock');
+
+            if (!isCalib) {
+                dispBtn.disabled = true;
+                dispInput.disabled = true;
+                dispLock.style.display = 'block';
+            } else {
+                dispBtn.disabled = false;
+                dispInput.disabled = false;
+                dispLock.style.display = 'none';
+            }
+        }
+
+        function updateNextWateringBanner() {
+            const currentLocalEpoch = getLocalEpoch(new Date());
+            let nextRun = null;
+            let nextSch = null;
+
+            for (let i = 0; i < 10; i++) {
+                const sch = currentSchedules[i];
+                if (sch) {
+                    let runEpoch;
+                    if (sch.rawInterval === 0) {
+                        runEpoch = sch.rawEpoch;
+                    } else {
+                        if (sch.rawEpoch > currentLocalEpoch) {
+                            runEpoch = sch.rawEpoch;
+                        } else {
+                            const passed = currentLocalEpoch - sch.rawEpoch;
+                            const intervals = Math.floor(passed / sch.rawInterval) + 1;
+                            runEpoch = sch.rawEpoch + (intervals * sch.rawInterval);
+                        }
+                    }
+                    if (runEpoch >= currentLocalEpoch) {
+                        if (!nextRun || runEpoch < nextRun) {
+                            nextRun = runEpoch;
+                            nextSch = sch;
+                        }
+                    }
+                }
+            }
+
+            const banner = document.getElementById('next-watering-banner');
+            if (nextSch) {
+                const diffSecs = nextRun - currentLocalEpoch;
+                const targetDate = new Date(Date.now() + (diffSecs * 1000));
+                
+                const formatter = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                document.getElementById('next-wat-time').innerText = formatter.format(targetDate);
+                document.getElementById('next-wat-zone').innerText = `Zone ${nextSch.zone}`;
+                document.getElementById('next-wat-amt').innerText = `~${nextSch.estVol} mL (${formatDuration(nextSch.rawDuration)})`;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
         // --- NFC Handshake & Execution ---
         function cancelSync() {
             syncCancelled = true;
@@ -859,7 +961,7 @@
                         screen.classList.remove('error-state');
                         errorMsg.style.display = "none";
                         status.style.color = "var(--text-main)";
-                    }, 400); // Wait for modal to hide before resetting colors
+                    }, 400); 
                 }, 3000);
             }
         }
@@ -869,7 +971,7 @@
             idx += 2; // Skip legacy pipe delay
             document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
             
-            const currentCalib = parseInt(document.getElementById('opt_calib').value) || 600;
+            const currentCalib = parseInt(document.getElementById('opt_calib').value) || 0;
 
             currentSchedules = {};
             for (let i = 0; i < 10; i++) {
@@ -887,8 +989,9 @@
                     else if (interval >= 3600 && interval % 3600 === 0) uiDesc = `Repeats ${interval / 3600} Hours`;
                     else uiDesc = `Repeats ${Math.round(interval / 60)} Mins`;
 
-                    const est_ml = Math.round(((duration + 1) * currentCalib) / 60);
-                    uiDesc += ` • ~${est_ml} mL`;
+                    const est_ml = currentCalib > 0 ? Math.round(((duration + 1) * currentCalib) / 60) : 0;
+                    if(est_ml > 0) uiDesc += ` • ~${est_ml} mL`;
+                    else uiDesc += ` • ${formatDuration(duration)}`;
 
                     currentSchedules[i] = {
                         zone: String.fromCharCode(zoneCode),
@@ -902,6 +1005,8 @@
             }
             localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
             localStorage.setItem('irrigationOptions', JSON.stringify({ calib: currentCalib }));
+            
+            updateAppState();
             renderSchedules();
         }
 
@@ -955,7 +1060,7 @@
             const status = document.getElementById('sync-status');
             
             try {
-                document.getElementById('sync-log').innerHTML = ''; // Clear logs
+                document.getElementById('sync-log').innerHTML = ''; 
                 openModal('screen-sync');
                 
                 logSync("Command Initiated...");
@@ -980,7 +1085,6 @@
                 const verified = await new Promise((resolve, reject) => {
                     const timeout = setTimeout(() => resolve(false), 4500);
 
-                    // Add listener to abort controller to reject early if cancelled while waiting
                     nfcAbortController.signal.addEventListener('abort', () => {
                         clearTimeout(timeout);
                         reject(new DOMException("Aborted", "AbortError"));
@@ -1011,7 +1115,7 @@
             } finally {
                 isSyncing = false;
                 if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
-                status.style.color = "var(--text-main)"; // Reset
+                status.style.color = "var(--text-main)"; 
             }
         }
 
@@ -1068,9 +1172,10 @@
             nfcAbortController = new AbortController();
             
             const status = document.getElementById('sync-status');
+            const progress = document.getElementById('sync-progress');
             
             try {
-                document.getElementById('sync-log').innerHTML = ''; // Clear
+                document.getElementById('sync-log').innerHTML = ''; 
                 openModal('screen-sync');
                 const encoder = new TextEncoder();
                 await ensureScanning(); 
@@ -1143,7 +1248,7 @@
             } finally {
                 isSyncing = false;
                 if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
-                status.style.color = "var(--text-main)"; // Reset
+                status.style.color = "var(--text-main)"; 
             }
         }
 
@@ -1214,6 +1319,8 @@
             if (isNaN(weight) || weight <= 0 || weight > 200) { showToast("Please enter a valid weight in grams."); return; }
 
             let currentBase = parseInt(document.getElementById('opt_calib').value) || 600;
+            if (currentBase === 0) currentBase = 600; // Force default for the calculation itself
+
             let calculatedFlow = Math.round((weight / calibTargetML) * currentBase);
             accumulatedCalib += calculatedFlow;
             calibPasses++;
@@ -1233,6 +1340,7 @@
             let finalCalib = parseInt(document.getElementById('calib-result').innerText);
             addToQueue("Update Config Flow Rate", { cmd: "opt", delay: 0, calib: finalCalib });
             document.getElementById('opt_calib').value = finalCalib;
+            updateAppState();
             closeCalibration();
         }
 
@@ -1268,7 +1376,13 @@
             if (!sch) return;
 
             document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
-            document.getElementById('det-dur').innerText = `~${sch.estVol} mL (${formatDuration(sch.rawDuration)})`;
+            
+            if (sch.estVol > 0) {
+                document.getElementById('det-dur').innerText = `~${sch.estVol} mL (${formatDuration(sch.rawDuration)})`;
+            } else {
+                document.getElementById('det-dur').innerText = `${formatDuration(sch.rawDuration)}`;
+            }
+
             document.getElementById('det-slot-memory').value = slot;
 
             const currentLocalEpoch = getLocalEpoch(new Date());
@@ -1312,8 +1426,25 @@
             document.getElementById('wiz_exp_date').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             document.getElementById('wiz_exp_time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-            setWizIntType('vol');
-            setWizExpType('vol');
+            const calib = parseInt(document.getElementById('opt_calib').value) || 0;
+            const isCalib = calib > 0;
+
+            if (!isCalib) {
+                document.getElementById('btn_wiz_int_type_vol').disabled = true;
+                document.getElementById('btn_wiz_exp_type_vol').disabled = true;
+                setWizIntType('time');
+                setWizExpType('time');
+                document.getElementById('wiz-vol-warning').style.display = 'block';
+                document.getElementById('wiz-vol-warning-exp').style.display = 'block';
+            } else {
+                document.getElementById('btn_wiz_int_type_vol').disabled = false;
+                document.getElementById('btn_wiz_exp_type_vol').disabled = false;
+                setWizIntType('vol');
+                setWizExpType('vol');
+                document.getElementById('wiz-vol-warning').style.display = 'none';
+                document.getElementById('wiz-vol-warning-exp').style.display = 'none';
+            }
+
             isEditingMode = (editSlot !== -1);
 
             const slotSelect = document.getElementById('wiz_slot');
@@ -1334,8 +1465,10 @@
             if (isEditingMode) {
                 slotSelect.value = editSlot;
                 document.getElementById('wiz_zone').value = currentSchedules[editSlot].zone;
-                document.getElementById('wiz_int_vol_val').value = Math.max(5, currentSchedules[editSlot].estVol);
-                document.getElementById('wiz_exp_vol_val').value = Math.max(5, currentSchedules[editSlot].estVol);
+                if (currentSchedules[editSlot].estVol > 0) {
+                    document.getElementById('wiz_int_vol_val').value = Math.max(5, currentSchedules[editSlot].estVol);
+                    document.getElementById('wiz_exp_vol_val').value = Math.max(5, currentSchedules[editSlot].estVol);
+                }
             } else {
                 slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
             }
@@ -1358,7 +1491,7 @@
             
             if (step === 1) { 
                 document.getElementById('wiz_1').classList.remove('hidden'); 
-                footer.innerHTML = ''; 
+                footer.innerHTML = `<button class="btn btn-primary flex-1" onclick="wizNextToStep2()">Next Step ➔</button>`;
             }
             if (step === 2) { 
                 document.getElementById('wiz_2').classList.remove('hidden'); 
@@ -1403,7 +1536,7 @@
             const slot = parseInt(document.getElementById('wiz_slot').value);
             const zone = document.getElementById('wiz_zone').value;
             let interval = 0, duration = 0, startEpoch = 0;
-            const currentCalib = parseInt(document.getElementById('opt_calib').value) || 600;
+            const currentCalib = parseInt(document.getElementById('opt_calib').value) || 0;
 
             if (selectedWizMode === 'interval') {
                 const v = parseInt(document.getElementById('wiz_int_val').value);
@@ -1475,6 +1608,8 @@
             }
             if (count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">No active routines configured.</p>`;
             document.getElementById('sch_count').innerText = `${count}/10 Used`;
+            
+            updateNextWateringBanner();
         }
     </script>
 </body>
