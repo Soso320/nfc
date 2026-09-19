@@ -7,8 +7,10 @@
     <style>
         /* --- SIEMENS CORPORATE DESIGN LANGUAGE --- */
         :root {
-            --primary: #009999; /* Siemens Teal */
+            --primary: #009999; 
             --primary-hover: #007a7a;
+            
+            /* Light Theme Defaults */
             --bg-color: #f4f4f6;
             --surface: #ffffff;
             --surface-hover: #f9fafb;
@@ -20,7 +22,24 @@
             --success: #16a34a;
             --warning: #ea580c;
             --warning-bg: #fff7ed;
-            --radius: 4px; /* Industrial sharp edges */
+            --radius: 4px;
+            --modal-bg: rgba(17, 24, 39, 0.6);
+        }
+
+        /* Dark Theme Overrides */
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --surface: #1f2937;
+            --surface-hover: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --border: #4b5563;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --success: #22c55e;
+            --warning: #f97316;
+            --warning-bg: rgba(249, 115, 22, 0.1);
+            --modal-bg: rgba(0, 0, 0, 0.8);
         }
 
         body {
@@ -30,7 +49,11 @@
             color: var(--text-main);
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
+
+        /* THE FIX: Missing utility class that broke the wizards */
+        .hidden { display: none !important; }
 
         /* --- FLUID TRANSITION ENGINE --- */
         .container {
@@ -47,7 +70,7 @@
 
         /* Modal Overlay Engine */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(17, 24, 39, 0.6);
+            position: fixed; inset: 0; background: var(--modal-bg);
             z-index: 300; display: flex; justify-content: center; align-items: center; padding: 20px;
             opacity: 0; visibility: hidden; pointer-events: none;
             transition: opacity 0.25s ease, visibility 0.25s ease;
@@ -60,7 +83,7 @@
             background: var(--surface); width: 100%; max-width: 420px;
             border-radius: var(--radius); border: 1px solid var(--border);
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            transform: translateY(15px) scale(0.98); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(15px) scale(0.98); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s;
             display: flex; flex-direction: column; overflow: hidden;
         }
         .modal-overlay.open .modal-content {
@@ -68,14 +91,20 @@
         }
 
         /* --- ICONS --- */
-        img.icon { width: 24px; height: 24px; display: block; opacity: 0.7; }
+        img.icon { width: 24px; height: 24px; display: block; opacity: 0.7; transition: filter 0.3s, opacity 0.3s; }
         img.icon-sm { width: 18px; height: 18px; display: block; opacity: 0.7; }
-        img.icon-lg { width: 48px; height: 48px; display: block; }
-        .nav-item.active img.icon { filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%); opacity: 1; }
+        img.icon-lg { width: 48px; height: 48px; display: block; opacity: 0.8; }
+        
+        [data-theme="dark"] img.icon { filter: invert(0.8); }
+        [data-theme="dark"] img.icon-sm { filter: invert(0.8); }
+        [data-theme="dark"] img.icon-lg { filter: invert(0.8); }
+
+        /* Force primary color for active tab regardless of theme */
+        .nav-item.active img.icon { filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%) !important; opacity: 1; }
 
         /* --- COMPONENTS --- */
         .header-title { font-size: 1.5rem; font-weight: 600; margin: 0 0 20px 0; letter-spacing: -0.5px; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background-color 0.3s, border-color 0.3s; }
         .card-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0; color: var(--text-main); }
         .card-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 16px 0; line-height: 1.4; }
         
@@ -83,18 +112,18 @@
         
         input, select {
             width: 100%; padding: 12px; margin-bottom: 16px;
-            background: #ffffff; color: var(--text-main);
+            background: var(--surface); color: var(--text-main);
             border: 1px solid var(--border); border-radius: var(--radius);
-            box-sizing: border-box; font-size: 1rem; transition: border 0.2s;
+            box-sizing: border-box; font-size: 1rem; transition: border 0.2s, background-color 0.3s, color 0.3s;
         }
         input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 153, 153, 0.1); }
         
         /* Buttons */
         .btn {
             width: 100%; padding: 14px; display: flex; justify-content: center; align-items: center; gap: 8px;
-            background: #ffffff; color: var(--text-main); border: 1px solid var(--border);
+            background: var(--surface); color: var(--text-main); border: 1px solid var(--border);
             border-radius: var(--radius); font-size: 0.95rem; font-weight: 600; cursor: pointer;
-            transition: background 0.15s, border 0.15s;
+            transition: background 0.15s, border 0.15s, color 0.3s;
         }
         .btn:active { background: var(--surface-hover); }
         .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
@@ -102,20 +131,29 @@
         .btn-danger { background: var(--danger-bg); color: var(--danger); border-color: #fca5a5; }
         
         /* Segmented Control */
-        .segmented-control { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+        .segmented-control { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; transition: border-color 0.3s; }
         .seg-btn { flex: 1; padding: 10px; text-align: center; font-size: 0.9rem; font-weight: 500; background: var(--surface); color: var(--text-muted); cursor: pointer; transition: 0.2s; border: none; }
         .seg-btn.active { background: var(--primary); color: white; }
+
+        /* Custom Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         /* Navigation */
         .nav-bar {
             position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface);
             display: flex; justify-content: space-around; align-items: center;
             padding: 12px 0; border-top: 1px solid var(--border); z-index: 50;
+            transition: background-color 0.3s, border-color 0.3s;
         }
         .nav-item {
             color: var(--text-muted); font-size: 0.75rem; font-weight: 500;
             display: flex; flex-direction: column; align-items: center; gap: 4px;
-            cursor: pointer; width: 33%;
+            cursor: pointer; width: 33%; transition: color 0.3s;
         }
         .nav-item.active { color: var(--primary); font-weight: 600; }
 
@@ -123,28 +161,28 @@
         .list-item {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px; border: 1px solid var(--border); border-radius: var(--radius);
-            background: var(--surface); margin-bottom: 8px; cursor: pointer;
+            background: var(--surface); margin-bottom: 8px; cursor: pointer; transition: background-color 0.3s, border-color 0.3s;
         }
         .item-main { font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 8px;}
         .item-sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; display: block; }
-        .badge { background: #e0f2f1; color: var(--primary); font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+        .badge { background: rgba(0, 153, 153, 0.15); color: var(--primary); font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
 
         /* Modals Structure */
-        .modal-header { padding: 16px 20px; background: var(--surface-hover); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 16px 20px; background: var(--surface-hover); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s, border-color 0.3s; }
         .modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
         .modal-body { padding: 20px; overflow-y: auto; max-height: 60vh; }
-        .modal-footer { padding: 16px 20px; background: var(--surface-hover); border-top: 1px solid var(--border); display: flex; gap: 12px; }
+        .modal-footer { padding: 16px 20px; background: var(--surface-hover); border-top: 1px solid var(--border); display: flex; gap: 12px; transition: background-color 0.3s, border-color 0.3s; }
         .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
 
         /* Toast & Banners */
         #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; }
-        .toast { background: var(--text-main); color: white; padding: 12px 16px; border-radius: var(--radius); text-align: center; font-weight: 500; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1), toast-out 0.3s 3.1s forwards; }
+        .toast { background: var(--text-main); color: var(--bg-color); padding: 12px 16px; border-radius: var(--radius); text-align: center; font-weight: 500; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1), toast-out 0.3s 3.1s forwards; transition: background-color 0.3s, color 0.3s; }
         @keyframes toast-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes toast-out { to { opacity: 0; transform: translateY(-10px); } }
 
         .queue-banner {
             position: fixed; bottom: 70px; left: 15px; right: 15px;
-            background: var(--warning-bg); border: 1px solid #fed7aa; color: var(--warning);
+            background: var(--warning-bg); border: 1px solid var(--warning); color: var(--warning);
             padding: 12px 16px; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center;
             z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease;
@@ -156,9 +194,17 @@
             position: fixed; inset: 0; background: var(--surface); z-index: 500;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; text-align: center;
-            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease;
+            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.3s;
         }
         .fullscreen-state.open { opacity: 1; visibility: visible; pointer-events: auto; }
+
+        /* Verbose Terminal Logging */
+        .terminal-log {
+            width: 100%; max-width: 380px; height: 160px; margin-top: 20px;
+            background: #0a0a0a; color: #10b981; font-family: monospace; font-size: 0.75rem;
+            text-align: left; padding: 12px; border-radius: var(--radius); border: 1px solid #333;
+            overflow-y: auto; box-sizing: border-box; white-space: pre-wrap;
+        }
 
         .flex-row { display: flex; gap: 12px; align-items: center; }
         .flex-1 { flex: 1; }
@@ -179,7 +225,7 @@
 
     <!-- STARTUP SCREEN -->
     <div id="screen-startup" class="fullscreen-state open">
-        <img src="contactless.svg" class="icon-lg" style="margin-bottom: 24px; opacity: 0.8;" alt="NFC">
+        <img src="contactless.svg" class="icon-lg" style="margin-bottom: 24px;" alt="NFC">
         <h1 style="font-size: 2rem; color: var(--text-main); margin: 0 0 12px 0;">System Overview</h1>
         <p style="color: var(--text-muted); max-width: 300px; line-height: 1.5; margin-bottom: 30px;">Tap your phone against the hardware controller to authenticate and load configuration.</p>
         <button class="btn btn-primary" style="max-width: 250px;" onclick="initConnection()">
@@ -188,17 +234,25 @@
     </div>
 
     <!-- SCAN PROMPT -->
-    <div id="screen-scan-prompt" class="fullscreen-state" style="background: rgba(255,255,255,0.95); backdrop-filter: blur(5px);">
+    <div id="screen-scan-prompt" class="fullscreen-state">
         <img src="nfc.svg" class="icon-lg" style="margin-bottom: 20px; filter: invert(36%) sepia(99%) saturate(1478%) hue-rotate(149deg) brightness(92%) contrast(101%);" alt="Scanning">
         <h2 style="margin: 0 0 8px 0; color: var(--primary);">Ready to Scan</h2>
         <p style="color: var(--text-muted); margin-bottom: 30px;">Hold phone perfectly still against the NFC icon.</p>
         <button class="btn" style="max-width: 200px;" onclick="cancelScan()">Cancel</button>
     </div>
 
-    <!-- SYNCING OVERLAY -->
-    <div id="screen-sync" class="fullscreen-state" style="background: rgba(255,255,255,0.95); z-index: 9999;">
+    <!-- SYNCING OVERLAY WITH VERBOSE TERMINAL -->
+    <div id="screen-sync" class="fullscreen-state" style="z-index: 9999;">
         <img src="transit-connection-variant.svg" class="icon-lg" style="margin-bottom: 20px; opacity: 0.5;" alt="Syncing">
-        <h2 id="sync-status" style="margin: 0; color: var(--text-main); white-space: pre-wrap;">Communicating...</h2>
+        <h2 id="sync-status" style="margin: 0 0 16px 0; color: var(--text-main);">Communicating...</h2>
+        
+        <!-- Progress Bar -->
+        <div style="width: 100%; max-width: 380px; height: 6px; background: var(--border); border-radius: 4px; overflow: hidden;">
+            <div id="sync-progress" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
+        </div>
+
+        <!-- Diagnostic Log -->
+        <div id="sync-log" class="terminal-log">Waiting for command initiation...</div>
     </div>
 
     <!-- TABS NAVIGATION -->
@@ -273,6 +327,19 @@
         <h2 class="header-title">System Settings</h2>
         
         <div class="card">
+            <div class="flex-row" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 class="card-title" style="margin:0;">Dark Mode</h3>
+                    <p class="card-desc" style="margin: 4px 0 0 0;">Toggle the application interface theme.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="flex-row" style="margin-bottom: 8px;">
                 <img src="information.svg" class="icon" alt="Info">
                 <h3 class="card-title" style="margin:0;">Flow Calibration</h3>
@@ -281,7 +348,7 @@
             
             <span class="label">Current Base Rate (mL/min)</span>
             <input type="number" id="opt_calib" value="600">
-            <button class="btn" onclick="openModal('modal-calibration')">Launch Volumetric Wizard</button>
+            <button class="btn" onclick="openCalibration()">Launch Volumetric Wizard</button>
             <button class="btn btn-primary" style="margin-top: 16px;" onclick="queueOptions()">
                 <img src="content-save-all.svg" class="icon" style="filter: invert(1);" alt="Save"> Save Configuration
             </button>
@@ -348,7 +415,7 @@
                 <button class="btn-icon" onclick="closeCalibration()"><img src="close-circle.svg" class="icon" alt="Close"></button>
             </div>
 
-            <div style="height: 4px; background: #e5e7eb; width: 100%;">
+            <div style="height: 4px; background: var(--border); width: 100%;">
                 <div id="calib-progress" style="height: 100%; background: var(--primary); width: 25%; transition: width 0.3s ease;"></div>
             </div>
 
@@ -420,13 +487,13 @@
             </div>
             <div class="modal-body">
                 <span class="label">Target Zone</span>
-                <p id="det-zone" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem;"></p>
+                <p id="det-zone" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main);"></p>
                 
                 <span class="label">Amount / Duration</span>
                 <p id="det-dur" style="margin: 0 0 16px 0; font-weight: 600; font-size: 1.1rem; color: var(--primary);"></p>
                 
                 <span class="label">Frequency</span>
-                <p id="det-freq" style="margin: 0 0 24px 0; font-weight: 600; font-size: 1.1rem;"></p>
+                <p id="det-freq" style="margin: 0 0 24px 0; font-weight: 600; font-size: 1.1rem; color: var(--text-main);"></p>
                 
                 <div style="background: var(--surface-hover); border: 1px solid var(--primary); border-radius: var(--radius); padding: 16px; text-align: center;">
                     <span class="label" style="margin-bottom: 4px;">Next Execution</span>
@@ -473,12 +540,12 @@
                     <p class="card-desc" style="font-size: 0.95rem;">Select the scheduling logic for this zone:</p>
                     
                     <div id="mode_interval" class="card selected" style="cursor:pointer; border-color:var(--primary); box-shadow: 0 0 0 1px var(--primary);" onclick="wizMode('interval')">
-                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem;">Simple Repeating</h4>
+                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Simple Repeating</h4>
                         <p class="card-desc" style="margin-bottom:0;">Start watering immediately and repeat at a fixed interval.</p>
                     </div>
 
                     <div id="mode_expert" class="card" style="cursor:pointer;" onclick="wizMode('expert')">
-                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem;">Advanced Schedule</h4>
+                        <h4 style="margin:0 0 4px 0; font-size: 1.05rem; color: var(--text-main);">Advanced Schedule</h4>
                         <p class="card-desc" style="margin-bottom:0;">Specify an exact starting date/time, or configure one-shot events.</p>
                     </div>
                 </div>
@@ -554,7 +621,7 @@
 
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 16px; background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px;">
                         <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()" style="width: auto; margin: 0;">
-                        <span style="font-weight: 500; font-size: 0.95rem;">One-Shot Event (Do not repeat)</span>
+                        <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">One-Shot Event (Do not repeat)</span>
                     </label>
 
                     <div id="wiz_exp_rep_group">
@@ -611,6 +678,29 @@
         function openModal(id) { document.getElementById(id).classList.add('open'); }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
+        // --- Dark Mode Logic ---
+        function toggleTheme() {
+            const toggle = document.getElementById('theme-toggle');
+            if (toggle.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // --- Diagnostic Terminal Logger ---
+        function clearLog() {
+            document.getElementById('sync-log').innerHTML = '';
+        }
+        function logSync(msg) {
+            const logWindow = document.getElementById('sync-log');
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit'});
+            logWindow.innerHTML += `[${time}] ${msg}\n`;
+            logWindow.scrollTop = logWindow.scrollHeight;
+        }
+
         const defaultNFCReadHandler = (event) => {
             for (const record of event.message.records) {
                 if (record.mediaType && record.mediaType.includes("octet-stream")) {
@@ -633,6 +723,12 @@
                 document.querySelector('#screen-startup p').innerText = "System configuration requires a compatible browser with Web NFC support.";
                 document.querySelector('#screen-startup button').style.display = 'none';
                 return;
+            }
+
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('theme-toggle').checked = true;
             }
 
             const storedSch = localStorage.getItem('irrigationSchedules');
@@ -777,19 +873,35 @@
             isSyncing = true;
 
             const status = document.getElementById('sync-status');
-
+            const progress = document.getElementById('sync-progress');
+            
             try {
+                clearLog();
                 openModal('screen-sync');
+                
+                logSync(">>> Initiating Direct Command...");
                 status.innerText = "Transmitting...\nHold phone steady.";
+                progress.style.width = '10%';
 
                 const encoder = new TextEncoder();
+                const pl = buildNFCPayload(payload);
+                logSync(`Compiling JSON Payload:`);
+                logSync(`${pl}`);
+                
                 await ensureScanning();
                 
+                logSync(`Payload size: ${pl.length} bytes.`);
+                logSync(`Transmitting via Web NFC...`);
+                progress.style.width = '30%';
+
                 await globalNDEF.write({
-                    records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }]
+                    records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(pl) }]
                 });
 
                 status.innerText = "Awaiting Verification...\nHold phone steady.";
+                logSync(`Transmission OK.`);
+                logSync(`Awaiting ST25DV binary telemetry overwrite...`);
+                progress.style.width = '60%';
 
                 const verified = await new Promise((resolve) => {
                     const timeout = setTimeout(() => resolve(false), 4500);
@@ -798,6 +910,7 @@
                         for (const record of event.message.records) {
                             if (record.mediaType && record.mediaType.includes("octet-stream")) {
                                 clearTimeout(timeout);
+                                logSync(`<<< Telemetry received (${record.data.byteLength} bytes)`);
                                 parseTelemetryAndSave(record.data); 
                                 resolve(true);
                             }
@@ -806,6 +919,8 @@
                 });
 
                 if (verified) {
+                    logSync(`Hardware validation successful.`);
+                    progress.style.width = '100%';
                     status.innerText = "Command Executed";
                     await new Promise(r => setTimeout(r, 1200));
                 } else {
@@ -813,7 +928,9 @@
                 }
             } catch (err) {
                 status.innerText = "Transmission Failed";
+                logSync(`ERROR: ${err.message}`);
                 showToast("Error: " + err.message);
+                progress.style.width = '0%';
                 await new Promise(r => setTimeout(r, 2500));
             } finally {
                 closeModal('screen-sync');
@@ -874,8 +991,10 @@
             isSyncing = true;
             
             const status = document.getElementById('sync-status');
+            const progress = document.getElementById('sync-progress');
             
             try {
+                clearLog();
                 openModal('screen-sync');
                 const encoder = new TextEncoder();
                 await ensureScanning(); 
@@ -884,16 +1003,26 @@
                     const cmd = commandQueue[i];
                     let verified = false;
                     let attempts = 0;
+                    
+                    let phasePercent = ((i) / commandQueue.length) * 100;
+                    progress.style.width = phasePercent + '%';
+
+                    logSync(`\n=== Processing Item ${i + 1} of ${commandQueue.length} ===`);
+                    logSync(`Task: ${cmd.desc}`);
 
                     while (!verified && attempts < 2) {
                         attempts++;
                         status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\n${cmd.desc}...`;
-
+                        
+                        const pl = buildNFCPayload(cmd.payload);
+                        logSync(`Attempt ${attempts} - Payload size: ${pl.length} bytes`);
+                        
                         await globalNDEF.write({
-                            records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }]
+                            records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(pl) }]
                         });
 
                         status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\nVerifying...\n(Keep phone steady)`;
+                        logSync(`Write OK. Waiting for ST25DV validation...`);
 
                         verified = await new Promise((resolve) => {
                             const timeout = setTimeout(() => resolve(false), 4500);
@@ -904,6 +1033,7 @@
                                         try {
                                             parseTelemetryAndSave(record.data);
                                             clearTimeout(timeout);
+                                            logSync(`<<< Telemetry verified (${record.data.byteLength} bytes)`);
                                             resolve(true);
                                         } catch (e) {}
                                     }
@@ -913,6 +1043,7 @@
 
                         if (!verified && attempts < 2) {
                             status.innerText = "Timeout. Retrying...";
+                            logSync(`Timeout. Hardware failed to ACK within 4.5s.`);
                             await new Promise(r => setTimeout(r, 1000));
                         }
                     }
@@ -921,12 +1052,16 @@
 
                 commandQueue = [];
                 updateQueueUI();
+                progress.style.width = '100%';
                 status.innerText = "All Changes Verified";
+                logSync(`\n=== SYNC COMPLETE ===`);
                 await new Promise(r => setTimeout(r, 1500));
 
             } catch (err) {
                 status.innerText = "Sync Interrupted";
+                logSync(`\nERROR: ${err.message}`);
                 showToast(err.message);
+                progress.style.width = '0%';
                 await new Promise(r => setTimeout(r, 3000));
             } finally {
                 closeModal('screen-sync');
@@ -1140,25 +1275,21 @@
 
         function wizGo(step) {
             document.querySelectorAll('.wizard-step').forEach(w => w.classList.add('hidden'));
-            document.querySelectorAll('.wiz-dot').forEach(d => d.classList.remove('active'));
             
             const footer = document.getElementById('wizard_footer_dynamic');
             document.getElementById('wiz-progress').style.width = (step * 33.33) + '%';
             
             if (step === 1) { 
                 document.getElementById('wiz_1').classList.remove('hidden'); 
-                document.getElementById('wiz_dot_1').classList.add('active'); 
                 footer.innerHTML = ''; 
             }
             if (step === 2) { 
                 document.getElementById('wiz_2').classList.remove('hidden'); 
-                document.getElementById('wiz_dot_2').classList.add('active'); 
                 footer.innerHTML = `
                     <button class="btn flex-1" onclick="wizGo(1)">Back</button>
                     <button class="btn btn-primary flex-1" onclick="wizGo(3)">Next Step ➔</button>`;
             }
             if (step === 3) {
-                document.getElementById('wiz_dot_3').classList.add('active');
                 if (selectedWizMode === 'interval') document.getElementById('wiz_3a').classList.remove('hidden');
                 else document.getElementById('wiz_3b').classList.remove('hidden');
                 
