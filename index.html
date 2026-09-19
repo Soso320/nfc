@@ -6,1178 +6,1074 @@
     <title>Irrigation Controller</title>
     <style>
         :root {
-            --bg: #09090b; --surface: #18181b; --surface-hover: #27272a;
-            --text-main: #f4f4f5; --text-muted: #a1a1aa;
-            --border: #3f3f46; --accent: #3b82f6; --accent-glow: rgba(59, 130, 246, 0.4);
-            --danger: #ef4444; --danger-glow: rgba(239, 68, 68, 0.5);
-            --success: #22c55e; --warning: #f59e0b;
-            --radius: 16px;
+            --bg-main: #0a0a0a;
+            --bg-card: #141414;
+            --accent: #00d2ff;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --warning: #ffa502;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { background-color: var(--bg); color: var(--text-main); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding-bottom: 120px; }
-
-        /* Typography */
-        h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
-        h3 { font-size: 1.15rem; font-weight: 600; }
-        p { color: var(--text-muted); line-height: 1.5; font-size: 0.95rem; }
-        
-        /* Icon Masking System */
-        .icon {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            background-color: currentColor;
-            -webkit-mask-size: contain;
-            mask-size: contain;
-            -webkit-mask-repeat: no-repeat;
-            mask-repeat: no-repeat;
-            -webkit-mask-position: center;
-            mask-position: center;
-            flex-shrink: 0;
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            -webkit-tap-highlight-color: transparent;
         }
-        .icon-lg { width: 36px; height: 36px; }
-        .icon-xl { width: 48px; height: 48px; }
 
-        /* Overlays & Modals */
-        .overlay { position: fixed; inset: 0; background: rgba(9, 9, 11, 0.85); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.3s ease; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-        .overlay.hidden { opacity: 0; pointer-events: none; }
+        .hidden { display: none !important; }
         
-        .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); transform: translateY(0) scale(1); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
-        .overlay.hidden .modal-box { transform: translateY(20px) scale(0.95); }
+        .container {
+            padding: 20px;
+            padding-bottom: 80px;
+            display: none;
+        }
+        .container.active { display: block; }
 
-        .static-icon { width: 96px; height: 96px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; color: var(--text-main); }
-        .pulse-ring { width: 80px; height: 80px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; position: relative; color: var(--accent); }
-        .pulse-ring::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid var(--accent); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+        /* Navigation */
+        .nav-bar {
+            position: fixed;
+            bottom: 0; width: 100%;
+            background: var(--bg-card);
+            display: flex; justify-content: space-around;
+            padding: 15px 0; border-top: 1px solid #333;
+            z-index: 50;
+        }
+        .nav-item {
+            color: var(--text-muted); font-size: 0.9rem;
+            text-align: center; cursor: pointer;
+        }
+        .nav-item.active { color: var(--accent); font-weight: bold; }
 
-        /* Views */
-        .container { width: 100%; max-width: 480px; padding: 20px; display: none; flex-direction: column; gap: 20px; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .container.active { display: flex; }
-        @keyframes fadeSlide { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Cards */
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
-        .card-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px; color: var(--text-main); }
+        /* Cards & Inputs */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px; padding: 15px;
+            margin-bottom: 15px; border: 1px solid #222;
+        }
+        input, select {
+            width: 100%; padding: 12px; margin-top: 5px;
+            background: #1e1e1e; color: white;
+            border: 1px solid #333; border-radius: 8px;
+            box-sizing: border-box; font-size: 1rem;
+        }
         
-        /* Inputs & Layouts */
-        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-        .input-row { display: flex; gap: 12px; width: 100%; }
-        .input-row > * { min-width: 0; flex: 1; } 
-        label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; display: flex; align-items: center; gap: 6px; }
-        
-        input, select { background: var(--bg); border: 1px solid var(--border); color: var(--text-main); padding: 14px; border-radius: 12px; font-size: 1rem; transition: all 0.2s; appearance: none; width: 100%; }
-        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
-        
-        /* Tooltip & Checkboxes */
-        .checkbox-container { display: flex; align-items: center; gap: 10px; cursor: pointer; text-transform: none; font-size: 0.95rem; font-weight: 500; color: var(--text-main); letter-spacing: 0; margin-bottom: 16px; }
-        .checkbox-container input { width: auto; appearance: auto; margin: 0; width: 18px; height: 18px; accent-color: var(--accent); }
-        
-        .tooltip { position: relative; display: inline-flex; align-items: center; color: var(--text-muted); }
-        .tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: var(--bg); color: var(--text-main); text-align: left; border-radius: 8px; padding: 12px; position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; font-size: 0.85rem; border: 1px solid var(--border); font-weight: normal; line-height: 1.4; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-
         /* Buttons */
-        button { background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border); padding: 16px; border-radius: 12px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; }
-        button:active { transform: scale(0.97); }
-        button.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
-        button.danger { background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 20px var(--danger-glow); }
-        .btn-icon { background: transparent; border: none; padding: 8px; width: auto; border-radius: 50%; color: var(--text-muted); box-shadow: none; }
-        .btn-icon:hover, .btn-icon:active { background: rgba(239, 68, 68, 0.1); color: var(--danger); transform: none; }
-
-        /* Bottom Navigation */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(24, 24, 27, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 12px 10px 30px 10px; z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; flex: 1; padding: 10px; border-radius: 12px; }
-        .nav-item.active { color: var(--accent); background: rgba(59, 130, 246, 0.12); }
-        .nav-icon { width: 24px; height: 24px; transition: transform 0.2s; }
-        .nav-item.active .nav-icon { transform: translateY(-2px); }
-
-        /* Queue Banner */
-        .queue-banner { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(150%); width: calc(100% - 40px); max-width: 440px; background: rgba(239, 68, 68, 0.1); backdrop-filter: blur(12px); border: 1px solid var(--danger); border-radius: 16px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 900; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.2); }
-        .queue-banner.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
-        .queue-info { display: flex; flex-direction: column; gap: 4px; }
-        .queue-title { color: var(--danger); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
-        .queue-desc { color: var(--text-main); font-size: 0.85rem; opacity: 0.9; }
-        .queue-banner button { width: auto; padding: 10px 18px; font-size: 0.95rem; margin: 0; box-shadow: none; border-radius: 10px; }
-
-        /* Lists */
-        .list-item { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.2s; cursor: pointer; }
-        .list-item:active { border-color: var(--accent); }
-        .item-main { font-weight: 600; font-size: 1.05rem; color: var(--text-main); margin-bottom: 6px; display: block; }
-        .item-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; display: block; }
+        .btn-main {
+            width: 100%; padding: 15px;
+            background: var(--accent); color: #000;
+            border: none; border-radius: 8px;
+            font-size: 1rem; font-weight: bold;
+            cursor: pointer; margin-top: 10px;
+        }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-icon { background: none; border: none; color: inherit; font-size: 1.2rem; cursor: pointer; padding: 5px; }
         
-        /* Schedule Details Modal */
-        .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); width: 100%; text-align: left;}
-        .detail-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .detail-label { color: var(--text-muted); font-size: 0.85rem; }
-        .detail-value { font-weight: 600; color: var(--text-main); font-size: 0.9rem;}
+        /* Lists */
+        .list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-bottom: 1px solid #222;
+            background: var(--bg-card);
+        }
+        .item-main { font-weight: bold; display: block; }
+        .item-sub { color: var(--text-muted); font-size: 0.85rem; }
 
-        /* Toasts */
-        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
-        .toast { background: rgba(39, 39, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 14px 20px; border-radius: 16px; font-size: 0.95rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.4s 3s forwards; text-align: center; }
-        @keyframes slideDown { from { transform: translateY(-30px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+        /* Overlays & Alerts */
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%;
+        }
+        .toast {
+            background: #333; color: white; padding: 12px 20px;
+            border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            animation: fadein 0.3s, fadeout 0.3s 3.1s forwards;
+        }
+        @keyframes fadein { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeout { to { opacity: 0; transform: translateY(-20px); } }
 
-        /* Wizard */
-        .wizard-step { display: none; }
-        .wizard-step.active { display: block; animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .mode-card { background: var(--bg); border: 1px solid var(--border); padding: 18px; border-radius: 14px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 6px; }
-        .mode-card.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.08); box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1); }
-        .slot-configured { font-weight: 600; color: var(--text-main); }
-        .slot-available { font-weight: 400; color: var(--success); }
+        .queue-banner {
+            position: sticky; top: 0; background: var(--warning); color: #000;
+            padding: 12px; text-align: center; font-weight: bold; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .screen-overlay {
+            position: fixed; inset: 0;
+            background: var(--bg-main); z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center;
+        }
+
+        /* Wizard & Modals */
+        .wizard-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 300; padding: 20px;
+        }
+        .wizard-modal {
+            background: var(--bg-card); border: 1px solid #333;
+            border-radius: 12px; width: 100%; max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column;
+        }
+        .wizard-header, .wizard-footer {
+            padding: 15px 20px; background: #111;
+        }
+        .wizard-header { border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .wizard-footer { border-top: 1px solid #333; display: flex; justify-content: space-between; }
+        .wizard-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        
+        .wizard-step-indicator {
+            display: flex; justify-content: center; gap: 8px; padding: 15px;
+            background: #111; border-bottom: 1px solid #333;
+        }
+        .wiz-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
+        .wiz-dot.active { background: var(--accent); }
     </style>
 </head>
 <body>
 
+    <!-- Toast Notifications -->
     <div id="toast-container"></div>
 
-    <!-- Static Startup Screen -->
-    <div id="screen-startup" class="overlay" style="background: var(--bg);">
-        <div class="static-icon">
-            <i class="icon icon-xl" style="-webkit-mask-image: url('contactless.svg'); mask-image: url('contactless.svg');"></i>
-        </div>
-        <h2 id="startup-title">Connect System</h2>
-        <p id="startup-desc" style="margin-bottom: 32px; max-width: 300px;">Press the button below, then tap your device against the controller to establish a secure connection.</p>
-        <button id="btn-startup" class="primary" onclick="initConnection()" style="max-width: 250px;">
-            <i class="icon" style="-webkit-mask-image: url('nfc.svg'); mask-image: url('nfc.svg'); background-color: #fff;"></i>
-            Start Scan
-        </button>
-    </div>
-
-    <!-- Active Scanning Modal -->
-    <div id="screen-scan-prompt" class="overlay hidden">
-        <div class="modal-box">
-            <div class="pulse-ring">
-                <i class="icon icon-lg" style="-webkit-mask-image: url('transit-connection-variant.svg'); mask-image: url('transit-connection-variant.svg');"></i>
-            </div>
-            <h2>Ready to Scan</h2>
-            <p style="color: var(--accent); margin-top: 8px;">Hold your device steady against the controller's tag.</p>
-            <button onclick="cancelScan()" style="margin-top: 32px; background: transparent; border-color: var(--border);">Cancel</button>
-        </div>
-    </div>
-
-    <!-- Sync Progress Modal -->
-    <div id="screen-sync" class="overlay hidden">
-        <div class="modal-box">
-            <div class="pulse-ring" style="border-color: var(--warning); color: var(--warning); animation-duration: 1s;">
-                <i class="icon icon-lg" style="-webkit-mask-image: url('transit-connection-variant.svg'); mask-image: url('transit-connection-variant.svg');"></i>
-            </div>
-            <h2>Synchronizing</h2>
-            <p id="sync-status" style="color: var(--warning); font-weight: 600; margin-top: 8px;">Writing configuration...</p>
-            <p style="margin-top: 8px; font-size: 0.85rem;">Please keep your device steady.</p>
-        </div>
-    </div>
-
-    <!-- Confirmation Dialog -->
-    <div id="dialog-confirm" class="overlay hidden">
-        <div class="modal-box" style="padding: 24px;">
-            <div style="color: var(--warning); margin-bottom: 16px;">
-                <i class="icon icon-xl" style="-webkit-mask-image: url('alert.svg'); mask-image: url('alert.svg');"></i>
-            </div>
-            <h3 style="margin-bottom: 12px;">Overwrite Slot?</h3>
-            <p id="dialog-msg" style="margin-bottom: 24px; font-size: 0.9rem;">This slot is currently active. Continuing will replace the existing schedule.</p>
-            <div class="input-row">
-                <button onclick="closeConfirmDialog()">Cancel</button>
-                <button class="primary danger" id="dialog-btn-confirm">Overwrite</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Schedule Details Modal -->
-    <div id="modal-schedule-details" class="overlay hidden">
-        <div class="modal-box" style="padding: 24px;">
-            <div style="color: var(--accent); margin-bottom: 12px;">
-                <i class="icon icon-xl" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i>
-            </div>
-            <h3 style="margin-bottom: 20px;">Schedule Details</h3>
-            
-            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color: var(--success);">Active</span></div>
-            <div class="detail-row"><span class="detail-label">Target Valve</span><span class="detail-value" id="det-zone">--</span></div>
-            <div class="detail-row"><span class="detail-label">Frequency</span><span class="detail-value" id="det-freq">--</span></div>
-            <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="det-dur">--</span></div>
-            <div class="detail-row" style="margin-bottom: 24px;"><span class="detail-label">Estimated Next Run</span><span class="detail-value" id="det-next">--</span></div>
-            
-            <button class="primary" onclick="closeDetailsModal()">Close</button>
-        </div>
-    </div>
-
     <!-- Queue Banner -->
-    <div id="queue-banner" class="queue-banner">
-        <div class="queue-info">
-            <span class="queue-title">
-                <i class="icon" style="-webkit-mask-image: url('alert.svg'); mask-image: url('alert.svg');"></i> Unsaved Changes
-            </span>
-            <span class="queue-desc" id="queue-count">0 items pending</span>
-        </div>
-        <button class="primary danger" onclick="executeQueue()">
-            <i class="icon" style="-webkit-mask-image: url('content-save-all.svg'); mask-image: url('content-save-all.svg');"></i> Save
-        </button>
+    <div id="queue-banner" class="queue-banner hidden">
+        <span id="queue-count">0 items pending</span>
+        <button onclick="executeQueue()" style="background:#000; color:var(--warning); border:none; padding:8px 15px; border-radius:6px; font-weight:bold;">Sync to Hardware</button>
     </div>
 
-    <!-- VIEW: SCHEDULES -->
+    <!-- STARTUP SCREEN -->
+    <div id="screen-startup" class="screen-overlay">
+        <h1 id="startup-title" style="color: var(--accent);">Irrigation Control</h1>
+        <p id="startup-desc" style="color: var(--text-muted); margin-bottom: 30px;">Tap your phone against the controller to connect and load configuration.</p>
+        <button id="btn-startup" class="btn-main" onclick="initConnection()">Connect Device</button>
+    </div>
+
+    <!-- SCAN PROMPT -->
+    <div id="screen-scan-prompt" class="screen-overlay hidden" style="background: rgba(10,10,10,0.95);">
+        <h2>Ready to Scan</h2>
+        <p style="color: var(--text-muted);">Hold your phone near the NFC icon on the controller.</p>
+        <button class="btn-main" style="background: #444; color: white; width: 200px;" onclick="cancelScan()">Cancel</button>
+    </div>
+
+    <!-- SYNCING OVERLAY -->
+    <div id="screen-sync" class="screen-overlay hidden" style="background: rgba(10,10,10,0.95); z-index: 9999;">
+        <h2 id="sync-status" style="color: var(--warning);">Communicating...</h2>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('schedules', this)">Schedules</div>
+        <div class="nav-item" onclick="switchTab('manual', this)">Manual Run</div>
+        <div class="nav-item" onclick="switchTab('settings', this)">Settings</div>
+    </nav>
+
+    <!-- SCHEDULES VIEW -->
     <div id="view-schedules" class="container active">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin:0;">Active Routines</h2>
+            <span id="sch_count" style="color: var(--text-muted); font-size: 0.9rem;">0/10</span>
+        </div>
+        <button class="btn-main" style="margin-bottom: 20px;" onclick="openWizard()">+ Add New Schedule</button>
+        <div id="schedule_list" style="border-radius: 12px; overflow: hidden; border: 1px solid #222;"></div>
+    </div>
+
+    <!-- MANUAL VIEW -->
+    <div id="view-manual" class="container">
+        <h2>Manual Override</h2>
         <div class="card">
-            <div class="card-title">
-                <i class="icon" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i>
-                <span>Active Schedules</span>
-                <span id="sch_count" style="margin-left: auto; color: var(--accent); font-size: 0.95rem;">0/10</span>
-            </div>
-            <div id="schedule_list">
-                <p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No schedules configured.<br>Tap below to create one.</p>
-            </div>
-            <button class="primary" onclick="openWizard()" style="margin-top: 10px;">
-                Create New Schedule
-            </button>
+            <h3 style="margin-top:0; color:var(--accent);">Pump Control</h3>
+            <label>Direction</label>
+            <select id="maint_pump_dir">
+                <option value="1">Forward (Dispense)</option>
+                <option value="2">Reverse (Flush)</option>
+            </select>
+            <label>Speed (%)</label>
+            <input type="number" id="maint_pump_spd" value="100" min="0" max="100">
+            <label>Duration (Seconds)</label>
+            <input type="number" id="maint_pump_sec" value="30" min="1">
+            <button class="btn-main" onclick="overridePump()">Execute Pump Run</button>
+            <button class="btn-main btn-danger" onclick="executeImmediate({cmd:'pump', dir:0, spd:0, sec:0})">Force Stop Pump</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0; color:var(--accent);">Valve Control</h3>
+            <label>Target Zone</label>
+            <select id="maint_sol_zone">
+                <option value="A">Zone A</option>
+                <option value="B">Zone B</option>
+                <option value="O">All Zones</option>
+            </select>
+            <label>State</label>
+            <select id="maint_sol_state">
+                <option value="1">Open Valve</option>
+                <option value="0">Close Valve</option>
+            </select>
+            <button class="btn-main" onclick="overrideSol()">Actuate Valve</button>
         </div>
     </div>
 
-    <!-- VIEW: OPTIONS -->
-    <div id="view-options" class="container">
+    <!-- SETTINGS VIEW -->
+    <div id="view-settings" class="container">
+        <h2>System Configuration</h2>
+        
         <div class="card">
-            <div class="card-title">
-                <i class="icon" style="-webkit-mask-image: url('cog.svg'); mask-image: url('cog.svg');"></i>
-                System Configuration
-            </div>
-            <div class="input-group">
-                <label>Pipe Travel Delay (Seconds)</label>
-                <input type="number" id="opt_delay" value="12" min="0">
-            </div>
-            <button class="btn-main" onclick="openCalibration()" style="margin-top: 15px; background: var(--accent); color: #000;">
-    Launch Volumetric Calibration Wizard
-</button>
-            <div class="input-group">
-                <label>Flow Calibration Offset</label>
-                <input type="number" id="opt_calib" value="0">
-            </div>
-            <button class="primary" onclick="queueOptions()" style="margin-top: 8px;">Queue Changes</button>
+            <h3 style="margin-top:0; color:var(--accent);">Flow Calibration</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Calibrate the physical flow rate to enable precise volume dispensing.</p>
+            <label>Current Base Rate (mL/min)</label>
+            <input type="number" id="opt_calib" value="600">
+            <button class="btn-main" onclick="openCalibration()" style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">Launch Volumetric Wizard</button>
         </div>
 
         <div class="card">
-            <div class="card-title">
-                <i class="icon" style="-webkit-mask-image: url('water.svg'); mask-image: url('water.svg');"></i> 
-                Calibration Helper
+            <h3 style="margin-top:0; color:var(--accent);">Pipe Delays</h3>
+            <label>Travel Delay (Seconds)</label>
+            <input type="number" id="opt_delay" value="0">
+        </div>
+        
+        <button class="btn-main" onclick="queueOptions()">Queue Configuration Update</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- WIZARD: VOLUMETRIC CALIBRATION             -->
+    <!-- ========================================== -->
+    <div id="modal-calibration" class="wizard-overlay hidden">
+        <div class="wizard-modal">
+            <div class="wizard-header">
+                <h2 style="margin: 0; font-size: 1.2rem; color: var(--accent);">Volumetric Setup</h2>
+                <button class="btn-icon" onclick="closeCalibration()" style="color: var(--text-muted);">✕</button>
             </div>
-            <p style="margin-bottom: 20px;">Place a cup under the pipe. The system will dispense water for 10 seconds. Weigh it in grams and update the offset above.</p>
-            <button onclick="executeImmediate({cmd: 'pump', dir: 0, spd: 100, sec: 10})">Dispense Test Volume</button>
+
+            <!-- Progress Bar -->
+            <div style="height: 4px; background: #333; width: 100%;">
+                <div id="calib-progress" style="height: 100%; background: var(--accent); width: 25%; transition: width 0.3s ease;"></div>
+            </div>
+
+            <div class="wizard-body">
+                <!-- Step 1: Welcome & Prime -->
+                <div id="calib-step-1" class="calib-step active">
+                    <h3 style="margin-top: 0;">Step 1: System Prep</h3>
+                    <p style="font-size: 0.95rem; color: #ccc;">This wizard measures your pump's exact flow rate, allowing you to schedule watering by precise volumes (mL) instead of timers.</p>
+                    
+                    <div style="background: rgba(255, 193, 7, 0.1); border-left: 4px solid var(--warning); padding: 10px; margin: 15px 0;">
+                        <strong style="color: var(--warning); font-size: 0.9rem;">Precision Note:</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.85rem;">Due to the mechanical pulsing of diaphragm pumps and shifting reservoir levels, expect a real-world accuracy of <strong>±1 to 3 mL</strong> per run.</p>
+                    </div>
+
+                    <p style="font-size: 0.95rem;"><strong>Crucial:</strong> Your tubes must be entirely full of water. If there is air in the lines, place the hose in a bucket and tap below.</p>
+                    <button class="btn-main" onclick="calibPrime()" style="margin-top: 10px; background: #333; color: white;">Tap Device to Prime Lines (15s)</button>
+                </div>
+
+                <!-- Step 2: Dispense -->
+                <div id="calib-step-2" class="calib-step hidden">
+                    <h3 style="margin-top: 0;">Step 2: Dispense Test <span id="calib-pass-label" style="font-size: 0.9rem; color: var(--accent);">(Pass 1 of 2)</span></h3>
+                    <ol style="padding-left: 20px; line-height: 1.6; font-size: 0.95rem; color: #ccc;">
+                        <li>Place an empty cup on a digital kitchen scale.</li>
+                        <li><strong>Tare the scale to exactly 0 grams.</strong></li>
+                        <li>Place the cup beneath the <strong>Zone A</strong> nozzle.</li>
+                        <li>Tap the button below and scan your controller.</li>
+                    </ol>
+                    <button class="btn-main" onclick="calibDispense()" style="margin: 15px 0;">Tap Device to Dispense 50mL</button>
+                    <p style="font-size: 0.85rem; color: var(--warning); text-align: center; margin: 0;">Wait for the pump to completely stop before clicking Next.</p>
+                </div>
+
+                <!-- Step 3: Measure -->
+                <div id="calib-step-3" class="calib-step hidden">
+                    <h3 style="margin-top: 0;">Step 3: Measure Weight</h3>
+                    <p style="font-size: 0.95rem; color: #ccc;">Weigh the water currently in the cup. Because 1 gram of water equals exactly 1 milliliter, enter the scale's reading directly below.</p>
+                    
+                    <div style="margin: 25px 0;">
+                        <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">Measured Weight (grams):</label>
+                        <input type="number" id="calib-weight" placeholder="e.g. 48.5" step="0.1" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #121212; color: white; font-size: 1.2rem;">
+                    </div>
+                </div>
+
+                <!-- Step 4: Finalize -->
+                <div id="calib-step-4" class="calib-step hidden">
+                    <h3 style="color: var(--success); margin-top: 0;">Calibration Complete</h3>
+                    <p style="font-size: 0.95rem; color: #ccc;">Your system's hardware flow rate has been successfully mapped based on your 2-pass average.</p>
+                    
+                    <div style="background: #121212; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; border: 1px solid #333;">
+                        <span style="font-size: 0.9rem; color: var(--text-muted); display: block; text-transform: uppercase; letter-spacing: 1px;">Calculated Base Rate</span>
+                        <strong style="font-size: 2.2rem; color: var(--accent);"><span id="calib-result"></span> <span style="font-size: 1rem; color: #888;">mL/min</span></strong>
+                    </div>
+
+                    <p style="font-size: 0.85rem; color: var(--warning); margin-bottom: 0;">Clicking Save will queue this configuration to be written permanently to the hardware's EEPROM.</p>
+                </div>
+            </div>
+
+            <div class="wizard-footer">
+                <button id="btn-calib-back" class="btn-main" onclick="calibBack()" style="background: transparent; border: 1px solid #555; width: 45%; color: white; margin-top: 0;">Back</button>
+                <button id="btn-calib-next" class="btn-main" onclick="calibNextStep()" style="width: 45%; margin-top: 0;">Lines are full ➔</button>
+            </div>
         </div>
     </div>
 
-    <!-- VIEW: MAINTENANCE -->
-    <div id="view-maintenance" class="container">
-        <div class="card">
-            <div class="card-title">
-                <i class="icon" style="-webkit-mask-image: url('clock-edit-outline.svg'); mask-image: url('clock-edit-outline.svg');"></i> 
-                Clock Synchronization
+    <!-- ========================================== -->
+    <!-- MODAL: SCHEDULE DETAILS                    -->
+    <!-- ========================================== -->
+    <div id="modal-schedule-details" class="wizard-overlay hidden">
+        <div class="wizard-modal" style="max-width: 350px;">
+            <div class="wizard-header">
+                <h3 style="margin:0; color:var(--accent);">Schedule Info</h3>
+                <button class="btn-icon" onclick="document.getElementById('modal-schedule-details').classList.add('hidden')" style="color: var(--text-muted);">✕</button>
             </div>
-            <p style="margin-bottom: 20px;">The internal clock naturally drifts over time. Synchronize it with your device's accurate internet time.</p>
-            <button class="primary" onclick="executeImmediate({cmd: 'rtc'})">Synchronize Clock Now</button>
-        </div>
-
-        <div class="card">
-            <div class="card-title" style="color: var(--danger);">
-                <i class="icon" style="-webkit-mask-image: url('tune-variant.svg'); mask-image: url('tune-variant.svg');"></i>
-                Hardware Manual Control
-            </div>
-            <p style="margin-bottom: 20px; font-size: 0.85rem;">Warning: Overrides bypass scheduling logic and execute instantly.</p>
-            
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Pump Direction</label>
-                    <select id="maint_pump_dir"><option value="0">Forward</option><option value="1">Reverse</option></select>
-                </div>
-                <div class="input-group">
-                    <label>Power (%)</label>
-                    <input type="number" id="maint_pump_spd" value="50" min="0" max="100">
-                </div>
-            </div>
-            <div class="input-group">
-                <label>Duration (Seconds)</label>
-                <input type="number" id="maint_pump_sec" value="5" min="1">
-            </div>
-            <button class="danger" onclick="overridePump()" style="margin-bottom: 32px;">Engage Pump</button>
-
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Solenoid Valve</label>
-                    <select id="maint_sol_zone"><option value="A">Zone A</option><option value="B">Zone B</option></select>
-                </div>
-                <div class="input-group">
-                    <label>State</label>
-                    <select id="maint_sol_state"><option value="1">OPEN</option><option value="0">CLOSED</option></select>
-                </div>
-            </div>
-            <button class="danger" onclick="overrideSol()">Toggle Solenoid</button>
-        </div>
-    </div>
-    <!-- VOLUMETRIC CALIBRATION WIZARD -->
-    <div id="screen-calibration" class="screen hidden" style="z-index: 100; background: var(--bg-main); position: fixed; inset: 0; overflow-y: auto; padding-bottom: 20px;">
-        <div class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--bg-card); border-bottom: 1px solid #333;">
-            <h2 style="margin: 0; font-size: 1.2rem;">Volumetric Calibration</h2>
-            <button class="btn-icon" onclick="closeCalibration()" style="color: var(--text-muted);">✕</button>
-        </div>
-
-        <div style="height: 4px; background: #333; width: 100%;">
-            <div id="calib-progress" style="height: 100%; background: var(--accent); width: 25%; transition: width 0.3s ease;"></div>
-        </div>
-
-        <div style="padding: 20px;">
-            <!-- Step 1: Welcome & Prime -->
-            <div id="calib-step-1" class="calib-step active">
-                <h3 style="color: var(--accent); margin-top: 0;">Step 1: System Prep</h3>
-                <p>Welcome to the Volume Calibration Wizard. This process measures your pump's true flow rate, allowing you to schedule watering by precise volumes (mL) instead of timers.</p>
-                
-                <div style="background: rgba(255, 193, 7, 0.1); border-left: 4px solid var(--warning); padding: 10px; margin: 15px 0;">
-                    <strong style="color: var(--warning);">Precision Expectations:</strong>
-                    <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Due to the physical pulsing of diaphragm pumps and changing water levels, this system achieves a real-world accuracy of <strong>±1 to 3 mL</strong> per run.</p>
-                </div>
-
-                <p><strong>Crucial:</strong> Your tubes must be completely full of water. If there is air in the lines, place the hose in a bucket and tap below to purge the system.</p>
-                <button class="btn-main" onclick="calibPrime()" style="margin-bottom: 15px;">Tap to Prime Lines (15s)</button>
-                <button class="btn-main" onclick="calibNext(2)" style="background: #444;">Lines are full. Next ➔</button>
-            </div>
-
-            <!-- Step 2: Dispense -->
-            <div id="calib-step-2" class="calib-step hidden">
-                <h3 style="color: var(--accent); margin-top: 0;">Step 2: Dispense Test <span id="calib-pass-label" style="font-size: 0.9rem; color: #888;">(Pass 1 of 2)</span></h3>
-                <ol style="padding-left: 20px; line-height: 1.6;">
-                    <li>Place an empty cup on a digital kitchen scale.</li>
-                    <li><strong>Tare the scale to 0 grams.</strong></li>
-                    <li>Place the cup beneath the <strong>Zone A</strong> nozzle.</li>
-                    <li>Tap the button below and scan your controller.</li>
-                </ol>
-                <button class="btn-main" onclick="calibDispense()" style="margin: 20px 0;">Tap to Dispense 50mL</button>
-                <p style="font-size: 0.85rem; color: var(--text-muted);">Wait for the pump to completely finish its soft-stop before tapping next.</p>
-                <button class="btn-main" onclick="calibNext(3)" style="background: #444;">Water dispensed. Next ➔</button>
-            </div>
-
-            <!-- Step 3: Measure -->
-            <div id="calib-step-3" class="calib-step hidden">
-                <h3 style="color: var(--accent); margin-top: 0;">Step 3: Measure Weight</h3>
-                <p>Weigh the water currently in the cup. Because 1 gram of water equals exactly 1 milliliter, you can enter the scale's reading directly below.</p>
-                
-                <div style="margin: 20px 0;">
-                    <label style="display: block; margin-bottom: 8px; color: var(--text-muted);">Measured Weight (grams):</label>
-                    <input type="number" id="calib-weight" placeholder="e.g. 48.5" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #1a1a1a; color: white; font-size: 1.1rem;">
-                </div>
-                
-                <button class="btn-main" onclick="processCalibWeight()">Submit Weight</button>
-            </div>
-
-            <!-- Step 4: Finalize -->
-            <div id="calib-step-4" class="calib-step hidden">
-                <h3 style="color: var(--success); margin-top: 0;">Calibration Complete!</h3>
-                <p>Your system's flow rate has been successfully mapped.</p>
-                
-                <div style="background: #1a1a1a; border-radius: 8px; padding: 15px; text-align: center; margin: 20px 0; border: 1px solid #333;">
-                    <span style="font-size: 0.9rem; color: var(--text-muted); display: block;">Calculated Flow Rate</span>
-                    <strong style="font-size: 1.8rem; color: var(--accent);"><span id="calib-result"></span> mL/min</strong>
-                </div>
-
-                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">This value will be queued to write to the device memory. Future firmware updates will use this metric for exact volume scheduling.</p>
-                <button class="btn-main" onclick="calibSave()">Queue Configuration ➔</button>
+            <div class="wizard-body">
+                <p><strong>Target:</strong> <span id="det-zone"></span></p>
+                <p><strong>Duration:</strong> <span id="det-dur"></span></p>
+                <p><strong>Frequency:</strong> <span id="det-freq"></span></p>
+                <p style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #333;"><strong>Next Execution:</strong><br><span id="det-next" style="display:inline-block; margin-top:5px; font-weight:bold;"></span></p>
             </div>
         </div>
     </div>
-    <!-- WIZARD OVERLAY -->
-    <div id="screen-wizard" class="overlay hidden" style="justify-content: flex-start; padding-top: 50px;">
-        <div class="card" style="width: 100%; max-width: 480px; position: relative;">
-            <button class="btn-icon" onclick="closeWizard()" style="position: absolute; top: 16px; right: 16px;">
-                <i class="icon" style="-webkit-mask-image: url('close-circle.svg'); mask-image: url('close-circle.svg');"></i>
-            </button>
-            <div class="card-title" id="wiz-title">Create Schedule</div>
-            
-            <div id="wiz_1" class="wizard-step active">
-                <label style="margin-bottom: 10px; display: block;">Select Target Valve</label>
-                <select id="wiz_zone" style="margin-bottom: 30px;">
-                    <option value="A">Zone A</option>
-                    <option value="B">Zone B</option>
-                </select>
-                <button class="primary" onclick="wizGo(2)">Continue</button>
+
+    <!-- ========================================== -->
+    <!-- WIZARD: SCHEDULE CREATOR                   -->
+    <!-- ========================================== -->
+    <div id="screen-wizard" class="wizard-overlay hidden">
+        <div class="wizard-modal">
+            <div class="wizard-header">
+                <h2 style="margin: 0; font-size: 1.2rem; color: var(--accent);">Create Schedule</h2>
+                <button class="btn-icon" onclick="closeWizard()" style="color: var(--text-muted);">✕</button>
             </div>
 
-            <div id="wiz_2" class="wizard-step">
-                <label style="margin-bottom: 10px; display: block;">Timing Mode</label>
-                <div class="mode-card selected" id="mode_interval" onclick="wizMode('interval')">
-                    <span class="item-main">Easy Interval</span>
-                    <span class="item-sub">Water routinely every few days, hours, or minutes.</span>
-                </div>
-                <div class="mode-card" id="mode_expert" onclick="wizMode('expert')">
-                    <span class="item-main">Expert Calendar</span>
-                    <span class="item-sub">Pick an exact start date and precise repetition cycle.</span>
-                </div>
-                <div class="input-row" style="margin-top: 30px;">
-                    <button onclick="wizGo(1)">Back</button>
-                    <button class="primary" onclick="wizGo(3)">Continue</button>
-                </div>
+            <div class="wizard-step-indicator">
+                <div id="wiz_dot_1" class="wiz-dot active"></div>
+                <div id="wiz_dot_2" class="wiz-dot"></div>
+                <div id="wiz_dot_3" class="wiz-dot"></div>
             </div>
 
-            <div id="wiz_3a" class="wizard-step">
-                <div class="input-group">
-                    <label>Frequency (How Often)</label>
-                    <div class="input-row">
-                        <input type="number" id="wiz_int_val" value="3" min="1">
-                        <select id="wiz_int_unit">
+            <div class="wizard-body">
+                <!-- WIZARD STEP 1: Core Target -->
+                <div id="wiz_1" class="wizard-step active">
+                    <label>Target Zone</label>
+                    <select id="wiz_zone">
+                        <option value="A">Zone A (Main)</option>
+                        <option value="B">Zone B (Secondary)</option>
+                    </select>
+
+                    <label style="margin-top: 15px; display:block;">Hardware Memory Slot</label>
+                    <select id="wiz_slot"></select>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Selecting a configured slot will overwrite it.</p>
+                    
+                    <button class="btn-main" onclick="wizGo(2)" style="margin-top: 20px;">Next Step ➔</button>
+                </div>
+
+                <!-- WIZARD STEP 2: Mode Selection -->
+                <div id="wiz_2" class="wizard-step hidden">
+                    <p style="color: var(--text-muted); margin-top:0;">How do you want to schedule this zone?</p>
+                    
+                    <div id="mode_interval" class="card selected" style="cursor:pointer; border-color:var(--accent);" onclick="wizMode('interval')">
+                        <h4 style="margin:0;">Easy Interval</h4>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0;">Start watering immediately and repeat at a fixed frequency (e.g. Every 2 Days).</p>
+                    </div>
+
+                    <div id="mode_expert" class="card" style="cursor:pointer;" onclick="wizMode('expert')">
+                        <h4 style="margin:0;">Expert Time</h4>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0;">Specify an exact starting date and time, and configure complex repetitions.</p>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                        <button class="btn-main" onclick="wizGo(1)" style="width:48%; background:transparent; border:1px solid #555; color:white;">Back</button>
+                        <button class="btn-main" onclick="wizGo(3)" style="width:48%;">Next Step ➔</button>
+                    </div>
+                </div>
+
+                <!-- WIZARD STEP 3A: Interval Mode -->
+                <div id="wiz_3a" class="wizard-step hidden">
+                    <h3 style="margin-top:0;">Frequency & Duration</h3>
+                    
+                    <label>Water Every:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="wiz_int_val" value="1" min="1" style="flex: 1;">
+                        <select id="wiz_int_unit" style="flex: 2;">
                             <option value="60">Minutes</option>
                             <option value="3600">Hours</option>
                             <option value="86400" selected>Days</option>
                             <option value="604800">Weeks</option>
                         </select>
                     </div>
-                </div>
-                <div class="input-group" style="margin-top: 20px;">
-                    <label>Duration (How Long)</label>
-                    <div class="input-row">
-                        <input type="number" id="wiz_dur_val" value="10" min="1">
-                        <select id="wiz_dur_unit"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
-                    </div>
-                </div>
-                <div class="input-row" style="margin-top: 40px;">
-                    <button onclick="wizGo(2)">Back</button>
-                    <button class="primary" onclick="wizGo(4)">Continue</button>
-                </div>
-            </div>
 
-            <div id="wiz_3b" class="wizard-step">
-                <div class="input-group">
-                    <label>First Watering Event</label>
-                    <div class="input-row">
-                        <input type="date" id="wiz_exp_date" style="flex: 1.5;">
-                        <input type="time" id="wiz_exp_time" style="flex: 1;">
-                    </div>
-                </div>
-                
-                <label class="checkbox-container">
-                    <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()">
-                    <span>One-Time Event</span>
-                    <div class="tooltip">
-                        <i class="icon" style="width: 16px; height: 16px; -webkit-mask-image: url('information.svg'); mask-image: url('information.svg'); color: var(--text-muted);"></i>
-                        <span class="tooltiptext">When selected, the system will trigger only once on the specified date and time without repeating.</span>
-                    </div>
-                </label>
-
-                <div class="input-group" id="wiz_exp_rep_group">
-                    <label>Repeat Every</label>
-                    <div class="input-row">
-                        <input type="number" id="wiz_exp_rep_val" value="1" min="1">
-                        <select id="wiz_exp_rep_unit">
+                    <label style="margin-top: 15px; display:block;">For a Duration of:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="wiz_dur_val" value="5" min="1" style="flex: 1;">
+                        <select id="wiz_dur_unit" style="flex: 2;">
+                            <option value="1" selected>Seconds</option>
                             <option value="60">Minutes</option>
-                            <option value="3600">Hours</option>
-                            <option value="86400" selected>Days</option>
-                            <option value="604800">Weeks</option>
                         </select>
                     </div>
-                </div>
-                <div class="input-group" style="margin-top: 16px;">
-                    <label>Duration</label>
-                    <div class="input-row">
-                        <input type="number" id="wiz_exp_dur_val" value="10" min="1">
-                        <select id="wiz_exp_dur_unit"><option value="1">Seconds</option><option value="60" selected>Minutes</option></select>
+
+                    <div style="display:flex; justify-content:space-between; margin-top:25px;">
+                        <button class="btn-main" onclick="wizGo(2)" style="width:48%; background:transparent; border:1px solid #555; color:white;">Back</button>
+                        <button class="btn-main" onclick="attemptQueueSchedule()" style="width:48%; background:var(--success);">Finish & Queue</button>
                     </div>
                 </div>
-                <div class="input-row" style="margin-top: 30px;">
-                    <button onclick="wizGo(2)">Back</button>
-                    <button class="primary" onclick="wizGo(4)">Continue</button>
-                </div>
-            </div>
 
-            <div id="wiz_4" class="wizard-step">
-                <label style="margin-bottom: 10px; display: block;">Hardware Memory Allocation</label>
-                <select id="wiz_slot" style="margin-bottom: 30px; font-weight: 600;"></select>
-                <div class="input-row">
-                    <button onclick="wizGo(selectedWizMode === 'interval' ? '3a' : '3b')">Back</button>
-                    <button class="primary" onclick="attemptQueueSchedule()">Queue Schedule</button>
+                <!-- WIZARD STEP 3B: Expert Mode -->
+                <div id="wiz_3b" class="wizard-step hidden">
+                    <h3 style="margin-top:0;">Exact Start & Repeat</h3>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex:1;">
+                            <label>Start Date</label>
+                            <input type="date" id="wiz_exp_date">
+                        </div>
+                        <div style="flex:1;">
+                            <label>Time</label>
+                            <input type="time" id="wiz_exp_time">
+                        </div>
+                    </div>
+
+                    <label style="margin-top: 15px; display:block;">Watering Duration:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="wiz_exp_dur_val" value="5" min="1" style="flex: 1;">
+                        <select id="wiz_exp_dur_unit" style="flex: 2;">
+                            <option value="1" selected>Seconds</option>
+                            <option value="60">Minutes</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="wiz_exp_oneshot" onchange="toggleOneShot()" style="width: 20px; margin: 0;">
+                            <strong>One-Shot Event (Do not repeat)</strong>
+                        </label>
+                    </div>
+
+                    <div id="wiz_exp_rep_group">
+                        <label style="margin-top: 15px; display:block;">Repeat Every:</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="wiz_exp_rep_val" value="1" min="1" style="flex: 1;">
+                            <select id="wiz_exp_rep_unit" style="flex: 2;">
+                                <option value="60">Minutes</option>
+                                <option value="3600">Hours</option>
+                                <option value="86400" selected>Days</option>
+                                <option value="604800">Weeks</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; margin-top:25px;">
+                        <button class="btn-main" onclick="wizGo(2)" style="width:48%; background:transparent; border:1px solid #555; color:white;">Back</button>
+                        <button class="btn-main" onclick="attemptQueueSchedule()" style="width:48%; background:var(--success);">Finish & Queue</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('schedules', this)">
-            <i class="icon nav-icon" style="-webkit-mask-image: url('calendar-multiselect.svg'); mask-image: url('calendar-multiselect.svg');"></i> Schedules
-        </div>
-        <div class="nav-item" onclick="switchTab('options', this)">
-            <i class="icon nav-icon" style="-webkit-mask-image: url('cog.svg'); mask-image: url('cog.svg');"></i> Options
-        </div>
-        <div class="nav-item" onclick="switchTab('maintenance', this)">
-            <i class="icon nav-icon" style="-webkit-mask-image: url('tune-variant.svg'); mask-image: url('tune-variant.svg');"></i> Manual
+    <!-- CONFIRMATION DIALOG -->
+    <div id="dialog-confirm" class="wizard-overlay hidden" style="z-index: 9999;">
+        <div class="wizard-modal" style="max-width: 300px; padding: 20px; text-align: center;">
+            <h3 style="margin-top:0; color:var(--danger);">Overwrite Slot?</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem;">The selected slot already has a schedule. Overwrite it?</p>
+            <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                <button class="btn-main" onclick="closeConfirmDialog()" style="width:45%; background:#333; color:white;">Cancel</button>
+                <button class="btn-main btn-danger" id="dialog-btn-confirm" style="width:45%;">Overwrite</button>
+            </div>
         </div>
     </div>
 
-<script>
-    // --- State Management ---
-    let commandQueue = [];
-    let currentSchedules = {};
-    let selectedWizMode = 'interval';
-    
-    // Global NFC State tracking to prevent overlapping scan errors
-    let globalNDEF = null; 
-    let isNfcScanning = false;
+    <!-- ========================================================= -->
+    <!-- APPLICATION LOGIC                                         -->
+    <!-- ========================================================= -->
+    <script>
+        // --- State Management ---
+        let commandQueue = [];
+        let currentSchedules = {};
+        let selectedWizMode = 'interval';
+        
+        let globalNDEF = null; 
+        let isNfcScanning = false;
 
-    // The background listener that silently keeps the UI updated if the tag changes
-    const defaultNFCReadHandler = (event) => {
-        for (const record of event.message.records) {
-            if (record.mediaType && record.mediaType.includes("octet-stream")) {
-                try { parseTelemetryAndSave(record.data); } catch (e) {}
-            }
-        }
-    };
-
-    // Safely ensures the NFC scanner is running without triggering overlap errors
-    async function ensureScanning() {
-        if (!globalNDEF) globalNDEF = new NDEFReader();
-        if (!isNfcScanning) {
-            await globalNDEF.scan();
-            isNfcScanning = true;
-        }
-    }
-
-    window.onload = () => {
-        if (!("NDEFReader" in window)) {
-            document.getElementById('startup-title').innerText = "Unsupported Device";
-            document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support (such as Chrome on Android).";
-            document.getElementById('btn-startup').style.display = 'none';
-            return;
-        }
-
-        const storedSch = localStorage.getItem('irrigationSchedules');
-        if (storedSch) {
-            try {
-                currentSchedules = JSON.parse(storedSch);
-                renderSchedules();
-            } catch (e) {
-                currentSchedules = {};
-            }
-        }
-
-        const storedOpt = localStorage.getItem('irrigationOptions');
-        if (storedOpt) {
-            try {
-                const opt = JSON.parse(storedOpt);
-                if (opt.delay !== undefined) document.getElementById('opt_delay').value = opt.delay;
-                if (opt.calib !== undefined) document.getElementById('opt_calib').value = opt.calib;
-            } catch (e) {}
-        }
-    };
-
-    function showToast(msg) {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerText = msg;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 3400);
-    }
-
-    function switchTab(tab, element) {
-        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('view-' + tab).classList.add('active');
-        element.classList.add('active');
-    }
-
-    // Precise Local Epoch Calculator
-    function getLocalEpoch(d) {
-        const year = d.getFullYear(); const mo = d.getMonth() + 1; const date = d.getDate();
-        const h = d.getHours(); const m = d.getMinutes(); const s = d.getSeconds();
-        const days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        let days = 0;
-        for (let i = 1970; i < year; i++) { days += 365 + ((i % 4 === 0 && (i % 100 !== 0 || i % 400 === 0)) ? 1 : 0); }
-        for (let i = 1; i < mo; i++) {
-            days += days_in_month[i - 1];
-            if (i === 2 && (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0))) days++;
-        }
-        days += (date - 1);
-        return (days * 86400) + (h * 3600) + (m * 60) + s;
-    }
-
-    function buildNFCPayload(payload) {
-        const now = new Date();
-        payload.y = now.getFullYear() - 2000; payload.mo = now.getMonth() + 1; payload.d = now.getDate();
-        payload.dw = now.getDay() === 0 ? 7 : now.getDay(); payload.h = now.getHours(); payload.m = now.getMinutes(); payload.s = now.getSeconds();
-        return JSON.stringify(payload);
-    }
-
-    function formatDuration(sec) {
-        if (!sec || sec <= 0) return "0 Seconds";
-        if (sec >= 60 && sec % 60 === 0) return `${sec / 60} Minutes`;
-        return `${sec} Seconds`;
-    }
-
-    // Decodes Binary Telemetry from STM32 and updates state
-    function parseTelemetryAndSave(data) {
-        let idx = 4; // Skip system states
-        document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
-        document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
-
-        currentSchedules = {};
-        for (let i = 0; i < 10; i++) {
-            const active = data.getUint8(idx++);
-            const zoneCode = data.getUint8(idx++);
-            const interval = data.getUint32(idx); idx += 4;
-            const epoch = data.getUint32(idx); idx += 4;
-            const duration = data.getUint16(idx); idx += 2;
-
-            if (active === 1) {
-                let uiDesc = "";
-                if (interval === 0) {
-                    uiDesc = "One-time event";
-                } else if (interval >= 604800 && interval % 604800 === 0) {
-                    uiDesc = `Repeats ${interval / 604800} Weeks`;
-                } else if (interval >= 86400 && interval % 86400 === 0) {
-                    uiDesc = `Repeats ${interval / 86400} Days`;
-                } else if (interval >= 3600 && interval % 3600 === 0) {
-                    uiDesc = `Repeats ${interval / 3600} Hours`;
-                } else {
-                    uiDesc = `Repeats ${Math.round(interval / 60)} Mins`;
+        // Background listener logic
+        const defaultNFCReadHandler = (event) => {
+            for (const record of event.message.records) {
+                if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                    try { parseTelemetryAndSave(record.data); } catch (e) {}
                 }
+            }
+        };
 
-                uiDesc += ` • ${formatDuration(duration)}`;
-
-                currentSchedules[i] = {
-                    zone: String.fromCharCode(zoneCode),
-                    desc: uiDesc,
-                    rawInterval: interval,
-                    rawDuration: duration,
-                    rawEpoch: epoch
-                };
+        async function ensureScanning() {
+            if (!globalNDEF) globalNDEF = new NDEFReader();
+            if (!isNfcScanning) {
+                await globalNDEF.scan();
+                isNfcScanning = true;
             }
         }
 
-        localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
-        localStorage.setItem('irrigationOptions', JSON.stringify({
-            delay: parseInt(document.getElementById('opt_delay').value) || 0,
-            calib: parseInt(document.getElementById('opt_calib').value) || 0
-        }));
-        renderSchedules();
-    }
+        window.onload = () => {
+            if (!("NDEFReader" in window)) {
+                document.getElementById('startup-title').innerText = "Unsupported Device";
+                document.getElementById('startup-desc').innerText = "System configuration requires a compatible browser with NFC support (such as Chrome on Android).";
+                document.getElementById('btn-startup').style.display = 'none';
+                return;
+            }
 
-    // --- NFC Read Connection ---
-    async function initConnection() {
-        if (!("NDEFReader" in window)) {
-            showToast("NFC is not supported on this browser.");
-            return;
-        }
-
-        try {
-            document.getElementById('screen-scan-prompt').classList.remove('hidden');
-
-            await ensureScanning(); // Safe scan start
-
-            globalNDEF.onreading = event => {
-                let synced = false;
-                for (const record of event.message.records) {
-                    if (record.mediaType && record.mediaType.includes("octet-stream")) {
-                        try {
-                            parseTelemetryAndSave(record.data);
-                            synced = true;
-                        } catch (e) {}
-                    }
+            const storedSch = localStorage.getItem('irrigationSchedules');
+            if (storedSch) {
+                try {
+                    currentSchedules = JSON.parse(storedSch);
+                    renderSchedules();
+                } catch (e) {
+                    currentSchedules = {};
                 }
-                
-                document.getElementById('screen-scan-prompt').classList.add('hidden');
-                document.getElementById('screen-startup').classList.add('hidden');
-                showToast(synced ? "Controller Synchronized" : "Connected. Memory empty.");
-                
-                globalNDEF.onreading = defaultNFCReadHandler; 
-            };
-        } catch (err) {
-            document.getElementById('screen-scan-prompt').classList.add('hidden');
-            showToast("Scan Failed: " + err.message);
+            }
+
+            const storedOpt = localStorage.getItem('irrigationOptions');
+            if (storedOpt) {
+                try {
+                    const opt = JSON.parse(storedOpt);
+                    if (opt.delay !== undefined) document.getElementById('opt_delay').value = opt.delay;
+                    if (opt.calib !== undefined) document.getElementById('opt_calib').value = opt.calib;
+                } catch (e) {}
+            }
+        };
+
+        // --- Core Utilities ---
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3400);
         }
-    }
 
-    function cancelScan() {
-        document.getElementById('screen-scan-prompt').classList.add('hidden');
-    }
+        function switchTab(tab, element) {
+            document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('view-' + tab).classList.add('active');
+            element.classList.add('active');
+        }
 
-    // --- Instant Execution (With Bidirectional Handshake) ---
-    async function executeImmediate(payload) {
-        const screen = document.getElementById('screen-sync');
-        const status = document.getElementById('sync-status');
+        function getLocalEpoch(d) {
+            const year = d.getFullYear(); const mo = d.getMonth() + 1; const date = d.getDate();
+            const h = d.getHours(); const m = d.getMinutes(); const s = d.getSeconds();
+            const days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            let days = 0;
+            for (let i = 1970; i < year; i++) { days += 365 + ((i % 4 === 0 && (i % 100 !== 0 || i % 400 === 0)) ? 1 : 0); }
+            for (let i = 1; i < mo; i++) {
+                days += days_in_month[i - 1];
+                if (i === 2 && (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0))) days++;
+            }
+            days += (date - 1);
+            return (days * 86400) + (h * 3600) + (m * 60) + s;
+        }
 
-        try {
-            screen.classList.remove('hidden');
-            status.innerText = "Transmitting Command...\nKeep device steady.";
-            status.style.color = "var(--warning)";
+        function buildNFCPayload(payload) {
+            const now = new Date();
+            payload.y = now.getFullYear() - 2000; payload.mo = now.getMonth() + 1; payload.d = now.getDate();
+            payload.dw = now.getDay() === 0 ? 7 : now.getDay(); payload.h = now.getHours(); payload.m = now.getMinutes(); payload.s = now.getSeconds();
+            return JSON.stringify(payload);
+        }
 
-            const encoder = new TextEncoder();
+        function formatDuration(sec) {
+            if (!sec || sec <= 0) return "0 Seconds";
+            if (sec >= 60 && sec % 60 === 0) return `${sec / 60} Minutes`;
+            return `${sec} Seconds`;
+        }
 
-            await ensureScanning(); // Safe scan start
-            await globalNDEF.write({
-                records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }]
-            });
+        // --- NFC Polling & Hardware Handshake ---
+        function parseTelemetryAndSave(data) {
+            let idx = 4; // Skip system hardware states
+            document.getElementById('opt_delay').value = data.getUint16(idx); idx += 2;
+            document.getElementById('opt_calib').value = data.getUint16(idx); idx += 2;
 
-            status.innerText = "Awaiting Verification...\nKeep device steady.";
+            currentSchedules = {};
+            for (let i = 0; i < 10; i++) {
+                const active = data.getUint8(idx++);
+                const zoneCode = data.getUint8(idx++);
+                const interval = data.getUint32(idx); idx += 4;
+                const epoch = data.getUint32(idx); idx += 4;
+                const duration = data.getUint16(idx); idx += 2;
 
-            const verified = await new Promise((resolve) => {
-                const timeout = setTimeout(() => {
-                    globalNDEF.onreading = defaultNFCReadHandler; 
-                    resolve(false);
-                }, 4500);
+                if (active === 1) {
+                    let uiDesc = "";
+                    if (interval === 0) uiDesc = "One-time event";
+                    else if (interval >= 604800 && interval % 604800 === 0) uiDesc = `Repeats ${interval / 604800} Weeks`;
+                    else if (interval >= 86400 && interval % 86400 === 0) uiDesc = `Repeats ${interval / 86400} Days`;
+                    else if (interval >= 3600 && interval % 3600 === 0) uiDesc = `Repeats ${interval / 3600} Hours`;
+                    else uiDesc = `Repeats ${Math.round(interval / 60)} Mins`;
+
+                    uiDesc += ` • ${formatDuration(duration)}`;
+
+                    currentSchedules[i] = {
+                        zone: String.fromCharCode(zoneCode),
+                        desc: uiDesc,
+                        rawInterval: interval,
+                        rawDuration: duration,
+                        rawEpoch: epoch
+                    };
+                }
+            }
+            localStorage.setItem('irrigationSchedules', JSON.stringify(currentSchedules));
+            localStorage.setItem('irrigationOptions', JSON.stringify({
+                delay: parseInt(document.getElementById('opt_delay').value) || 0,
+                calib: parseInt(document.getElementById('opt_calib').value) || 0
+            }));
+            renderSchedules();
+        }
+
+        async function initConnection() {
+            if (!("NDEFReader" in window)) return;
+            try {
+                document.getElementById('screen-scan-prompt').classList.remove('hidden');
+                await ensureScanning();
 
                 globalNDEF.onreading = event => {
+                    let synced = false;
                     for (const record of event.message.records) {
                         if (record.mediaType && record.mediaType.includes("octet-stream")) {
-                            clearTimeout(timeout);
-                            parseTelemetryAndSave(record.data); 
-                            globalNDEF.onreading = defaultNFCReadHandler; 
-                            resolve(true);
+                            try { parseTelemetryAndSave(record.data); synced = true; } catch (e) {}
                         }
                     }
+                    document.getElementById('screen-scan-prompt').classList.add('hidden');
+                    document.getElementById('screen-startup').classList.add('hidden');
+                    showToast(synced ? "Controller Synchronized" : "Connected. Memory empty.");
+                    
+                    globalNDEF.onreading = defaultNFCReadHandler; 
                 };
-            });
-
-            if (verified) {
-                status.innerText = "Command Executed Successfully";
-                status.style.color = "var(--success)";
-                setTimeout(() => { screen.classList.add('hidden'); }, 1400);
-            } else {
-                throw new Error("Controller did not acknowledge command.");
+            } catch (err) {
+                document.getElementById('screen-scan-prompt').classList.add('hidden');
+                showToast("Scan Failed: " + err.message);
             }
-        } catch (err) {
-            status.innerText = "Transmission Failed";
-            status.style.color = "var(--danger)";
-            showToast("Error: " + err.message);
-            setTimeout(() => { screen.classList.add('hidden'); }, 2800);
-            if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
         }
-    }
 
-    function overridePump() {
-        const dir = parseInt(document.getElementById('maint_pump_dir').value);
-        const spd = parseInt(document.getElementById('maint_pump_spd').value);
-        const sec = parseInt(document.getElementById('maint_pump_sec').value);
-
-        if (isNaN(spd) || spd < 0 || spd > 100) { showToast("Enter speed between 0-100%"); return; }
-        if (isNaN(sec) || sec <= 0) { showToast("Enter a duration greater than 0"); return; }
-
-        executeImmediate({ cmd: "pump", dir: dir, spd: spd, sec: sec });
-    }
-
-    function overrideSol() {
-        const zone = document.getElementById('maint_sol_zone').value;
-        const state = parseInt(document.getElementById('maint_sol_state').value);
-        executeImmediate({ cmd: "sol", zone: zone, state: state });
-    }
-
-    // --- Command Queue System ---
-    function updateQueueUI() {
-        const banner = document.getElementById('queue-banner');
-        if (commandQueue.length > 0) {
-            document.getElementById('queue-count').innerText = `${commandQueue.length} item${commandQueue.length > 1 ? 's' : ''} pending`;
-            banner.classList.add('visible');
-        } else {
-            banner.classList.remove('visible');
+        function cancelScan() {
+            document.getElementById('screen-scan-prompt').classList.add('hidden');
         }
-    }
 
-    function addToQueue(desc, payload) {
-        commandQueue.push({ desc, payload });
-        updateQueueUI();
-        showToast("Added to Queue");
-    }
+        async function executeImmediate(payload) {
+            const screen = document.getElementById('screen-sync');
+            const status = document.getElementById('sync-status');
 
-    async function executeQueue() {
-        if (commandQueue.length === 0) return;
-        const screen = document.getElementById('screen-sync');
-        const status = document.getElementById('sync-status');
-        screen.classList.remove('hidden');
+            try {
+                screen.classList.remove('hidden');
+                status.innerText = "Transmitting Command...\nKeep device steady.";
+                status.style.color = "var(--warning)";
 
-        try {
-            const encoder = new TextEncoder();
+                const encoder = new TextEncoder();
+                await ensureScanning();
+                await globalNDEF.write({
+                    records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(payload)) }]
+                });
 
-            await ensureScanning(); // Safe scan start
+                status.innerText = "Awaiting Verification...\nKeep device steady.";
 
-            for (let i = 0; i < commandQueue.length; i++) {
-                const cmd = commandQueue[i];
-                let verified = false;
-                let attempts = 0;
+                const verified = await new Promise((resolve) => {
+                    const timeout = setTimeout(() => {
+                        globalNDEF.onreading = defaultNFCReadHandler; 
+                        resolve(false);
+                    }, 4500);
 
-                while (!verified && attempts < 2) {
-                    attempts++;
-                    status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\n${cmd.desc}...`;
-                    status.style.color = "var(--warning)";
-
-                    await globalNDEF.write({
-                        records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }]
-                    });
-
-                    status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\nVerifying with controller...\n(Keep device steady)`;
-
-                    verified = await new Promise((resolve) => {
-                        const timeout = setTimeout(() => {
-                            globalNDEF.onreading = defaultNFCReadHandler;
-                            resolve(false);
-                        }, 4500);
-
-                        globalNDEF.onreading = event => {
-                            for (const record of event.message.records) {
-                                if (record.mediaType && record.mediaType.includes("octet-stream")) {
-                                    try {
-                                        parseTelemetryAndSave(record.data);
-                                        clearTimeout(timeout);
-                                        globalNDEF.onreading = defaultNFCReadHandler;
-                                        resolve(true);
-                                    } catch (e) {}
-                                }
+                    globalNDEF.onreading = event => {
+                        for (const record of event.message.records) {
+                            if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                                clearTimeout(timeout);
+                                parseTelemetryAndSave(record.data); 
+                                globalNDEF.onreading = defaultNFCReadHandler; 
+                                resolve(true);
                             }
-                        };
-                    });
+                        }
+                    };
+                });
 
-                    if (!verified && attempts < 2) {
-                        status.innerText = "Timeout. Retrying...";
-                        await new Promise(r => setTimeout(r, 1000));
+                if (verified) {
+                    status.innerText = "Command Executed Successfully";
+                    status.style.color = "var(--success)";
+                    setTimeout(() => { screen.classList.add('hidden'); }, 1400);
+                } else {
+                    throw new Error("Hardware unresponsive. Is the device plugged in?");
+                }
+            } catch (err) {
+                status.innerText = "Transmission Failed";
+                status.style.color = "var(--danger)";
+                showToast("Error: " + err.message);
+                setTimeout(() => { screen.classList.add('hidden'); }, 2800);
+                if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
+            }
+        }
+
+        function overridePump() {
+            const dir = parseInt(document.getElementById('maint_pump_dir').value);
+            const spd = parseInt(document.getElementById('maint_pump_spd').value);
+            const sec = parseInt(document.getElementById('maint_pump_sec').value);
+
+            if (isNaN(spd) || spd < 0 || spd > 100) { showToast("Enter speed between 0-100%"); return; }
+            if (isNaN(sec) || sec <= 0) { showToast("Enter a duration greater than 0"); return; }
+            executeImmediate({ cmd: "pump", dir: dir, spd: spd, sec: sec });
+        }
+
+        function overrideSol() {
+            const zone = document.getElementById('maint_sol_zone').value;
+            const state = parseInt(document.getElementById('maint_sol_state').value);
+            executeImmediate({ cmd: "sol", zone: zone, state: state });
+        }
+
+        // --- Command Queue ---
+        function updateQueueUI() {
+            const banner = document.getElementById('queue-banner');
+            if (commandQueue.length > 0) {
+                document.getElementById('queue-count').innerText = `${commandQueue.length} item${commandQueue.length > 1 ? 's' : ''} pending`;
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function addToQueue(desc, payload) {
+            commandQueue.push({ desc, payload });
+            updateQueueUI();
+            showToast("Added to Queue");
+        }
+
+        async function executeQueue() {
+            if (commandQueue.length === 0) return;
+            const screen = document.getElementById('screen-sync');
+            const status = document.getElementById('sync-status');
+            screen.classList.remove('hidden');
+
+            try {
+                const encoder = new TextEncoder();
+                await ensureScanning(); 
+
+                for (let i = 0; i < commandQueue.length; i++) {
+                    const cmd = commandQueue[i];
+                    let verified = false;
+                    let attempts = 0;
+
+                    while (!verified && attempts < 2) {
+                        attempts++;
+                        status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\n${cmd.desc}...`;
+                        status.style.color = "var(--warning)";
+
+                        await globalNDEF.write({
+                            records: [{ recordType: "mime", mediaType: "application/json", data: encoder.encode(buildNFCPayload(cmd.payload)) }]
+                        });
+
+                        status.innerText = `Syncing ${i + 1} of ${commandQueue.length}\nVerifying with controller...\n(Keep device steady)`;
+
+                        verified = await new Promise((resolve) => {
+                            const timeout = setTimeout(() => {
+                                globalNDEF.onreading = defaultNFCReadHandler;
+                                resolve(false);
+                            }, 4500);
+
+                            globalNDEF.onreading = event => {
+                                for (const record of event.message.records) {
+                                    if (record.mediaType && record.mediaType.includes("octet-stream")) {
+                                        try {
+                                            parseTelemetryAndSave(record.data);
+                                            clearTimeout(timeout);
+                                            globalNDEF.onreading = defaultNFCReadHandler;
+                                            resolve(true);
+                                        } catch (e) {}
+                                    }
+                                }
+                            };
+                        });
+
+                        if (!verified && attempts < 2) {
+                            status.innerText = "Timeout. Retrying...";
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
                     }
+                    if (!verified) throw new Error(`Timeout on: ${cmd.desc}. Ensure the controller is plugged into power.`);
                 }
 
-                if (!verified) throw new Error(`Controller failed to confirm: ${cmd.desc}`);
+                commandQueue = [];
+                updateQueueUI();
+                status.innerText = "All Changes Verified";
+                status.style.color = "var(--success)";
+                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 1800);
+
+            } catch (err) {
+                status.innerText = "Sync Interrupted";
+                status.style.color = "var(--danger)";
+                showToast(err.message);
+                setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 3200);
+            } finally {
+                if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
+            }
+        }
+
+        function queueOptions() {
+            const delay = parseInt(document.getElementById('opt_delay').value);
+            const calib = parseInt(document.getElementById('opt_calib').value) || 0;
+            if (isNaN(delay) || delay < 0) { showToast("Enter a valid travel delay"); return; }
+            addToQueue("Update Configuration", { cmd: "opt", delay, calib });
+        }
+
+        function queueDeleteSchedule(slot, event) {
+            if (event) event.stopPropagation();
+            addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
+        }
+
+        // --- Volumetric Calibration Wizard ---
+        let calibStep = 1;
+        let calibTargetML = 50; 
+        let calibPasses = 0;
+        let accumulatedCalib = 0;
+
+        function openCalibration() {
+            calibStep = 1;
+            calibPasses = 0;
+            accumulatedCalib = 0;
+            document.getElementById('calib-weight').value = '';
+            document.getElementById('modal-calibration').classList.remove('hidden');
+            updateWizardUI();
+        }
+
+        function closeCalibration() {
+            document.getElementById('modal-calibration').classList.add('hidden');
+        }
+
+        function updateWizardUI() {
+            document.querySelectorAll('.calib-step').forEach(el => el.classList.add('hidden'));
+            document.getElementById('calib-step-' + calibStep).classList.remove('hidden');
+            document.getElementById('calib-progress').style.width = (calibStep * 25) + '%';
+            
+            if (calibStep === 2) {
+                document.getElementById('calib-pass-label').innerText = `(Pass ${calibPasses + 1} of 2)`;
             }
 
-            commandQueue = [];
-            updateQueueUI();
+            const btnBack = document.getElementById('btn-calib-back');
+            const btnNext = document.getElementById('btn-calib-next');
 
-            status.innerText = "All Changes Verified";
-            status.style.color = "var(--success)";
-            setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 1800);
-
-        } catch (err) {
-            status.innerText = "Sync Interrupted";
-            status.style.color = "var(--danger)";
-            showToast(err.message);
-            setTimeout(() => { screen.classList.add('hidden'); status.style.color = "var(--warning)"; }, 3200);
-        } finally {
-            if (globalNDEF) globalNDEF.onreading = defaultNFCReadHandler;
+            if (calibStep === 1) {
+                btnBack.style.visibility = 'hidden';
+                btnNext.innerText = 'Lines are full ➔';
+                btnNext.onclick = () => { calibStep = 2; updateWizardUI(); };
+            } 
+            else if (calibStep === 2) {
+                btnBack.style.visibility = 'visible';
+                btnNext.innerText = 'Water Dispensed ➔';
+                btnNext.onclick = () => { calibStep = 3; updateWizardUI(); };
+            } 
+            else if (calibStep === 3) {
+                btnBack.style.visibility = 'visible';
+                btnNext.innerText = (calibPasses === 0) ? 'Submit Pass 1' : 'Calculate Final';
+                btnNext.onclick = () => processCalibWeight();
+            } 
+            else if (calibStep === 4) {
+                btnBack.style.visibility = 'hidden';
+                btnNext.innerText = 'Save to Controller';
+                btnNext.onclick = () => calibSave();
+            }
         }
-    }
 
-    function queueOptions() {
-        const delay = parseInt(document.getElementById('opt_delay').value);
-        const calib = parseInt(document.getElementById('opt_calib').value) || 0;
+        function calibBack() {
+            if (calibStep > 1) { calibStep--; updateWizardUI(); }
+        }
 
-        if (isNaN(delay) || delay < 0) { showToast("Enter a valid travel delay"); return; }
-        addToQueue("Update Configuration", { cmd: "opt", delay, calib });
-    }
+        function calibPrime() {
+            executeImmediate({ cmd: "prime", zone: "A" });
+        }
 
-    function queueDeleteSchedule(slot, event) {
-        if (event) event.stopPropagation();
-        addToQueue(`Delete Slot ${slot + 1}`, { cmd: "del", idx: slot });
-    }
+        function calibDispense() {
+            executeImmediate({ cmd: "disp", zone: "A", ml: calibTargetML });
+        }
 
-    // --- View Schedule Details ---
-    function showScheduleDetails(slot) {
-        const sch = currentSchedules[slot];
-        if (!sch) return;
+        function processCalibWeight() {
+            let weight = parseFloat(document.getElementById('calib-weight').value);
+            if (isNaN(weight) || weight <= 0 || weight > 200) { showToast("Please enter a valid weight in grams."); return; }
 
-        document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
-        document.getElementById('det-dur').innerText = formatDuration(sch.rawDuration);
+            let currentBase = parseInt(document.getElementById('opt_calib').value);
+            if (isNaN(currentBase) || currentBase === 0) currentBase = 600; 
 
-        const currentLocalEpoch = getLocalEpoch(new Date());
+            let calculatedFlow = Math.round((weight / calibTargetML) * currentBase);
+            accumulatedCalib += calculatedFlow;
+            calibPasses++;
 
-        if (sch.rawInterval === 0) {
-            document.getElementById('det-freq').innerText = "One-Time Event";
-
-            const diffSecs = sch.rawEpoch - currentLocalEpoch;
-            if (diffSecs < 0) {
-                document.getElementById('det-next').innerText = "Pending / Due";
-                document.getElementById('det-next').style.color = "var(--warning)";
+            if (calibPasses < 2) {
+                calibStep = 2;
+                document.getElementById('calib-weight').value = '';
+                showToast("Pass 1 recorded. Empty the cup, tare, and repeat!");
+                updateWizardUI();
             } else {
+                let finalCalib = Math.round(accumulatedCalib / 2);
+                document.getElementById('calib-result').innerText = finalCalib;
+                calibStep = 4;
+                updateWizardUI();
+            }
+        }
+
+        function calibSave() {
+            let finalCalib = parseInt(document.getElementById('calib-result').innerText);
+            let delay = parseInt(document.getElementById('opt_delay').value) || 0;
+            addToQueue("Update System Flow Rate", { cmd: "opt", delay: delay, calib: finalCalib });
+            document.getElementById('opt_calib').value = finalCalib;
+            closeCalibration();
+        }
+
+        // --- Schedule Wizard & Display ---
+        function showScheduleDetails(slot) {
+            const sch = currentSchedules[slot];
+            if (!sch) return;
+
+            document.getElementById('det-zone').innerText = `Zone ${sch.zone}`;
+            document.getElementById('det-dur').innerText = formatDuration(sch.rawDuration);
+            const currentLocalEpoch = getLocalEpoch(new Date());
+
+            if (sch.rawInterval === 0) {
+                document.getElementById('det-freq').innerText = "One-Time Event";
+                const diffSecs = sch.rawEpoch - currentLocalEpoch;
+                if (diffSecs < 0) {
+                    document.getElementById('det-next').innerText = "Pending / Due";
+                    document.getElementById('det-next').style.color = "var(--warning)";
+                } else {
+                    const targetDate = new Date(Date.now() + (diffSecs * 1000));
+                    document.getElementById('det-next').innerText = targetDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('det-next').style.color = "var(--text-main)";
+                }
+            } else {
+                let fDesc = "";
+                if (sch.rawInterval >= 604800 && sch.rawInterval % 604800 === 0) fDesc = `Every ${sch.rawInterval / 604800} Weeks`;
+                else if (sch.rawInterval >= 86400 && sch.rawInterval % 86400 === 0) fDesc = `Every ${sch.rawInterval / 86400} Days`;
+                else if (sch.rawInterval >= 3600 && sch.rawInterval % 3600 === 0) fDesc = `Every ${sch.rawInterval / 3600} Hours`;
+                else fDesc = `Every ${Math.round(sch.rawInterval / 60)} Minutes`;
+                
+                document.getElementById('det-freq').innerText = fDesc;
+                const nextRunEpoch = sch.rawEpoch + sch.rawInterval;
+                const diffSecs = nextRunEpoch - currentLocalEpoch;
                 const targetDate = new Date(Date.now() + (diffSecs * 1000));
-                document.getElementById('det-next').innerText = targetDate.toLocaleString([], {
-                    weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
+                document.getElementById('det-next').innerText = targetDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 document.getElementById('det-next').style.color = "var(--text-main)";
             }
-        } else {
-            let fDesc = "";
-            if (sch.rawInterval >= 604800 && sch.rawInterval % 604800 === 0) fDesc = `Every ${sch.rawInterval / 604800} Weeks`;
-            else if (sch.rawInterval >= 86400 && sch.rawInterval % 86400 === 0) fDesc = `Every ${sch.rawInterval / 86400} Days`;
-            else if (sch.rawInterval >= 3600 && sch.rawInterval % 3600 === 0) fDesc = `Every ${sch.rawInterval / 3600} Hours`;
-            else fDesc = `Every ${Math.round(sch.rawInterval / 60)} Minutes`;
-            document.getElementById('det-freq').innerText = fDesc;
-
-            const nextRunEpoch = sch.rawEpoch + sch.rawInterval;
-            const diffSecs = nextRunEpoch - currentLocalEpoch;
-            const targetDate = new Date(Date.now() + (diffSecs * 1000));
-            document.getElementById('det-next').innerText = targetDate.toLocaleString([], {
-                weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-            });
-            document.getElementById('det-next').style.color = "var(--text-main)";
+            document.getElementById('modal-schedule-details').classList.remove('hidden');
         }
 
-        document.getElementById('modal-schedule-details').classList.remove('hidden');
-    }
+        function openWizard() {
+            const now = new Date();
+            document.getElementById('wiz_exp_date').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            document.getElementById('wiz_exp_time').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    function closeDetailsModal() {
-        document.getElementById('modal-schedule-details').classList.add('hidden');
-    }
+            const slotSelect = document.getElementById('wiz_slot');
+            slotSelect.innerHTML = '';
+            let firstEmpty = -1;
 
-    // --- Schedule Wizard ---
-    function openWizard() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-
-        document.getElementById('wiz_exp_date').value = `${year}-${month}-${day}`;
-        document.getElementById('wiz_exp_time').value = `${hours}:${minutes}`;
-
-        const slotSelect = document.getElementById('wiz_slot');
-        slotSelect.innerHTML = '';
-        let firstEmpty = -1;
-
-        for (let i = 0; i < 10; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            if (currentSchedules[i]) {
-                opt.innerText = `Slot ${i + 1}  [ Configured ]`;
-                opt.className = 'slot-configured';
-            } else {
-                opt.innerText = `Slot ${i + 1}  [ Available ]`;
-                opt.className = 'slot-available';
-                if (firstEmpty === -1) firstEmpty = i;
-            }
-            slotSelect.appendChild(opt);
-        }
-
-        slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
-        document.getElementById('screen-wizard').classList.remove('hidden');
-        wizGo(1);
-    }
-
-    function closeWizard() {
-        document.getElementById('screen-wizard').classList.add('hidden');
-        document.getElementById('wiz_exp_oneshot').checked = false;
-        toggleOneShot();
-    }
-
-    function wizGo(step) {
-        document.querySelectorAll('.wizard-step').forEach(w => w.classList.remove('active'));
-        if (step === 3) step = selectedWizMode === 'interval' ? '3a' : '3b';
-        document.getElementById('wiz_' + step).classList.add('active');
-    }
-
-    function wizMode(mode) {
-        selectedWizMode = mode;
-        document.getElementById('mode_interval').classList.remove('selected');
-        document.getElementById('mode_expert').classList.remove('selected');
-        document.getElementById('mode_' + mode).classList.add('selected');
-    }
-
-    function toggleOneShot() {
-        const isChecked = document.getElementById('wiz_exp_oneshot').checked;
-        document.getElementById('wiz_exp_rep_group').style.display = isChecked ? 'none' : 'flex';
-    }
-
-    function attemptQueueSchedule() {
-        const slot = parseInt(document.getElementById('wiz_slot').value);
-        if (currentSchedules[slot]) {
-            document.getElementById('dialog-confirm').classList.remove('hidden');
-            document.getElementById('dialog-btn-confirm').onclick = () => {
-                closeConfirmDialog();
-                finalizeQueueSchedule(slot);
-            };
-        } else {
-            finalizeQueueSchedule(slot);
-        }
-    }
-
-    function closeConfirmDialog() {
-        document.getElementById('dialog-confirm').classList.add('hidden');
-    }
-
-    function finalizeQueueSchedule(slot) {
-        const zone = document.getElementById('wiz_zone').value;
-        let interval = 0, duration = 0, startEpoch = 0;
-
-        if (selectedWizMode === 'interval') {
-            const v = parseInt(document.getElementById('wiz_int_val').value);
-            const u = parseInt(document.getElementById('wiz_int_unit').value);
-            const dv = parseInt(document.getElementById('wiz_dur_val').value);
-            const du = parseInt(document.getElementById('wiz_dur_unit').value);
-
-            if (isNaN(v) || v <= 0 || isNaN(dv) || dv <= 0) {
-                showToast("Please enter positive numbers for frequency and duration.");
-                return;
-            }
-
-            interval = v * u;
-            duration = dv * du;
-        } else {
-            const dateStr = document.getElementById('wiz_exp_date').value;
-            const timeStr = document.getElementById('wiz_exp_time').value;
-
-            if (!dateStr || !timeStr) {
-                showToast("Please select both a start date and time.");
-                return;
-            }
-
-            const dateParts = dateStr.split('-');
-            const timeParts = timeStr.split(':');
-            const targetDate = new Date(
-                parseInt(dateParts[0], 10),
-                parseInt(dateParts[1], 10) - 1,
-                parseInt(dateParts[2], 10),
-                parseInt(timeParts[0], 10),
-                parseInt(timeParts[1], 10),
-                0
-            );
-
-            startEpoch = getLocalEpoch(targetDate);
-
-            const dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
-            const du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
-
-            if (isNaN(dv) || dv <= 0) {
-                showToast("Please enter a valid watering duration.");
-                return;
-            }
-
-            duration = dv * du;
-
-            if (document.getElementById('wiz_exp_oneshot').checked) {
-                interval = 0; 
-            } else {
-                const v = parseInt(document.getElementById('wiz_exp_rep_val').value);
-                const u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
-                if (isNaN(v) || v <= 0) {
-                    showToast("Please enter a positive repetition value.");
-                    return;
+            for (let i = 0; i < 10; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                if (currentSchedules[i]) {
+                    opt.innerText = `Slot ${i + 1}  [ Configured ]`;
+                } else {
+                    opt.innerText = `Slot ${i + 1}  [ Available ]`;
+                    if (firstEmpty === -1) firstEmpty = i;
                 }
-                interval = v * u;
+                slotSelect.appendChild(opt);
+            }
+            slotSelect.value = firstEmpty !== -1 ? firstEmpty : 0;
+            document.getElementById('screen-wizard').classList.remove('hidden');
+            wizGo(1);
+        }
+
+        function closeWizard() {
+            document.getElementById('screen-wizard').classList.add('hidden');
+            document.getElementById('wiz_exp_oneshot').checked = false;
+            toggleOneShot();
+        }
+
+        function wizGo(step) {
+            document.querySelectorAll('.wizard-step').forEach(w => w.classList.add('hidden'));
+            document.querySelectorAll('.wiz-dot').forEach(d => d.classList.remove('active'));
+            
+            if (step === 1) { document.getElementById('wiz_1').classList.remove('hidden'); document.getElementById('wiz_dot_1').classList.add('active'); }
+            if (step === 2) { document.getElementById('wiz_2').classList.remove('hidden'); document.getElementById('wiz_dot_2').classList.add('active'); }
+            if (step === 3) {
+                document.getElementById('wiz_dot_3').classList.add('active');
+                if (selectedWizMode === 'interval') document.getElementById('wiz_3a').classList.remove('hidden');
+                else document.getElementById('wiz_3b').classList.remove('hidden');
             }
         }
 
-        addToQueue(`Save Schedule (Slot ${slot + 1})`, {
-            cmd: "sch",
-            idx: slot,
-            z: zone,
-            int: interval,
-            dur: duration,
-            strt: startEpoch
-        });
+        function wizMode(mode) {
+            selectedWizMode = mode;
+            document.getElementById('mode_interval').style.borderColor = (mode === 'interval') ? 'var(--accent)' : '#222';
+            document.getElementById('mode_expert').style.borderColor = (mode === 'expert') ? 'var(--accent)' : '#222';
+        }
 
-        closeWizard();
-    }
+        function toggleOneShot() {
+            const isChecked = document.getElementById('wiz_exp_oneshot').checked;
+            document.getElementById('wiz_exp_rep_group').style.display = isChecked ? 'none' : 'block';
+        }
 
-    function renderSchedules() {
-        const list = document.getElementById('schedule_list');
-        list.innerHTML = '';
-        let count = 0;
-
-        for (let i = 0; i < 10; i++) {
-            if (currentSchedules[i]) {
-                count++;
-                list.innerHTML += `
-                <div class="list-item" onclick="showScheduleDetails(${i})">
-                    <div>
-                        <span class="item-main">Zone ${currentSchedules[i].zone} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(Slot ${i + 1})</span></span>
-                        <span class="item-sub">${currentSchedules[i].desc}</span>
-                    </div>
-                    <button class="btn-icon" onclick="queueDeleteSchedule(${i}, event)">
-                        <i class="icon" style="-webkit-mask-image: url('trash-can-outline.svg'); mask-image: url('trash-can-outline.svg');"></i>
-                    </button>
-                </div>`;
+        function attemptQueueSchedule() {
+            const slot = parseInt(document.getElementById('wiz_slot').value);
+            if (currentSchedules[slot]) {
+                document.getElementById('dialog-confirm').classList.remove('hidden');
+                document.getElementById('dialog-btn-confirm').onclick = () => { closeConfirmDialog(); finalizeQueueSchedule(slot); };
+            } else {
+                finalizeQueueSchedule(slot);
             }
         }
 
-        if (count === 0) {
-            list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules configured.<br>Tap below to create one.</p>`;
-        }
-        document.getElementById('sch_count').innerText = `${count}/10`;
-    }
+        function closeConfirmDialog() { document.getElementById('dialog-confirm').classList.add('hidden'); }
 
-    // --- CALIBRATION WIZARD LOGIC ---
-    let calibStep = 1;
-    let calibTargetML = 50; // The fixed test amount
-    let calibPasses = 0;
-    let accumulatedCalib = 0;
+        function finalizeQueueSchedule(slot) {
+            const zone = document.getElementById('wiz_zone').value;
+            let interval = 0, duration = 0, startEpoch = 0;
 
-    function openCalibration() {
-        calibStep = 1;
-        calibPasses = 0;
-        accumulatedCalib = 0;
-        document.getElementById('calib-weight').value = '';
-        document.getElementById('screen-calibration').classList.remove('hidden');
-        renderCalibStep();
-    }
+            if (selectedWizMode === 'interval') {
+                const v = parseInt(document.getElementById('wiz_int_val').value);
+                const u = parseInt(document.getElementById('wiz_int_unit').value);
+                const dv = parseInt(document.getElementById('wiz_dur_val').value);
+                const du = parseInt(document.getElementById('wiz_dur_unit').value);
 
-    function closeCalibration() {
-        document.getElementById('screen-calibration').classList.add('hidden');
-    }
+                if (isNaN(v) || v <= 0 || isNaN(dv) || dv <= 0) { showToast("Enter positive numbers."); return; }
+                interval = v * u; duration = dv * du;
+            } else {
+                const dateStr = document.getElementById('wiz_exp_date').value;
+                const timeStr = document.getElementById('wiz_exp_time').value;
+                if (!dateStr || !timeStr) { showToast("Select start date and time."); return; }
 
-    function renderCalibStep() {
-        document.querySelectorAll('.calib-step').forEach(el => el.classList.add('hidden'));
-        document.getElementById('calib-step-' + calibStep).classList.remove('hidden');
-        
-        // Progress bar visual (25% per step)
-        document.getElementById('calib-progress').style.width = (calibStep * 25) + '%';
-        
-        if (calibStep === 2) {
-            document.getElementById('calib-pass-label').innerText = `(Pass ${calibPasses + 1} of 2)`;
-        }
-    }
+                const dateParts = dateStr.split('-'); const timeParts = timeStr.split(':');
+                const targetDate = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10), parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), 0);
+                startEpoch = getLocalEpoch(targetDate);
 
-    function calibNext(step) {
-        calibStep = step;
-        renderCalibStep();
-    }
+                const dv = parseInt(document.getElementById('wiz_exp_dur_val').value);
+                const du = parseInt(document.getElementById('wiz_exp_dur_unit').value);
+                if (isNaN(dv) || dv <= 0) { showToast("Enter valid duration."); return; }
+                duration = dv * du;
 
-    function calibPrime() {
-        executeImmediate({ cmd: "prime", zone: "A" });
-        showToast("Priming... Pump will run for 15 seconds.");
-    }
+                if (document.getElementById('wiz_exp_oneshot').checked) interval = 0; 
+                else {
+                    const v = parseInt(document.getElementById('wiz_exp_rep_val').value);
+                    const u = parseInt(document.getElementById('wiz_exp_rep_unit').value);
+                    if (isNaN(v) || v <= 0) { showToast("Enter positive repetition."); return; }
+                    interval = v * u;
+                }
+            }
 
-    function calibDispense() {
-        executeImmediate({ cmd: "disp", zone: "A", ml: calibTargetML });
-        showToast("Command sent! Waiting for water...");
-    }
-
-    function processCalibWeight() {
-        let weight = parseFloat(document.getElementById('calib-weight').value);
-        if (isNaN(weight) || weight <= 0 || weight > 200) {
-            showToast("Please enter a valid weight in grams.");
-            return;
+            addToQueue(`Save Schedule (Slot ${slot + 1})`, { cmd: "sch", idx: slot, z: zone, int: interval, dur: duration, strt: startEpoch });
+            closeWizard();
         }
 
-        // Retrieve what the STM32 currently thinks its flow rate is (default 600 if 0)
-        let currentBase = parseInt(document.getElementById('opt_calib').value);
-        if (isNaN(currentBase) || currentBase === 0) currentBase = 600; 
+        function renderSchedules() {
+            const list = document.getElementById('schedule_list');
+            list.innerHTML = ''; let count = 0;
 
-        // Mathematical Extrapolation: (Measured / Target) * Base Flow Rate
-        let calculatedFlow = Math.round((weight / calibTargetML) * currentBase);
-        accumulatedCalib += calculatedFlow;
-        calibPasses++;
-
-        if (calibPasses < 2) {
-            // Loop back for Pass 2
-            calibStep = 2;
-            document.getElementById('calib-weight').value = '';
-            showToast("Pass 1 recorded. Empty the cup, tare, and repeat!");
-            renderCalibStep();
-        } else {
-            // Average the two passes and finish
-            let finalCalib = Math.round(accumulatedCalib / 2);
-            document.getElementById('calib-result').innerText = finalCalib;
-            calibNext(4);
+            for (let i = 0; i < 10; i++) {
+                if (currentSchedules[i]) {
+                    count++;
+                    list.innerHTML += `
+                    <div class="list-item" onclick="showScheduleDetails(${i})">
+                        <div>
+                            <span class="item-main">Zone ${currentSchedules[i].zone} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(Slot ${i + 1})</span></span>
+                            <span class="item-sub">${currentSchedules[i].desc}</span>
+                        </div>
+                        <button class="btn-icon" onclick="queueDeleteSchedule(${i}, event)">✕</button>
+                    </div>`;
+                }
+            }
+            if (count === 0) list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px 0;">No active schedules configured.</p>`;
+            document.getElementById('sch_count').innerText = `${count}/10`;
         }
-    }
-
-    function calibSave() {
-        let finalCalib = parseInt(document.getElementById('calib-result').innerText);
-        let delay = parseInt(document.getElementById('opt_delay').value) || 0;
-        
-        // Push to the command queue system
-        addToQueue("Update System Flow Rate", { cmd: "opt", delay: delay, calib: finalCalib });
-        
-        // Update local UI immediately so the user sees it saved
-        document.getElementById('opt_calib').value = finalCalib;
-        
-        closeCalibration();
-    }
-</script>
+    </script>
 </body>
 </html>
